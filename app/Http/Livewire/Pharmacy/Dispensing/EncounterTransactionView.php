@@ -63,7 +63,7 @@ class EncounterTransactionView extends Component
     public $diagtext;
     public $patlast;
     public $patfirst;
-    public $patmiddle;
+    public $patmiddle, $billstat = null;
 
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss;
 
@@ -111,8 +111,9 @@ class EncounterTransactionView extends Component
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
 
         $encounter = collect(DB::select("SELECT TOP 1 enctr.hpercode, enctr.toecode, enctr.enccode, enctr.encdate, diag.diagtext, pat.patlast, pat.patfirst, pat.patmiddle,
-                                                mss.mssikey, ward.wardname, room.rmname
+                                                mss.mssikey, ward.wardname, room.rmname, track.billstat
                                 FROM henctr as enctr
+                                LEFT JOIN hactrack as track ON enctr.enccode = track.enccode
                                 LEFT JOIN hencdiag as diag ON enctr.enccode = diag.enccode
                                 INNER JOIN hperson as pat ON enctr.hpercode = pat.hpercode
                                 LEFT JOIN hpatmss as mss ON enctr.enccode = mss.enccode
@@ -185,6 +186,7 @@ class EncounterTransactionView extends Component
         $this->patmiddle = $encounter->patmiddle;
         $this->wardname = $encounter->wardname;
         $this->rmname = $encounter->rmname;
+        $this->billstat = $encounter->billstat;
         if (!$this->charges) {
             $this->charges = ChargeCode::where('bentypcod', 'DRUME')
                 ->where('chrgstat', 'A')

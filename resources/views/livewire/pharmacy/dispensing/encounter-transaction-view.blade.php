@@ -27,24 +27,26 @@
                     <div class="flex space-x-3">
                         <label for="prescription_lists" class="btn btn-sm">Prescription</label>
                     </div>
-                    <div class="flex ml-auto">
-                        <div class="flex flex-col text-center">
-                            <button id="delBtn" class="ml-2 btn btn-sm btn-error" onclick="delete_item()"
-                                wire:loading.attr="disabled" wire:loading.class="btn-secondary">
-                                Delete Item/s </button>
-                            <span class="text-xs text-info-content">Ctrl + x</span>
+                    @if ($billstat != '02' and $billstat != '03')
+                        <div class="flex ml-auto">
+                            <div class="flex flex-col text-center">
+                                <button id="delBtn" class="ml-2 btn btn-sm btn-error" onclick="delete_item()"
+                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">
+                                    Delete Item/s </button>
+                                <span class="text-xs text-info-content">Ctrl + x</span>
+                            </div>
+                            <div class="flex flex-col text-center">
+                                <button id="chrgBtn" class="ml-2 btn btn-sm btn-warning" onclick="charge_items()"
+                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">Charge Slip</button>
+                                <span class="text-xs text-info-content">Ctrl + C</span>
+                            </div>
+                            <div class="flex flex-col text-center">
+                                <button id="issBtn" class="ml-2 btn btn-sm btn-primary" onclick="issue_order()"
+                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">Issue</button>
+                                <span class="text-xs text-info-content">Ctrl + I</span>
+                            </div>
                         </div>
-                        <div class="flex flex-col text-center">
-                            <button id="chrgBtn" class="ml-2 btn btn-sm btn-warning" onclick="charge_items()"
-                                wire:loading.attr="disabled" wire:loading.class="btn-secondary">Charge Slip</button>
-                            <span class="text-xs text-info-content">Ctrl + C</span>
-                        </div>
-                        <div class="flex flex-col text-center">
-                            <button id="issBtn" class="ml-2 btn btn-sm btn-primary" onclick="issue_order()"
-                                wire:loading.attr="disabled" wire:loading.class="btn-secondary">Issue</button>
-                            <span class="text-xs text-info-content">Ctrl + I</span>
-                        </div>
-                    </div>
+                    @endif
                 </div>
                 <table class="w-full mb-40 text-sm table-compact">
                     <thead class="sticky font-bold bg-gray-200" wire:ignore>
@@ -286,7 +288,8 @@
                                 $drug = implode('', $concat);
                             @endphp
                             <tr class="cursor-pointer hover content {{ $stock->chrgcode }}"
-                                onclick="select_item('{{ $stock->id }}', `{{ $drug }}`, '{{ $stock->dmselprice }}', '{{ $stock->dmdcomb }}', '{{ $stock->dmdctr }}', '{{ $stock->chrgcode }}', '{{ $stock->loc_code }}', '{{ $stock->dmdprdte }}', '{{ $stock->id }}', {{ $stock->stock_bal }}, '{{ $stock->exp_date }}')">
+                                @if ($billstat != '02' and $billstat != '03') onclick="select_item('{{ $stock->id }}', `{{ $drug }}`, '{{ $stock->dmselprice }}', '{{ $stock->dmdcomb }}', '{{ $stock->dmdctr }}', '{{ $stock->chrgcode }}', '{{ $stock->loc_code }}', '{{ $stock->dmdprdte }}', '{{ $stock->id }}', {{ $stock->stock_bal }}, '{{ $stock->exp_date }}')" @else
+                                    onclick="alert('Patient already billed! You cannot add any more item in this encounter.')" @endif>
                                 <td class="break-words">
                                     <div>
                                         <span class="text-xs text-slate-600">{{ $stock->chrgdesc }}</span>
