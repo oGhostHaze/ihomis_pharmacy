@@ -28,7 +28,7 @@ class CreatePharmIoTransTable extends Migration
             $table->string('issued_by', 30)->nullable(true); //type of account
             $table->string('received_by', 30)->nullable(true); //type of account
             $table->string('user_id', 30)->nullable(true); //type of account
-            $table->enum('trans_stat', ['Requested', 'Issued', 'Received', 'Cancelled'])->default('Requested')->nullable(true); //delivery type
+            $table->enum('trans_stat', ['Requested', 'Issued', 'Received', 'Cancelled', 'Denied'])->default('Requested')->nullable(true); //delivery type
             $table->decimal('retail_price', 12, 2)->nullable(true); //selling price
             $table->timestamps();
         });

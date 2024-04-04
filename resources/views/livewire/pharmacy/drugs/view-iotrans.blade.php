@@ -71,7 +71,7 @@
             </thead>
             <tbody class="border">
                 @forelse ($trans as $tran)
-                    <tr class="cursor-pointer hover">
+                    <tr class="cursor-pointer hover" wire:key="request-{{ $tran->id }}-{{ $loop->iteration }}">
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $tran->created_at() }}</td>
                         <td @if ($tran->trans_stat == 'Requested' and $tran->request_from == session('pharm_location_id')) @can('issue-requested-drugs') wire:click="select_request({{ $tran->id }})" @endcan @endif

@@ -87,7 +87,11 @@
                         </td>
                         <td class="text-xs">{!! $tran->updated_at() !!}</td>
                         <td class="text-xs">
-                            {{ $tran->remarks_request }}
+                            @if ($tran->remarks_cancel)
+                                {{ $tran->remarks_cancel }}
+                            @else
+                                {{ $tran->remarks_request }}
+                            @endif
                         </td>
                     </tr>
                 @empty

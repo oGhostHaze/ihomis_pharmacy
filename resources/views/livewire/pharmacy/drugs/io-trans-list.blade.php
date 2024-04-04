@@ -57,7 +57,7 @@
                         <td class="text-xs">{{ $tran->from_location ? $tran->from_location->description : '' }}</td>
                         <td class="text-xs"
                             @if ($tran->trans_stat == 'Requested' and $tran->request_from == session('pharm_location_id')) @can('issue-requested-drugs') wire:click="select_request({{ $tran->id }})" @endcan @endif
-                            @if ($tran->trans_stat == 'Issued' and $tran->loc_code == session('pharm_location_id')) onclick="cancel_issued({{ $tran->id }})" @endif>
+                            @if ($tran->trans_stat == 'Issued' and $tran->request_from == session('pharm_location_id')) onclick="cancel_issued({{ $tran->id }})" @endif>
                             <span class="text-blue-500"><i class="las la-lg la-hand-pointer"></i>
                                 {{ $tran->drug->drug_concat() }}</span>
                         </td>
@@ -72,7 +72,11 @@
                         </td>
                         <td>{!! $tran->updated_at() !!}</td>
                         <td>
-                            {{ $tran->remarks_request }}
+                            @if ($tran->remarks_cancel)
+                                {{ $tran->remarks_cancel }}
+                            @else
+                                {{ $tran->remarks_request }}
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -101,11 +105,11 @@
                         <option></option>
                         @forelse ($available_drugs as $charge)
                             @if (is_object($charge))
-                                <option value="{{ $charge->chrgcode }}">{{ $charge->charge->chrgdesc }} - [avail QTY:
+                                <option value="{{ $charge->chrgcode }}">{{ $charge->chrgdesc }} - [avail QTY:
                                     {{ $charge->avail }}]</option>
                             @endif
                             @if (is_array($charge))
-                                <option value="{{ $charge['chrgcode'] }}">{{ $charge['charge']['chrgdesc'] }} - [avail
+                                <option value="{{ $charge['chrgcode'] }}">{{ $charge['chrgdesc'] }} - [avail
                                     QTY: {{ $charge['avail'] }}]</option>
                             @endif
                         @empty
@@ -136,7 +140,10 @@
                     <input id="remarks" type="text" class="w-full input input-bordered"
                         wire:model.defer="remarks" />
                 </div>
-                <div class="flex justify-end mt-3">
+                <div class="flex justify-between mt-3">
+                    <div>
+                        <button class="btn btn-error" onclick="deny_request()">Deny</button>
+                    </div>
                     <div>
                         <button class="btn btn-primary" onclick="issue_request()">Issue</button>
                     </div>
@@ -161,6 +168,31 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     Livewire.emit('issue_request')
+                }
+            })
+        }
+
+        function deny_request() {
+            Swal.fire({
+                title: 'Are you sure you want to deny request?',
+                showCancelButton: true,
+                confirmButtonText: 'Continue',
+                confirmButtonColor: 'red',
+                html: `
+                    <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
+                    <div class="mt-2 text-slate-500" id="inf">This process cannot be undone. Input REMARKS to Continue.</div>
+                    <div class="w-full form-control">
+                        <label class="label" for="deny_remarks">
+                            <span class="label-text">REMARKS</span>
+                        </label>
+                        <input id="deny_remarks" type="text" class="w-full input input-bordered" />
+                    </div>
+                `,
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    const deny_remarks = Swal.getHtmlContainer().querySelector('#deny_remarks');
+                    Livewire.emit('deny_request', deny_remarks.value)
                 }
             })
         }

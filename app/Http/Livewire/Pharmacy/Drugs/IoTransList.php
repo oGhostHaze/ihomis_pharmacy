@@ -25,7 +25,7 @@ class IoTransList extends Component
     use WithPagination;
     use LivewireAlert;
 
-    protected $listeners = ['add_request', 'cancel_issued', 'refreshComponent' => '$refresh', 'issue_request'];
+    protected $listeners = ['add_request', 'cancel_issued', 'refreshComponent' => '$refresh', 'issue_request', 'deny_request'];
     // protected $listeners = ['add_request', 'cancel_issued', 'echo:io-trans,new-request' => 'notifyRequest'];
     // protected $listeners = ['add_request', 'cancel_issued', 'echo:private-io-trans,new-request' => 'notifyRequest', 'echo:io-trans,new-request' => 'notifyRequest'];
 
@@ -45,14 +45,14 @@ class IoTransList extends Component
                     ->orWhere('request_from', session('pharm_location_id'));
             });
 
-        $drugs = DrugStock::with('drug')->select(DB::raw('MAX(id) as id'), 'dmdcomb', 'dmdctr', DB::raw('SUM(stock_bal) as "avail"'))
-            ->where('loc_code', session('pharm_location_id'))
-            ->where('stock_bal', '>', '0')->where('exp_date', '>', now())
-            ->groupBy('dmdcomb', 'dmdctr');
+        // $drugs = DrugStock::with('drug')->select(DB::raw('MAX(id) as id'), 'dmdcomb', 'dmdctr', DB::raw('SUM(stock_bal) as "avail"'))
+        //     ->where('loc_code', session('pharm_location_id'))
+        //     ->where('stock_bal', '>', '0')->where('exp_date', '>', now())
+        //     ->groupBy('dmdcomb', 'dmdctr');
 
         return view('livewire.pharmacy.drugs.io-trans-list', [
             'trans' => $trans->latest()->paginate(20),
-            'drugs' => $drugs->get(),
+            // 'drugs' => $drugs->get(),
         ]);
     }
 
@@ -91,14 +91,16 @@ class IoTransList extends Component
     {
         $this->selected_request = $txn;
         $this->issue_qty = $txn->requested_qty;
-        $this->available_drugs = DrugStock::with('charge')->with('drug')
-            ->select('chrgcode', DB::raw('SUM(stock_bal) as "avail"'))
-            ->where('loc_code', $txn->request_from)->where('stock_bal', '>', '0')
-            ->where('exp_date', '>', now())
-            ->where('dmdcomb', $txn->dmdcomb)
-            ->where('dmdctr', $txn->dmdctr)
-            ->groupBy('chrgcode')
-            ->get();
+        $this->available_drugs = DB::select("
+                SELECT charge.chrgcode, charge.chrgdesc, SUM(pdsl.stock_bal) avail FROM pharm_drug_stocks pdsl
+                INNER JOIN hcharge charge ON pdsl.chrgcode = charge.chrgcode
+                WHERE pdsl.dmdcomb = '" . $txn->dmdcomb . "'
+                    AND pdsl.dmdctr = '" . $txn->dmdctr . "'
+                    AND pdsl.loc_code = '" . $txn->request_from . "'
+                    AND pdsl.stock_bal > 0
+                    AND pdsl.exp_date > '" . now() . "'
+                GROUP BY charge.chrgcode, charge.chrgdesc
+            ");
         $this->dispatchBrowserEvent('toggleIssue');
     }
 
@@ -184,13 +186,6 @@ class IoTransList extends Component
         }
     }
 
-    public function select_issued(InOutTransaction $txn)
-    {
-        $this->selected_request = $txn;
-        $this->available_drugs = $txn->warehouse_stock_charges->all();
-        $this->dispatchBrowserEvent('toggleIssue');
-    }
-
     public function view_trans($trans_no)
     {
         return $this->redirect(route('iotrans.view', ['reference_no' => $trans_no]));
@@ -246,5 +241,18 @@ class IoTransList extends Component
         $trans->save();
 
         $this->alert('success', 'Issued items successfully recalled!');
+    }
+
+    public function deny_request($remarks)
+    {
+        $this->selected_request->remarks_cancel = $remarks;
+        $this->selected_request->trans_stat = 'Denied';
+        $this->selected_request->issued_by = session('user_id');
+        $this->selected_request->save();
+
+        $this->dispatchBrowserEvent('toggleIssue');
+        $this->reset('selected_request', 'available_drugs');
+
+        $this->alert('warning', 'Request denied!');
     }
 }
