@@ -23,9 +23,9 @@
 @endphp
 
 <div class="flex flex-col p-5 mx-auto mt-5 max-w-screen-2xl">
-    <div class="p-4 mb-3 bg-white rounded-lg">
-        <div class="flex justify-between">
-            @if ($details->status == 'pending')
+    @if ($details->status == 'pending')
+        <div class="p-4 mb-3 bg-white rounded-lg">
+            <div class="flex justify-between">
                 <div>
                     <button class="btn btn-sm btn-warning" onclick="save_lock()" wire:loading.attr="disabled">Save &
                         Lock</button>
@@ -34,9 +34,9 @@
                     <button class="btn btn-sm btn-primary" onclick="add_item()" wire:loading.attr="disabled">Add
                         Item</button>
                 </div>
-            @endif
+            </div>
         </div>
-    </div>
+    @endif
     @if ($errors->first())
         <div class="mb-3 shadow-lg alert alert-error">
             <div>
@@ -98,7 +98,7 @@
                 @forelse ($details->items->all() as $item)
                     @php
                         $dm = $item->drug;
-                        $total_qty += $item->qty;
+                        $total_qty++;
                         $total_amount += $item->total_amount;
                     @endphp
                     <tr
@@ -127,7 +127,7 @@
                 <tr class="uppercase">
                     <td></td>
                     <td></td>
-                    <td class="text-right">{{ $total_qty }} Items</td>
+                    <td class="text-right">{{ $total_qty }} Item/s</td>
                     <td class="text-right"></td>
                     <td class="text-right">Total</td>
                     <td class="text-right">{{ number_format($total_amount, 2) }}</td>

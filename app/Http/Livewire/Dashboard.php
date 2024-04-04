@@ -20,10 +20,75 @@ class Dashboard extends Component
 
     protected $listeners = ['start_log', 'stop_log'];
     public $password;
+    public $location_id, $below_date;
 
     public function render()
     {
-        return view('livewire.dashboard');
+        $near_expiry = DrugStock::where('loc_code', $this->location_id)
+            ->where('exp_date', '<', $this->below_date)
+            ->where('exp_date', '>', now())
+            ->where('stock_bal', '>', 0)
+            ->count();
+
+        $expired = DrugStock::where('loc_code', $this->location_id)
+            ->where('exp_date', '<=', now())
+            ->where('stock_bal', '>', 0)
+            ->count();
+
+        $near_reorder = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+                                (SELECT reorder_point
+                                    FROM pharm_drug_stock_reorder_levels as level
+                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr) as reorder_point,
+                                    pds.dmdcomb, pds.dmdctr
+                                FROM pharm_drug_stocks as pds
+                                WHERE pds.loc_code = " . $this->location_id . "
+                                    AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
+                                                AND pds.dmdctr = level.dmdctr
+                                                AND reorder_point > 0
+                                                AND level.reorder_point < stock_bal
+                                                AND level.reorder_point < (stock_bal - (stock_bal * 0.3)))
+                                GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
+                        "));
+
+        $critical = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+                                (SELECT reorder_point
+                                    FROM pharm_drug_stock_reorder_levels as level
+                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr) as reorder_point,
+                                    pds.dmdcomb, pds.dmdctr
+                                FROM pharm_drug_stocks as pds
+                                WHERE pds.loc_code = " . $this->location_id . "
+                                    AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
+                                                AND pds.dmdctr = level.dmdctr
+                                                AND reorder_point > 0
+                                                AND level.reorder_point >= stock_bal)
+                                GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
+                                        "));
+
+        $date_from = Carbon::parse(now())->startOfDay()->format('Y-m-d H:i:s');
+        $date_to = Carbon::parse(now())->endOfDay()->format('Y-m-d H:i:s');
+
+        $pending_order = count(DB::select("SELECT rxo.pcchrgcod
+                                            FROM hrxo rxo
+                                            WHERE   (dodate BETWEEN '" . $date_from . "' and '" . $date_to . "')
+                                            AND ((rxo.estatus = 'U' OR rxo.estatus = 'P')
+                                                OR (rxo.estatus = 'S' AND (rxo.pcchrgcod IS NULL OR rxo.pcchrgcod = ''))
+                                            AND rxo.loc_code = '" . $this->location_id . "')
+                                            GROUP BY rxo.pcchrgcod
+                                            "));
+
+        return view('livewire.dashboard', compact(
+            'near_expiry',
+            'expired',
+            'near_reorder',
+            'critical',
+            'pending_order',
+        ));
+    }
+
+    public function mount()
+    {
+        $this->location_id = session('pharm_location_id');
+        $this->below_date = Carbon::parse(now())->addMonths(6)->format('Y-m-d');
     }
 
     public function start_log()
