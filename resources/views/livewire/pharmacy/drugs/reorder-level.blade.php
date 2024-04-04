@@ -52,7 +52,24 @@
                 @forelse ($stocks as $stk)
                     <tr class="cursor-pointer hover">
                         <td class="font-bold">{{ $stk->drug_concat }}</td>
-                        <td class="text-end">{{ number_format($stk->stock_bal, 0) }}</td>
+                        <td class="text-end">
+                            {{ number_format($stk->stock_bal, 0) }}
+                            @if ($stk->reorder_point)
+                                @if ($stk->reorder_point <= $stk->stock_bal)
+                                    <span class="text-primary">
+                                        <i class="las la-lg la-check"></i>
+                                    </span>
+                                @else
+                                    <span class="text-error">
+                                        <i class="las la-lg la-exclamation-triangle"></i>
+                                    </span>
+                                @endif
+                            @else
+                                <span class="text-warning">
+                                    <i class="las la-lg la-pause-circle"></i>
+                                </span>
+                            @endif
+                        </td>
                         <td class="text-end">
                             <button class="btn btn-ghost btn-sm text-primary tooltip" data-tip="update point"
                                 onclick="update_reorder(`{{ $stk->dmdcomb }}`, `{{ $stk->dmdctr }}`, `{{ $stk->reorder_point ?? 0 }}`)">

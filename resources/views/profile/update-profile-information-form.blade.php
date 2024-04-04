@@ -86,7 +86,7 @@
 
         <!-- Location -->
         <div class="col-span-6 sm:col-span-4">
-            <x-jet-label for="pharm_location_id" value="{{ __('Email') }}" />
+            <x-jet-label for="pharm_location_id" value="{{ __('Pharmacy Location') }}" />
             <select id="pharm_location_id" class="block w-full mt-1 select select-sm select-bordered"
                 wire:model.defer="state.pharm_location_id">
                 <option selected disabled>Select location</option>
