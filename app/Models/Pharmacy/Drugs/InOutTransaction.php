@@ -109,7 +109,7 @@ class InOutTransaction extends Model
     {
         if ($this->trans_stat == 'Requested') {
             $status = '<span class="mr-2 badge bg-slate-500 hover">' . $this->trans_stat . '</span>';
-        } elseif ($this->trans_stat == 'Cancelled') {
+        } elseif ($this->trans_stat == 'Cancelled' or $this->trans_stat == 'Denied') {
             $status = '<span class="mr-2 bg-red-500 badge hover">' . $this->trans_stat . '</span>';
         } elseif ($this->trans_stat == 'Issued') {
             $status = '<span class="mr-2 bg-blue-500 badge hover">' . $this->trans_stat . '</span>';

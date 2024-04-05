@@ -772,17 +772,11 @@
                         total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
 
                         order_qty.addEventListener('input', () => {
-                            if (sc.checked) {
-                                unit_price.value = unit_price.value - (unit_price.value * 0.20);
-                            }
                             total.value = parseFloat(order_qty.value) * parseFloat(unit_price
                                 .value)
                         })
 
                         unit_price.addEventListener('input', () => {
-                            if (sc.checked) {
-                                unit_price.value = unit_price.value - (unit_price.value * 0.20);
-                            }
                             total.value = parseFloat(order_qty.value) * parseFloat(unit_price
                                 .value)
                         })
