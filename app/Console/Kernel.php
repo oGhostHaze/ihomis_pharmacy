@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->everyMinute();
-        $schedule->command('init:stock-card')->daily();
+        $schedule->command('init:stock-card')->everyMinute();
         // $schedule->command('init:consumption')->monthly();
     }
 
