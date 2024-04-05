@@ -22,7 +22,7 @@ class ReorderLevel extends Component
         $stocks = DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                             (SELECT reorder_point
                                 FROM pharm_drug_stock_reorder_levels as level
-                                WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr) as reorder_point,
+                                WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
                                 pds.dmdcomb, pds.dmdctr
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
@@ -50,6 +50,7 @@ class ReorderLevel extends Component
         DrugStockReorderLevel::updateOrCreate([
             'dmdcomb' => $dmdcomb,
             'dmdctr' => $dmdctr,
+            'loc_code' => $this->location_id,
         ], [
             'reorder_point' => $reorder_point,
             'user_id' => session('user_id'),

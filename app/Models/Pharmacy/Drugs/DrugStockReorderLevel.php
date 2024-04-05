@@ -17,5 +17,6 @@ class DrugStockReorderLevel extends Model
         'dmdctr',
         'reorder_point',
         'user_id',
+        'loc_code',
     ];
 }

@@ -38,12 +38,12 @@ class Dashboard extends Component
         $near_reorder = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                                 (SELECT reorder_point
                                     FROM pharm_drug_stock_reorder_levels as level
-                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr) as reorder_point,
+                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
                                     pds.dmdcomb, pds.dmdctr
                                 FROM pharm_drug_stocks as pds
                                 WHERE pds.loc_code = " . $this->location_id . "
                                     AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
-                                                AND pds.dmdctr = level.dmdctr
+                                                AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
                                                 AND reorder_point > 0
                                                 AND level.reorder_point < stock_bal
                                                 AND level.reorder_point < (stock_bal - (stock_bal * 0.3)))
@@ -53,12 +53,12 @@ class Dashboard extends Component
         $critical = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                                 (SELECT reorder_point
                                     FROM pharm_drug_stock_reorder_levels as level
-                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr) as reorder_point,
+                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
                                     pds.dmdcomb, pds.dmdctr
                                 FROM pharm_drug_stocks as pds
                                 WHERE pds.loc_code = " . $this->location_id . "
                                     AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
-                                                AND pds.dmdctr = level.dmdctr
+                                                AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
                                                 AND reorder_point > 0
                                                 AND level.reorder_point >= stock_bal)
                                 GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
