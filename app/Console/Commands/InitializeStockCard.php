@@ -68,7 +68,7 @@ class InitializeStockCard extends Command
                 ->where('loc_code', $stock->loc_code)
                 ->where('dmdcomb', $stock->dmdcomb)
                 ->where('dmdctr', $stock->dmdctr)
-                ->where('drug_concat', $stock->drug_concat)
+                ->where('drug_concat', $stock->drug_concat())
                 ->where('exp_date', $stock->exp_date)
                 ->first();
 
