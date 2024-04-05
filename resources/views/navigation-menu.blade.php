@@ -75,6 +75,8 @@
                         @can('view-stocks')
                             <li><a href="{{ route('dmd.stk') }}">Stocks</a></li>
                             <li><a href="{{ route('dmd.stk.sum') }}">Stocks Summary</a></li>
+                        @endcan
+                        @can('manage-reorder-levels')
                             <li><a href="{{ route('dmd.stk.reorder') }}">Stocks Reorder Levels</a></li>
                         @endcan
                         @can('view-iotrans')
