@@ -2,10 +2,7 @@
 
 namespace App\Http\Livewire\Pharmacy\Dispensing;
 
-use App\Jobs\LogDrugOrderIssue;
 use App\Jobs\LogDrugStockIssue;
-use App\Models\Hospital\Room;
-use App\Models\Hospital\Ward;
 use App\Models\Pharmacy\Dispensing\DrugOrder;
 use App\Models\Pharmacy\Dispensing\DrugOrderIssue;
 use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
@@ -14,10 +11,7 @@ use App\Models\Pharmacy\Drug;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockIssue;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
-use App\Models\Record\Admission\PatientRoom;
 use App\Models\Record\Encounters\EncounterLog;
-use App\Models\Record\Patients\Patient;
-use App\Models\Record\Patients\PatientMss;
 use App\Models\Record\Prescriptions\Prescription;
 use App\Models\Record\Prescriptions\PrescriptionData;
 use App\Models\Record\Prescriptions\PrescriptionDataIssued;
@@ -220,13 +214,6 @@ class EncounterTransactionView extends Component
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
         $cnt = 0;
 
-        // $rxos = DB::table('hospital.dbo.hrxo')->whereIn('docointkey', $this->selected_items)
-        //     ->where(function ($query) {
-        //         $query->where('estatus', 'P')
-        //             ->orWhere('pchrgup', 0);
-        //     })
-        //     ->get();
-        // dd($rxos);
         $selected_items = implode(',', $this->selected_items);
         $rxos = collect(DB::select("SELECT * FROM hrxo WHERE docointkey IN (" . $selected_items . ") AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"))->all();
         if ($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') {
@@ -348,7 +335,6 @@ class EncounterTransactionView extends Component
                     $cnt = DB::update(
                         "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = '" . $rxo->pchrgqty . "', tx_type = '" . $this->type . "' WHERE docointkey = '" . $rxo->docointkey . "' AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
                     );
-                    // LogDrugOrderIssue::dispatch($rxo->docointkey, $rxo->enccode, $rxo->hpercode, $rxo->dmdcomb, $rxo->dmdctr, $rxo->pchrgqty, session('employeeid'), $rxo->orderfrom, $rxo->pcchrgcod, $rxo->pchrgup, $rxo->ris, $rxo->prescription_data_id, now(), $rxo->dmdprdte );
                     $this->log_hrxoissue($rxo->docointkey, $rxo->enccode, $rxo->hpercode, $rxo->dmdcomb, $rxo->dmdctr, $rxo->pchrgqty, session('employeeid'), $rxo->orderfrom, $rxo->pcchrgcod, $rxo->pchrgup, $rxo->ris, $rxo->prescription_data_id, now(), $rxo->dmdprdte);
                 }
             } else {
@@ -526,54 +512,6 @@ class EncounterTransactionView extends Component
                             '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "' )";
             $query_run = sqlsrv_query($conn, $query);
 
-            // DB::insert(
-            //     'INSERT INTO hospital.dbo.hrxo(docointkey, enccode, hpercode, rxooccid, rxoref, dmdcomb, repdayno1, rxostatus,
-            //         rxolock, rxoupsw, rxoconfd, dmdctr, estatus, entryby, ordcon, orderupd, locacode, orderfrom, issuetype,
-            //         has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by )
-            //     VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            //             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            //             ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            //             ?, ?, ?, ?, ?, ? )',
-            //     [
-            //         '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $chrgcode . $dmdcomb . $dmdctr,
-            //         $enccode,
-            //         $this->hpercode,
-            //         '1',
-            //         '1',
-            //         $dmdcomb,
-            //         '1',
-            //         'A',
-            //         'N',
-            //         'N',
-            //         'N',
-            //         $dmdctr,
-            //         'U',
-            //         session('employeeid'),
-            //         'NEWOR',
-            //         'ACTIV',
-            //         'PHARM',
-            //         $chrgcode,
-            //         'c',
-            //         $this->type ? true : false,
-            //         $this->type,
-            //         $this->is_ris ? true : false,
-            //         $this->order_qty,
-            //         $this->unit_price,
-            //         $this->order_qty * $this->unit_price,
-            //         now(),
-            //         now(),
-            //         now(),
-            //         now(),
-            //         $dmdprdte,
-            //         $exp_date,
-            //         $loc_code,
-            //         $id,
-            //         $this->remarks ?? '',
-            //         $with_rx ? $rx_id : null,
-            //         $with_rx ? $empid : null,
-            //     ]
-            // );
-
             if ($with_rx) {
                 DB::connection('webapp')->table('webapp.dbo.prescription_data')
                     ->where('id', $rx_id)
@@ -597,8 +535,6 @@ class EncounterTransactionView extends Component
             $query = "DELETE FROM hrxo WHERE docointkey = " . $docointkey . " AND (estatus = 'U' OR pcchrgcod IS NULL)";
             $query_run = sqlsrv_query($conn, $query);
         }
-        // $items = DrugOrder::whereIn('docointkey', $this->selected_items)
-        //     ->where('estatus', 'U')->orWhereNull('pcchrgcod')->delete();
 
         $this->reset('selected_items');
 
@@ -613,7 +549,6 @@ class EncounterTransactionView extends Component
             'unit_price' => 'required',
             'docointkey' => 'required',
         ]);
-        // dd($this->docointkey);
 
         //RECORD RETURN ITEM TO hrxoreturn table
         DrugOrderReturn::create([
