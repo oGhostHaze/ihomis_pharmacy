@@ -27,11 +27,13 @@
                             class="mr-1 las la-lg la-file"></i> For Pull Out List</a>
                 </div>
             @endcan
-            <div class="mt-auto">
-                <button class="btn btn-xs bg-primary" onclick="add_item()" wire:loading.attr="disabled"><i
-                        class="mr-1 las la-lg la-plus"></i>Add
-                    Item</button>
-            </div>
+            @can('add-stock-item')
+                <div class="mt-auto">
+                    <button class="btn btn-xs bg-primary" onclick="add_item()" wire:loading.attr="disabled"><i
+                            class="mr-1 las la-lg la-plus"></i>Add
+                        Item</button>
+                </div>
+            @endcan
             @can('filter-stocks-location')
                 <div class="mt-auto form-control">
                     <label class="label">
