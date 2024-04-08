@@ -11,6 +11,10 @@
     </div>
 </x-slot>
 
+@push('head')
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+@endpush
+
 <div class="flex flex-col px-5 py-5 mx-auto max-w-screen">
     <div class="flex justify-end">
         <div class="flex">
@@ -26,19 +30,26 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="ml-3 form-control">
-                    <label class="label">
-                        <span class="label-text">Fund Source</span>
-                    </label>
-                    <select class="text-sm select select-bordered select-sm" wire:model="selected_fund">
-                        <option value="">All</option>
-                        @foreach ($charges as $charge)
-                            <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
-                                {{ $charge->chrgdesc }}</option>
-                        @endforeach
-                    </select>
-                </div>
             @endcan
+            <div class="ml-3 form-control">
+                <label class="label">
+                    <span class="label-text">Fund Source</span>
+                </label>
+                <select class="text-sm select select-bordered select-sm" wire:model="selected_fund">
+                    <option value="">All</option>
+                    @foreach ($charges as $charge)
+                        <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
+                            {{ $charge->chrgdesc }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="ml-3 form-control">
+                <label class="label">
+                    <span class="label-text">Export to .csv</span>
+                </label>
+                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
+                        class="las la-lg la-file-excel"></i> Export</button>
+            </div>
             <div class="ml-3 form-control">
                 <label class="label">
                     <span class="label-text">Seach generic name</span>
@@ -52,7 +63,7 @@
         </div>
     </div>
     <div class="flex flex-col justify-center w-full mt-2 overflow-x-auto">
-        <table class="table w-full table-compact">
+        <table class="table w-full table-compact" id="table">
             <thead>
                 <tr>
                     <th>Source of Fund</th>
@@ -79,6 +90,20 @@
 
 @push('scripts')
     <script>
+        function ExportToExcel(type, fn, dl) {
+            var elt = document.getElementById('table');
+            var wb = XLSX.utils.table_to_book(elt, {
+                sheet: "sheet1"
+            });
+            return dl ?
+                XLSX.write(wb, {
+                    bookType: type,
+                    bookSST: true,
+                    type: 'base64'
+                }) :
+                XLSX.writeFile(wb, fn || ('Stocks summary.' + (type || 'xlsx')));
+        }
+
         function update_reorder(dmdcomb, dmdctr, chrgcode, reorder_point) {
             Swal.fire({
                 html: `
