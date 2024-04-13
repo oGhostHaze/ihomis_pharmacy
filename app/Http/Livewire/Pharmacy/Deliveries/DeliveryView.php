@@ -268,6 +268,9 @@ class DeliveryView extends Component
             $add_to->save();
             LogDrugDelivery::dispatch($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now());
             $updated = true;
+
+            $item->status = 'delivered';
+            $item->save();
         }
         if ($updated) {
             $this->details->status = 'locked';

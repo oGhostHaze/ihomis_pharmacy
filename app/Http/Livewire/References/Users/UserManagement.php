@@ -35,7 +35,6 @@ class UserManagement extends Component
 
         if ($user->syncRoles($this->role_name)) {
             $this->alert('success', $this->role_name . ' role assigned to user ' . $user->name);
-            $this->reset();
         }
     }
 }
