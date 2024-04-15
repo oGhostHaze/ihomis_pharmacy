@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\DrugManualLogHeader;
+use App\Models\DrugManualLogItem;
 use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
@@ -105,6 +107,13 @@ class Dashboard extends Component
                     'loc_code' => $pharm_location_id,
                 ]);
 
+                $active_manual_consumption = DrugManualLogHeader::create([
+                    'consumption_from' => now(),
+                    'status' => 'A',
+                    'entry_by' => session('user_id'),
+                    'loc_code' => $pharm_location_id,
+                ]);
+
                 $users = User::where('pharm_location_id', $pharm_location_id)->get();
                 foreach ($users as $user) {
                     $sessions = UserSession::where('user_id', '<>', '1')->where('user_id', $user->id)->get();
@@ -129,6 +138,17 @@ class Dashboard extends Component
                     ]);
                     $log->time_logged = now();
                     $log->save();
+
+                    DrugManualLogItem::create([
+                        'loc_code' => $stock->loc_code,
+                        'dmdcomb' => $stock->dmdcomb,
+                        'dmdctr' => $stock->dmdctr,
+                        'chrgcode' => $stock->chrgcode,
+                        'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
+                        'unit_price' => $stock->retail_price,
+                        'beg_bal' => $stock->stock_bal,
+                        'detail_id' => $active_manual_consumption->id,
+                    ]);
                 }
 
                 session(['active_consumption' => $active_consumption->id]);
