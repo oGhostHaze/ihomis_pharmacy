@@ -90,10 +90,6 @@ class StockList extends Component
             ->get();
 
         $this->drugs = Drug::where('dmdstat', 'A')
-            // ->whereHas('sub', function ($query) {
-            //     // return $query->whereIn('dmhdrsub', array('DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS', 'DRUMAD', 'DRUMAE'));
-            //     return $query->where('dmhdrsub', 'LIKE', '%DRUM%');
-            // })
             ->whereNotNull('drug_concat')
             ->has('generic')->orderBy('drug_concat', 'ASC')
             ->get();

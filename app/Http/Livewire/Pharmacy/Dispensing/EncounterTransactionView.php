@@ -79,11 +79,11 @@ class EncounterTransactionView extends Component
                                 FROM hospital.dbo.pharm_drug_stocks
                                 INNER JOIN hcharge on hcharge.chrgcode = pharm_drug_stocks.chrgcode
                                 INNER JOIN hdmhdrprice on hdmhdrprice.dmdprdte = pharm_drug_stocks.dmdprdte
-                                WHERE loc_code = ?
-                                AND drug_concat LIKE ?
+                                WHERE loc_code = '" . $this->location_id . "'
+                                AND drug_concat LIKE '%" . $this->generic . "%'
                                 AND stock_bal > 0
                                 GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
-                                ORDER BY drug_concat", [$this->location_id, '%' . $this->generic . '%']);
+                                ORDER BY drug_concat");
 
         $this->dispatchBrowserEvent('issued');
         $encounter = $this->encounter;
@@ -387,7 +387,6 @@ class EncounterTransactionView extends Component
             }
         }
 
-
         DrugOrderIssue::updateOrCreate([
             'docointkey' => $docointkey,
             'enccode' => $enccode,
@@ -413,20 +412,6 @@ class EncounterTransactionView extends Component
             'issuetype' => 'c', //c
             'ris' =>  $ris ? true : false,
         ]);
-    }
-
-    public function reset_order()
-    {
-        $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
-        $items = DrugOrder::where('enccode', $enccode)
-            ->whereRaw('item_id IS NOT NULL')
-            ->get();
-        foreach ($items as $item) {
-            $item->estatus = 'U';
-            $item->pcchrgcod = null;
-            $item->save();
-        }
-        $this->emit('refresh');
     }
 
     public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date)

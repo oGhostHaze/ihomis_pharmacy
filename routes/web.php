@@ -39,6 +39,7 @@ use App\Http\Livewire\Pharmacy\Drugs\StockSummary;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIotrans;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIoTransDate;
 use App\Http\Livewire\Pharmacy\Drugs\WardRisTrans;
+use App\Http\Livewire\Pharmacy\Logs\ConsumptionLogReport;
 use App\Http\Livewire\Pharmacy\References\PndfGenerics;
 use App\Http\Livewire\Pharmacy\Reports\DailyStockCard;
 use App\Http\Livewire\Pharmacy\Reports\DeliverySummary;
@@ -125,6 +126,7 @@ Route::middleware([
         Route::get('/issuance/returns-summary', DrugsReturnedSummary::class)->name('issuance.returns.summary');
         Route::get('/issuance/chargeslips', DrugsChargeSlips::class)->name('issuance.charges');
         Route::get('/consumption', ConssumptionReport::class)->name('consumption');
+        Route::get('/consumption/manual', ConsumptionLogReport::class)->name('consumption.manual');
         Route::get('/iotrans/issued', IoTransIssuedReport::class)->name('iotrans.issued');
         Route::get('/iotrans/received', IoTransReceivedReport::class)->name('iotrans.received');
         Route::get('/consumption/wards', DrugsIssuedWards::class)->name('consumption.wards');

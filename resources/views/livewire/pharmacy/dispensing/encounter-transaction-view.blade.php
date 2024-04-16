@@ -340,24 +340,6 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white">
-
-                        {{-- @foreach ($active_prescription as $presc)
-                            <tr class="hover" wire:key="select-rx-item-{{ $loop->iteration }}">
-                                <td class="text-xs">
-                                    {{ date('Y-m-d', strtotime($presc->updated_at)) }}
-                                    {{ date('h:i A', strtotime($presc->updated_at)) }}
-                                </td>
-                                <td class="text-xs cursor-pointer"
-                                    onclick="select_rx_item({{ $presc->id }}, `{{ $presc->drug_concat }}`, '{{ $presc->qty }}', '{{ $presc->empid }}', '{{ $presc->dmdcomb }}', '{{ $presc->dmdctr }}')">
-                                    {{ $presc->drug_concat }}</td>
-                                <td class="text-xs">{{ $presc->qty }}</td>
-                                <td class="text-xs">{{ $presc->remark }}</td>
-                                <td class="text-xs">{{ $presc->employee->fullname() }}</td>
-                                <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
-                                        onclick="select_rx_item_inactive({{ $presc->id }}, '{{ $presc->drug_concat }}', '{{ $presc->qty }}', '{{ $presc->empid }}', '{{ $presc->dmdcomb }}', '{{ $presc->dmdctr }}')"><i
-                                            class="las la-sliders-h"></i></button></td>
-                            </tr>
-                        @endforeach --}}
                         @forelse($active_prescription as $presc)
                             @forelse($presc->data_active->all() as $presc_data)
                                 <tr class="hover" wire:key="select-rx-item-{{ $loop->iteration }}">
@@ -798,12 +780,13 @@
             function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
 
                 var search = drug.split(",");
-                $("#generic").val(search[0]);
-                $("#generic").trigger('keyup');
-                @this.rx_id = rx_id;
-                @this.rx_dmdcomb = rx_dmdcomb;
-                @this.rx_dmdctr = rx_dmdctr;
-                @this.empid = empid;
+                @this.set('rx_id', rx_id)
+                @this.set('generic', search[0])
+                @this.set('rx_dmdcomb', rx_dmdcomb);
+                @this.set('rx_dmdctr', rx_dmdctr);
+                @this.set('empid', empid);
+                // $("#generic").val(search[0]);
+                // $("#generic").trigger('keyup');
 
                 Swal.fire({
                     html: `
@@ -1056,26 +1039,26 @@
             function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
 
                 var search = drug.split(",");
-                @this.rx_id = rx_id;
-                @this.generic = search[0];
-                @this.rx_dmdcomb = rx_dmdcomb;
-                @this.rx_dmdctr = rx_dmdctr;
-                @this.empid = empid;
-                $("#generic").val(search[0]);
-                $("#generic").trigger('keyup');
+                @this.set('rx_id', rx_id)
+                @this.set('generic', search[0])
+                @this.set('rx_dmdcomb', rx_dmdcomb);
+                @this.set('rx_dmdctr', rx_dmdctr);
+                @this.set('empid', empid);
+                // $("#generic").val(search[0]);
+                // $("#generic").trigger('keyup');
             }
         @endif
 
         function select_rx_item_inactive(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
 
             var search = drug.split(",");
-            @this.rx_id = rx_id;
-            @this.generic = search[0];
-            @this.rx_dmdcomb = rx_dmdcomb;
-            @this.rx_dmdctr = rx_dmdctr;
-            @this.empid = empid;
-            $("#generic").val(search[0]);
-            $("#generic").trigger('keyup');
+            @this.set('rx_id', rx_id)
+            @this.set('generic', search[0])
+            @this.set('rx_dmdcomb', rx_dmdcomb);
+            @this.set('rx_dmdctr', rx_dmdctr);
+            @this.set('empid', empid);
+            // $("#generic").val(search[0]);
+            // $("#generic").trigger('keyup');
 
             Swal.fire({
                 html: `

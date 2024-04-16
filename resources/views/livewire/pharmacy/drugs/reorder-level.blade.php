@@ -11,6 +11,10 @@
     </div>
 </x-slot>
 
+@push('head')
+    <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+@endpush
+
 <div class="flex flex-col px-5 py-5 mx-auto max-w-screen">
     <div class="flex justify-end">
         <div class="flex">
@@ -29,6 +33,13 @@
             @endcan
             <div class="ml-3 form-control">
                 <label class="label">
+                    <span class="label-text">Export to .csv</span>
+                </label>
+                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
+                        class="las la-lg la-file-excel"></i> Export</button>
+            </div>
+            <div class="ml-3 form-control">
+                <label class="label">
                     <span class="label-text">Seach generic name</span>
                 </label>
                 <label class="input-group input-group-sm">
@@ -40,18 +51,53 @@
         </div>
     </div>
     <div class="flex flex-col justify-center w-full mt-2 overflow-x-auto">
-        <table class="table w-full table-compact">
+        <table class="table w-full table-compact" id="table">
             <thead>
                 <tr>
                     <th>Generic</th>
                     <th class="text-end">Remaining</th>
+                    <th class="text-end">Prev. Week Ave.</th>
+                    <th class="text-end">Max Level</th>
+                    <th class="text-end">Stock Order QTY</th>
                     <th class="text-end">Reorder Point</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($stocks as $stk)
+                    @php
+                        $issued = collect(
+                            DB::connection('worker')->select(
+                                "SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
+                            WHERE card.dmdcomb = '" .
+                                    $stk->dmdcomb .
+                                    "'
+                            AND card.dmdctr = '" .
+                                    $stk->dmdctr .
+                                    "'
+                            AND card.loc_code = '" .
+                                    $location_id .
+                                    "'
+                            AND card.iss > 0
+                            AND card.stock_date BETWEEN '" .
+                                    $prev_week_start .
+                                    "' AND '" .
+                                    $prev_week_end .
+                                    "'",
+                            ),
+                        )->first();
+
+                        $max_level = $issued->average ? ($issued->average / 7) * 2 : 0;
+                        $order_qty =
+                            $max_level > $stk->stock_bal
+                                ? number_format($max_level - $stk->stock_bal)
+                                : ($stk->stock_bal < 1
+                                    ? ''
+                                    : 'over');
+
+                        $concat = implode('', explode('_', $stk->drug_concat));
+                    @endphp
                     <tr class="cursor-pointer hover">
-                        <td class="font-bold">{{ $stk->drug_concat }}</td>
+                        <td class="font-bold">{{ $concat }}</td>
                         <td class="text-end">
                             {{ number_format($stk->stock_bal, 0) }}
                             @if ($stk->reorder_point)
@@ -69,6 +115,11 @@
                                     <i class="las la-lg la-pause-circle"></i>
                                 </span>
                             @endif
+                        </td>
+                        <td class="text-end">{{ $issued->average ? number_format($issued->average / 7, 2) : '' }}</td>
+                        <td class="text-end">{{ $issued->average ? number_format($max_level) : '' }}
+                        </td>
+                        <td class="text-end">{{ $order_qty }}
                         </td>
                         <td class="text-end">
                             <button class="btn btn-ghost btn-sm text-primary tooltip" data-tip="update point"
@@ -89,6 +140,20 @@
 
 @push('scripts')
     <script>
+        function ExportToExcel(type, fn, dl) {
+            var elt = document.getElementById('table');
+            var wb = XLSX.utils.table_to_book(elt, {
+                sheet: "sheet1"
+            });
+            return dl ?
+                XLSX.write(wb, {
+                    bookType: type,
+                    bookSST: true,
+                    type: 'base64'
+                }) :
+                XLSX.writeFile(wb, fn || ('Reorder Level.' + (type || 'xlsx')));
+        }
+
         function update_reorder(dmdcomb, dmdctr, reorder_point) {
             Swal.fire({
                 html: `
