@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Pharmacy\Drugs;
 use App\Models\Pharmacy\Drugs\DrugStockReorderLevel;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -15,6 +16,7 @@ class ReorderLevel extends Component
 
     protected $listeners = ['update_reorder'];
     public $search, $location_id;
+    public $prev_week_start, $prev_week_end;
 
     public function render()
     {
@@ -43,6 +45,8 @@ class ReorderLevel extends Component
     public function mount()
     {
         $this->location_id = session('pharm_location_id');
+        $this->prev_week_start = Carbon::parse(now())->subWeek()->startOfWeek();
+        $this->prev_week_end = Carbon::parse(now())->subWeek()->endOfWeek();
     }
 
     public function update_reorder($dmdcomb, $dmdctr, $reorder_point)
