@@ -802,63 +802,8 @@
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Fund Source</div>
                             <div class="col-span-4">
-                            <select id="rx_charge_code" class="w-full select select-bordered select-sm">
-                            </select>
-                            </div>
-                            <div class="col-span-4 font-bold">TAG</div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_na" name="radio" checked>
-                                <label class="cursor-pointer" for="na">
-                                    <span class="label-text">PAY</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_ems" name="radio">
-                                <label class="cursor-pointer" for="ems">
-                                    <span class="label-text">EMS</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_konsulta" name="radio">
-                                <label class="cursor-pointer" for="konsulta">
-                                    <span class="label-text">Konsulta Package</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_wholesale" name="radio">
-                                <label class="cursor-pointer" for="wholesale">
-                                    <span class="label-text">WHOLESALE</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_caf" name="radio">
-                                <label class="cursor-pointer" for="caf">
-                                    <span class="label-text">CAF</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_maip" name="radio">
-                                <label class="cursor-pointer" for="maip">
-                                    <span class="label-text">MAIP</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_is_ris" name="radio">
-                                <label class="cursor-pointer" for="is_ris">
-                                    <span class="label-text">RIS</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_pcso" name="radio">
-                                <label class="cursor-pointer" for="pcso">
-                                    <span class="label-text">PCSO</span>
-                                </label>
-                            </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="rx_phic" name="radio">
-                                <label class="cursor-pointer" for="phic">
-                                    <span class="label-text">PHIC</span>
-                                </label>
+                                <select id="rx_charge_code" class="w-full select select-bordered select-sm">
+                                </select>
                             </div>
                         </div>
                         <div class="px-2 mt-2">
@@ -870,16 +815,16 @@
                     didOpen: () => {
                         const rx_order_qty = Swal.getHtmlContainer().querySelector('#rx_order_qty')
                         const rx_charge_code = Swal.getHtmlContainer().querySelector('#rx_charge_code')
-                        const rx_sc = Swal.getHtmlContainer().querySelector('#rx_sc')
-                        const rx_ems = Swal.getHtmlContainer().querySelector('#rx_ems')
-                        const rx_maip = Swal.getHtmlContainer().querySelector('#rx_maip')
-                        const rx_wholesale = Swal.getHtmlContainer().querySelector('#rx_wholesale')
-                        const rx_pay = Swal.getHtmlContainer().querySelector('#rx_pay')
-                        const rx_medicare = Swal.getHtmlContainer().querySelector('#rx_medicare')
-                        const rx_service = Swal.getHtmlContainer().querySelector('#rx_service')
-                        const rx_caf = Swal.getHtmlContainer().querySelector('#rx_caf')
-                        const rx_govt = Swal.getHtmlContainer().querySelector('#rx_govt')
-                        const rx_is_ris = Swal.getHtmlContainer().querySelector('#rx_is_ris')
+                        // const rx_sc = Swal.getHtmlContainer().querySelector('#rx_sc')
+                        // const rx_ems = Swal.getHtmlContainer().querySelector('#rx_ems')
+                        // const rx_maip = Swal.getHtmlContainer().querySelector('#rx_maip')
+                        // const rx_wholesale = Swal.getHtmlContainer().querySelector('#rx_wholesale')
+                        // const rx_pay = Swal.getHtmlContainer().querySelector('#rx_pay')
+                        // const rx_medicare = Swal.getHtmlContainer().querySelector('#rx_medicare')
+                        // const rx_service = Swal.getHtmlContainer().querySelector('#rx_service')
+                        // const rx_caf = Swal.getHtmlContainer().querySelector('#rx_caf')
+                        // const rx_govt = Swal.getHtmlContainer().querySelector('#rx_govt')
+                        // const rx_is_ris = Swal.getHtmlContainer().querySelector('#rx_is_ris')
                         const rx_remarks = Swal.getHtmlContainer().querySelector('#rx_remarks')
 
                         $.each(data, function(index, value) {
@@ -903,14 +848,14 @@
                         @this.set('order_qty', rx_order_qty.value)
 
                         @this.set('rx_charge_code', rx_charge_code.value);
-                        @this.set('ems', rx_ems.checked);
-                        @this.set('maip', rx_maip.checked);
-                        @this.set('wholesale', rx_wholesale.checked);
-                        @this.set('konsulta', rx_konsulta.checked);
-                        @this.set('pcso', rx_pcso.checked);
-                        @this.set('phic', rx_phic.checked);
-                        @this.set('caf', rx_caf.checked);
-                        @this.set('is_ris', rx_is_ris.checked);
+                        // @this.set('ems', rx_ems.checked);
+                        // @this.set('maip', rx_maip.checked);
+                        // @this.set('wholesale', rx_wholesale.checked);
+                        // @this.set('konsulta', rx_konsulta.checked);
+                        // @this.set('pcso', rx_pcso.checked);
+                        // @this.set('phic', rx_phic.checked);
+                        // @this.set('caf', rx_caf.checked);
+                        // @this.set('is_ris', rx_is_ris.checked);
                         @this.set('remarks', rx_remarks.value);
 
                         Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
