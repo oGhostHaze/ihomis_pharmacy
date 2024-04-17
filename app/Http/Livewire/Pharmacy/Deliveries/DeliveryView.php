@@ -79,6 +79,7 @@ class DeliveryView extends Component
             $retail_price = $unit_cost + $markup_price;
         } else {
             $retail_price = 0;
+            $markup_price = 0;
         }
 
         if ($this->has_compounding) {
@@ -165,6 +166,9 @@ class DeliveryView extends Component
         } elseif ($unit_cost >= 0.01 and $unit_cost <= 50.00) {
             $markup_price = $unit_cost * 0.40;
             $retail_price = $unit_cost + $markup_price;
+        } else {
+            $markup_price = 0;
+            $retail_price = 0;
         }
 
         if ($this->has_compounding) {
