@@ -19,7 +19,7 @@ class DeliveryView extends Component
     use LivewireAlert;
 
     protected $listeners = ['add_item', 'refresh' => '$refresh', 'edit_item', 'delete_item', 'save_lock'];
-    public $delivery_id, $details, $search, $dmdcomb, $expiry_date, $qty, $unit_price, $lot_no;
+    public $delivery_id, $details, $search, $dmdcomb, $expiry_date, $qty, $unit_price = 0, $lot_no;
     public $has_compounding = false, $compounding_fee = 0;
 
     public function render()
@@ -51,7 +51,7 @@ class DeliveryView extends Component
     {
         $this->validate([
             'dmdcomb' => 'required',
-            'unit_price' => 'required',
+            'unit_price' => ['required', 'numeric', 'min:0'],
             'qty' => 'required', 'expiry_date' => 'required'
         ]);
 
@@ -77,6 +77,8 @@ class DeliveryView extends Component
         } elseif ($unit_cost >= 0.01 and $unit_cost <= 50.00) {
             $markup_price = $unit_cost * 0.40;
             $retail_price = $unit_cost + $markup_price;
+        } else {
+            $retail_price = 0;
         }
 
         if ($this->has_compounding) {
