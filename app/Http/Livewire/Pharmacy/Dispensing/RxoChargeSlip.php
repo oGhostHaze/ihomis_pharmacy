@@ -29,13 +29,9 @@ class RxoChargeSlip extends Component
             ->latest('dodate');
 
         if ($this->view_returns) {
-            // $rxo->with('returns');
             $this->returned_qty = DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->count();
         }
 
-        // if ($this->view_returns and $rxo->sum('qtyissued') > 0) {
-        //     $rxo = $rxo->where('qtyissued', '>', '0');
-        // }
         $rxo = $rxo->get();
 
         $rxo_header = $rxo[0];
