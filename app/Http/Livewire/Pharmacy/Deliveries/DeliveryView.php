@@ -249,7 +249,7 @@ class DeliveryView extends Component
                 'brandname' => $item->drug->brandname,
                 'dmdrem' => $item->drug->dmdrem,
                 'dmdrxot' => $item->drug->dmdrxot,
-                'gencode' => $item->drug->generic->gzencode,
+                'gencode' => $item->drug->generic->gencode,
             ]);
             $add_to->stock_bal = $add_to->stock_bal + $item->qty;
             $add_to->beg_bal = $add_to->beg_bal + $item->qty;

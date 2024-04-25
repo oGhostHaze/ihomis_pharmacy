@@ -52,7 +52,7 @@ class DrugStockIssue extends Model
 
     public function stock()
     {
-        return $this->belongsTo(DrugStock::class, 'stock_id');
+        return $this->belongsTo(DrugStock::class, 'stock_id', 'id');
     }
 
     public function charge()

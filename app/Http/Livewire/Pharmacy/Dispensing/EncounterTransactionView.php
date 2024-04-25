@@ -328,7 +328,7 @@ class EncounterTransactionView extends Component
                         $drug_concat = '';
                         $drug_concat = implode("", explode('_', $stock->drug_concat));
 
-                        LogDrugStockIssue::dispatch($stock->id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $stock->exp_date, $trans_qty, $unit_price, $pcchrgamt, session('user_id'), $rxo->hpercode, $rxo->enccode, $this->toecode, $pcchrgcod, $tag, $rxo->ris, $stock->dmdprdte, $stock->retail_price, $drug_concat, date('Y-m-d'), now(), session('active_consumption'), $stock->dmduprice);
+                        // LogDrugStockIssue::dispatch($stock->id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $stock->exp_date, $trans_qty, $unit_price, $pcchrgamt, session('user_id'), $rxo->hpercode, $rxo->enccode, $this->toecode, $pcchrgcod, $tag, $rxo->ris, $stock->dmdprdte, $stock->retail_price, $drug_concat, date('Y-m-d'), now(), session('active_consumption'), $stock->dmduprice);
                     }
                 }
                 if ($cnt == 1) {
@@ -527,41 +527,72 @@ class EncounterTransactionView extends Component
             'unit_price' => 'required',
             'docointkey' => 'required',
         ]);
+        $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
 
         //RECORD RETURN ITEM TO hrxoreturn table
-        DrugOrderReturn::create([
-            'docointkey' => $item->docointkey,
-            'enccode' => $item->enccode,
-            'hpercode' => $item->hpercode,
-            'dmdcomb' => $item->dmdcomb,
-            'returndate' => now(),
-            'returntime' => now(),
-            'qty' => $this->return_qty,
-            'returnby' => session('employeeid'),
-            'status' => 'A',
-            'rxolock' => 'N',
-            'updsw' => 'N',
-            'confdl' => 'N',
-            'entryby' => session('employeeid'),
-            'locacode' => $item->locacode,
-            'dmdctr' => $item->dmdctr,
-            'dmdprdte' => $item->dmdprdte,
-            'remarks' => $item->remarks,
-            'returnfrom' => $item->orderfrom,
-            'chrgcode' => $item->orderfrom,
-            'pcchrgcod' => $item->pcchrgcod,
-            'rcode' => '',
-            'unit_price' => $item->pchrgup,
-            'pchrgup' => $item->pchrgup,
-            'dmdprdte' => $item->dmdprdte,
-        ]);
+        // DrugOrderReturn::create([
+        //     'docointkey' => $item->docointkey,
+        //     'enccode' => $item->enccode,
+        //     'hpercode' => $item->hpercode,
+        //     'dmdcomb' => $item->dmdcomb,
+        //     'returndate' => now(),
+        //     'returntime' => now(),
+        //     'qty' => $this->return_qty,
+        //     'returnby' => session('employeeid'),
+        //     'status' => 'A',
+        //     'rxolock' => 'N',
+        //     'updsw' => 'N',
+        //     'confdl' => 'N',
+        //     'entryby' => session('employeeid'),
+        //     'locacode' => $item->locacode,
+        //     'dmdctr' => $item->dmdctr,
+        //     'dmdprdte' => $item->dmdprdte,
+        //     'remarks' => $item->remarks,
+        //     'returnfrom' => $item->orderfrom,
+        //     'chrgcode' => $item->orderfrom,
+        //     'pcchrgcod' => $item->pcchrgcod,
+        //     'rcode' => '',
+        //     'unit_price' => $item->pchrgup,
+        //     'pchrgup' => $item->pchrgup,
+        // ]);
+
+        DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
+                docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
+                status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
+                returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup)
+            VALUES(
+            '" . $item->docointkey . "',
+            '" . $item->enccode . "',
+            '" . $item->hpercode . "',
+            '" . $item->dmdcomb . "',
+            '" . now() . "',
+            '" . now() . "',
+            '" . $this->return_qty . "',
+            '" . session('employeeid') . "',
+            'A',
+            'N',
+            'N',
+            'N',
+            '" . session('employeeid') . "',
+            '" . $item->locacode . "',
+            '" . $item->dmdctr . "',
+            '" . $item->dmdprdte . "',
+            '" . $item->remarks . "',
+            '" . $item->orderfrom . "',
+            '" . $item->orderfrom . "',
+            '" . $item->pcchrgcod . "',
+            '',
+            '" . $item->pchrgup . "',
+            '" . $item->pchrgup . "'
+            )
+        ");
 
         //DEDUCT QTYISSUED FROM hrxo and DrugStockIssue table
         $item->pcchrgamt = $item->pchrgup * ($item->qtyissued - $this->return_qty);
         $item->qtyissued -= $this->return_qty;
         $item->save();
 
-        $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
+        $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->with('stock')->latest()->get();
         $qty_to_return = $this->return_qty;
         foreach ($issued_items as $stock_issued) {
             if ($qty_to_return > $stock_issued->qty) {
@@ -577,11 +608,31 @@ class EncounterTransactionView extends Component
                 $stock_issued->qty = 0;
             }
             //Return QTY to DrugStock table
-            $stock_issued->stock->stock_bal += $returned_qty;
+            // $stock_issued->stock->stock_bal += $returned_qty;
+            $stock = DrugStock::firstOrCreate([
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'loc_code' =>  $this->location_id,
+                'chrgcode' => $stock_issued->chrgcode,
+                'exp_date' => $stock_issued->exp_date,
+                'retail_price' => $item->pchrgup,
+                'drug_concat' => $stock_issued->stock->drug_concat,
+                'dmdnost' => $stock_issued->stock->dmdnost,
+                'strecode' => $stock_issued->stock->strecode,
+                'formcode' => $stock_issued->stock->formcode,
+                'rtecode' => $stock_issued->stock->rtecode,
+                'brandname' => $stock_issued->stock->brandname,
+                'dmdrem' => $stock_issued->stock->dmdrem,
+                'dmdrxot' => $stock_issued->stock->dmdrxot,
+                'gencode' => $stock_issued->stock->gencode,
+                'dmdprdte' => $stock_issued->stock->dmdprdte,
+            ]);
+            $stock->stock_bal = $stock->stock_bal + $this->return_qty;
             $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
 
             $log = DrugStockLog::firstOrNew([
-                'loc_code' => $stock_issued->stock->loc_code,
+                // 'loc_code' => $stock_issued->stock->loc_code,
+                'loc_code' => $this->location_id,
                 'dmdcomb' => $stock_issued->stock->dmdcomb,
                 'dmdctr' => $stock_issued->stock->dmdctr,
                 'chrgcode' => $stock_issued->stock->chrgcode,
@@ -594,7 +645,8 @@ class EncounterTransactionView extends Component
             $log->return_qty += $returned_qty;
 
             $log->save();
-            $stock_issued->stock->save();
+            // $stock_issued->stock->save();
+            $stock->save();
             $stock_issued->save();
         }
 
