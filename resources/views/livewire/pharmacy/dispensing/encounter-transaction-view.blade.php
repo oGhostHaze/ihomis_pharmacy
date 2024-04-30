@@ -172,7 +172,7 @@
                                                 href="{{ route('dispensing.rxo.chargeslip', $rxo->pcchrgcod) }}"
                                                 target="_blank">{{ $rxo->pcchrgcod }}</a>
                                         @endif
-                                        <span>{{ $rxo->tx_type }}</span>
+                                        <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
                                     </div>
                                 </td>
                                 <td class="align-center whitespace-nowrap w-min">

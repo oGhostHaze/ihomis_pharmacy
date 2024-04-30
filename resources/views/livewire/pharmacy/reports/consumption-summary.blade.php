@@ -47,6 +47,38 @@
                 <div class="ml-2">
                     <div class="form-control">
                         <label class="input-group">
+                            <span>Type/Tag</span>
+                            <select class="text-sm select select-bordered select-sm" wire:model="tagging">
+                                <option value="">ALL</option>
+                                @foreach ($tags as $tag)
+                                    <option value="{{ $tag->tx_type }}" class="uppercase">
+                                        @php
+                                            $desc = '';
+                                            switch ($tag->tx_type) {
+                                                case 'opdpay':
+                                                case 'pay':
+                                                    $desc = 'Non Basic';
+                                                    break;
+
+                                                case 'service':
+                                                    $desc = 'Basic';
+                                                    break;
+
+                                                default:
+                                                    $desc = $tag->tx_type;
+                                                    break;
+                                            }
+                                        @endphp
+                                        {{ $desc }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="ml-2">
+                    <div class="form-control">
+                        <label class="input-group">
                             <span>Date</span>
                             <input type="date" class="w-full input input-sm input-bordered"
                                 wire:model.lazy="date_from" />
@@ -63,11 +95,17 @@
                         <td class="text-sm text-left uppercase">Patient</td>
                         <td class="text-sm text-left">Prescribing Department</td>
                         <td class="text-sm text-left">Type/Tagging</td>
+                        <td class="text-sm">Rx</td>
                         <td class="text-sm">L.I.</td>
                         <td class="text-sm text-right">Amount</td>
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $total_rx = 0;
+                        $total_li = 0;
+                        $total_amount = 0;
+                    @endphp
                     @forelse ($transactions as $txn)
                         @php
                             $tag = '';
@@ -85,16 +123,20 @@
                                     $tag = $txn->transaction_type;
                                     break;
                             }
+                            $total_rx++;
+                            $total_li += $txn->line_item;
+                            $total_amount += $txn->amount;
                         @endphp
                         <tr classs="border border-black">
                             <td class="text-sm text-right border">{{ $loop->iteration }}</td>
                             <td class="text-sm border">
                                 {{ $txn->patlast . ', ' . $txn->patfirst }} <span
                                     class="text-xs">({{ $txn->hpercode }})</span></td>
-                            <td class="text-sm border">{{ $txn->prescribing_department }}</td>
+                            <td class="text-sm border">{{ $txn->prescribing_department ?? $txn->toecode }}</td>
                             <td class="text-sm border">{{ $tag }}</td>
+                            <td class="text-sm text-center border">{{ $txn->rx ?? '' }}</td>
                             <td class="text-sm text-center border">{{ $txn->line_item }}</td>
-                            <td class="text-sm text-right border">{{ number_format($txn->amount) }}</td>
+                            <td class="text-sm text-right border">{{ number_format($txn->amount, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -103,6 +145,17 @@
                         </tr>
                     @endforelse
                 </tbody>
+                <tfoot>
+                    <tr classs="border border-black bg-gray-100 font-bold">
+                        <td class="text-sm text-right border"></td>
+                        <td class="text-sm text-right border"></td>
+                        <td class="text-sm text-right border"></td>
+                        <td class="text-sm text-right border"></td>
+                        <td class="text-sm font-bold text-center border">{{ $total_rx }}</td>
+                        <td class="text-sm font-bold text-center border">{{ $total_li }}</td>
+                        <td class="text-sm font-bold text-right border">{{ number_format($total_amount, 2) }}</td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         <div class="mt-2">

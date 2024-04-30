@@ -67,7 +67,7 @@ class EncounterTransactionView extends Component
     {
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
 
-        $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type
+        $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
                             FROM hospital.dbo.hrxo
                             INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
                             INNER JOIN hcharge ON orderfrom = chrgcode
