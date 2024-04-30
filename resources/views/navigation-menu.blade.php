@@ -174,6 +174,9 @@
                         <x-jet-dropdown-link href="{{ route('reports.delivery.sum') }}">
                             {{ __('Deliveries Summary') }}
                         </x-jet-dropdown-link>
+                        <x-jet-dropdown-link href="{{ route('reports.cons.sum') }}">
+                            {{ __('Consumption Summary') }}
+                        </x-jet-dropdown-link>
 
                     </x-slot>
                 </x-jet-dropdown>
