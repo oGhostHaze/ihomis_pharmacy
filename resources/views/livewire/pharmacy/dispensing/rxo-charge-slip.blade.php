@@ -40,6 +40,9 @@
                     <div>Ordering Physician: <span
                             class="font-semibold">{{ $prescription && $prescription->adm_pat_room ? 'Dr. ' . ($rxo[0]->prescription_data ? $rxo[0]->prescription_data->employee->fullname() : '') : 'N/A' }}</span>
                     </div>
+                    <div>Date/Time Ordered: <span
+                            class="font-semibold">{{ $prescription ? date('F j, Y h:i A', strtotime($prescription->created_at)) : 'N/A' }}</span>
+                    </div>
                 </div>
             </div>
             <table class="w-full text-xs/4">
@@ -57,7 +60,8 @@
                 <tbody>
                     @foreach ($rxo as $item)
                         @php
-                            $amount = $item->pcchrgamt + ($view_returns ? $item->pchrgup * $item->returns->sum('qty') : 0);
+                            $amount =
+                                $item->pcchrgamt + ($view_returns ? $item->pchrgup * $item->returns->sum('qty') : 0);
                             $total_amt += $amount;
                             $concat = implode(',', explode('_,', $item->dm->drug_concat));
                         @endphp
