@@ -41,7 +41,7 @@
                             class="font-semibold">{{ $prescription && $prescription->adm_pat_room ? 'Dr. ' . ($rxo[0]->prescription_data ? $rxo[0]->prescription_data->employee->fullname() : '') : 'N/A' }}</span>
                     </div>
                     <div>Date/Time Ordered: <span
-                            class="font-semibold">{{ $prescription ? date('F j, Y h:i A', strtotime($prescription->created_at)) : 'N/A' }}</span>
+                            class="font-semibold">{{ $rxo[0]->prescription_data ? date('F j, Y h:i A', strtotime($rxo[0]->prescription_data->created_at)) : 'N/A' }}</span>
                     </div>
                 </div>
             </div>
