@@ -123,7 +123,7 @@
                                     $tag = $txn->transaction_type;
                                     break;
                             }
-                            $total_rx++;
+                            $total_rx += $txn->rx ?? 0;
                             $total_li += $txn->line_item;
                             $total_amount += $txn->amount;
                         @endphp
