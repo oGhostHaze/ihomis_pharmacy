@@ -23,6 +23,13 @@
                 transform: scale(1);
                 transform-origin: 0 0;
             }
+
+            @media print {
+                .text-3xs {
+                    font-size: 8px;
+                    line-height: 8px;
+                }
+            }
         }
     </style>
 

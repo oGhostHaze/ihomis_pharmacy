@@ -26,6 +26,8 @@
                 <div class="flex justify-between mb-3">
                     <div class="flex space-x-3">
                         <label for="prescription_lists" class="btn btn-sm">Prescription</label>
+                        <a href="{{ route('dispensing.rxo.return.sum', $hpercode) }}" target="_blank"
+                            class="btn btn-sm btn-outline">Issued with Return</a>
                     </div>
                     @if ($billstat != '02' and $billstat != '03')
                         <div class="flex ml-auto">

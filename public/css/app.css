@@ -1580,12 +1580,26 @@ html {
   --tw-text-opacity: 1;
   color: hsl(var(--s) / var(--tw-text-opacity));
 }
+.btn-outline.btn-accent .badge-outline {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--a) / var(--tw-border-opacity));
+  background-color: transparent;
+  --tw-text-opacity: 1;
+  color: hsl(var(--a) / var(--tw-text-opacity));
+}
 .btn-outline.btn-info .badge-outline {
   --tw-border-opacity: 1;
   border-color: hsl(var(--in) / var(--tw-border-opacity));
   background-color: transparent;
   --tw-text-opacity: 1;
   color: hsl(var(--in) / var(--tw-text-opacity));
+}
+.btn-outline.btn-success .badge-outline {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--su) / var(--tw-border-opacity));
+  background-color: transparent;
+  --tw-text-opacity: 1;
+  color: hsl(var(--su) / var(--tw-text-opacity));
 }
 .btn-outline.btn-warning .badge-outline {
   --tw-border-opacity: 1;
@@ -1841,6 +1855,21 @@ html {
 .btn-ghost:focus-visible {
   outline: 2px solid currentColor;
 }
+.btn-outline {
+  border-color: currentColor;
+  background-color: transparent;
+  --tw-text-opacity: 1;
+  color: hsl(var(--bc) / var(--tw-text-opacity));
+}
+.btn-outline:hover,
+    .btn-outline.btn-active {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--bc) / var(--tw-border-opacity));
+  --tw-bg-opacity: 1;
+  background-color: hsl(var(--bc) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: hsl(var(--b1) / var(--tw-text-opacity));
+}
 .btn-outline.btn-primary {
   --tw-text-opacity: 1;
   color: hsl(var(--p) / var(--tw-text-opacity));
@@ -1866,6 +1895,32 @@ html {
   background-color: hsl(var(--sf, var(--s)) / var(--tw-bg-opacity));
   --tw-text-opacity: 1;
   color: hsl(var(--sc) / var(--tw-text-opacity));
+}
+.btn-outline.btn-accent {
+  --tw-text-opacity: 1;
+  color: hsl(var(--a) / var(--tw-text-opacity));
+}
+.btn-outline.btn-accent:hover,
+      .btn-outline.btn-accent.btn-active {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--af, var(--a)) / var(--tw-border-opacity));
+  --tw-bg-opacity: 1;
+  background-color: hsl(var(--af, var(--a)) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: hsl(var(--ac) / var(--tw-text-opacity));
+}
+.btn-outline.btn-success {
+  --tw-text-opacity: 1;
+  color: hsl(var(--su) / var(--tw-text-opacity));
+}
+.btn-outline.btn-success:hover,
+      .btn-outline.btn-success.btn-active {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--su) / var(--tw-border-opacity));
+  --tw-bg-opacity: 1;
+  background-color: hsl(var(--su) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: hsl(var(--suc, var(--nc)) / var(--tw-text-opacity));
 }
 .btn-outline.btn-info {
   --tw-text-opacity: 1;
@@ -3733,8 +3788,8 @@ html {
 .h-4 {
   height: 1rem !important;
 }
-.h-48 {
-  height: 12rem !important;
+.h-40 {
+  height: 10rem !important;
 }
 .h-5 {
   height: 1.25rem !important;
@@ -3759,9 +3814,6 @@ html {
 }
 .h-screen {
   height: 100vh !important;
-}
-.h-40 {
-  height: 10rem !important;
 }
 .max-h-96 {
   max-height: 24rem !important;
@@ -3810,6 +3862,9 @@ html {
 }
 .w-2\/3 {
   width: 66.666667% !important;
+}
+.w-2\/6 {
+  width: 33.333333% !important;
 }
 .w-20 {
   width: 5rem !important;
@@ -3875,12 +3930,6 @@ html {
 .w-min {
   width: -moz-min-content !important;
   width: min-content !important;
-}
-.w-1\/4 {
-  width: 25% !important;
-}
-.w-3\/12 {
-  width: 25% !important;
 }
 .min-w-0 {
   min-width: 0px !important;
@@ -4013,9 +4062,6 @@ html {
 }
 .justify-normal {
   justify-content: normal !important;
-}
-.justify-start {
-  justify-content: flex-start !important;
 }
 .justify-end {
   justify-content: flex-end !important;
@@ -4336,10 +4382,6 @@ html {
   --tw-bg-opacity: 1 !important;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity)) !important;
 }
-.bg-error {
-  --tw-bg-opacity: 1 !important;
-  background-color: hsl(var(--er) / var(--tw-bg-opacity)) !important;
-}
 .bg-opacity-25 {
   --tw-bg-opacity: 0.25 !important;
 }
@@ -4518,6 +4560,10 @@ html {
   font-size: 1.5rem !important;
   line-height: 2rem !important;
 }
+.text-6xl {
+  font-size: 3.75rem !important;
+  line-height: 1 !important;
+}
 .text-7xl {
   font-size: 4.5rem !important;
   line-height: 1 !important;
@@ -4545,18 +4591,6 @@ html {
 .text-xs\/4 {
   font-size: 0.75rem !important;
   line-height: 1rem !important;
-}
-.text-9xl {
-  font-size: 8rem !important;
-  line-height: 1 !important;
-}
-.text-5xl {
-  font-size: 3rem !important;
-  line-height: 1 !important;
-}
-.text-6xl {
-  font-size: 3.75rem !important;
-  line-height: 1 !important;
 }
 .font-bold {
   font-weight: 700 !important;
@@ -4666,6 +4700,10 @@ html {
   --tw-text-opacity: 1 !important;
   color: rgb(67 56 202 / var(--tw-text-opacity)) !important;
 }
+.text-info {
+  --tw-text-opacity: 1 !important;
+  color: hsl(var(--in) / var(--tw-text-opacity)) !important;
+}
 .text-info-content {
   --tw-text-opacity: 1 !important;
   color: hsl(var(--inc, var(--nc)) / var(--tw-text-opacity)) !important;
@@ -4701,10 +4739,6 @@ html {
 .text-white {
   --tw-text-opacity: 1 !important;
   color: rgb(255 255 255 / var(--tw-text-opacity)) !important;
-}
-.text-info {
-  --tw-text-opacity: 1 !important;
-  color: hsl(var(--in) / var(--tw-text-opacity)) !important;
 }
 .underline {
   text-decoration-line: underline !important;
