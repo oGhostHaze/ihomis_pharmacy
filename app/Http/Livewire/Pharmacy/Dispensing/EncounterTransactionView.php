@@ -80,7 +80,7 @@ class EncounterTransactionView extends Component
                                 INNER JOIN hcharge on hcharge.chrgcode = pharm_drug_stocks.chrgcode
                                 INNER JOIN hdmhdrprice on hdmhdrprice.dmdprdte = pharm_drug_stocks.dmdprdte
                                 WHERE loc_code = '" . $this->location_id . "'
-                                AND drug_concat LIKE '%" . $this->generic . "%'
+                                AND drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
                                 AND stock_bal > 0
                                 GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
                                 ORDER BY drug_concat");
