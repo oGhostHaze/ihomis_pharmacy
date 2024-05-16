@@ -504,8 +504,9 @@ class EncounterTransactionView extends Component
             }
 
             $this->resetExcept('generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss');
-            $this->emit('refresh');
+            // $this->emit('refresh');
             $this->alert('success', 'Item added.');
+            return redirect(route('dispensing.view.enctr', $this->enccode));
         } else {
             $this->alert('error', 'Insufficient stock!');
         }

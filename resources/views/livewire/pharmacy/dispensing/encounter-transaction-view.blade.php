@@ -482,6 +482,7 @@
                 @this.set('selected_items', myArray);
             }
         });
+
         document.addEventListener('keydown', e => {
             if (e.ctrlKey && e.key == 'c') {
                 e.preventDefault();
