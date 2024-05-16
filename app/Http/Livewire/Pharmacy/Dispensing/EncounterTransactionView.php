@@ -283,7 +283,6 @@ class EncounterTransactionView extends Component
             if ($rxo->orderfrom == 'DRUMK') {
                 $this->type = 'service';
             }
-
             $this->type = $temp_type;
 
             $stocks = DB::select(

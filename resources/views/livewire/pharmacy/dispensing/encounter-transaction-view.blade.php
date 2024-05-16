@@ -710,7 +710,9 @@
                         const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                         const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                         const phic = Swal.getHtmlContainer().querySelector('#phic')
-                        const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
+                        @if ($toecode == 'WALKN')
+                            const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
+                        @endif
                     }
                 }).then((result) => {
                     /* Read more about isConfirmed, isDenied below */
@@ -723,7 +725,9 @@
                         @this.set('phic', phic.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
-                        @this.set('deptcode', deptcode.value);
+                        @if ($toecode == 'WALKN')
+                            @this.set('deptcode', deptcode.value);
+                        @endif
                         Livewire.emit('issue_order')
                     }
                 })
