@@ -22,7 +22,7 @@ class ConsumptionSummary extends Component
         $locations = PharmLocation::all();
 
         $transactions = DB::select("
-            SELECT loc.description location, dept.deptname prescribing_department, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, serv.tsdesc, COUNT(DISTINCT(pcchrgcod)) 'rx'
+            SELECT loc.description location, MAX(dept.deptname) prescribing_department, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, serv.tsdesc, COUNT(DISTINCT(pcchrgcod)) 'rx'
             FROM hrxo rxo
                 RIGHT JOIN hperson pat ON rxo.hpercode = pat.hpercode
                 RIGHT JOIN henctr enctr ON rxo.enccode = enctr.enccode
@@ -35,7 +35,7 @@ class ConsumptionSummary extends Component
                 AND rxo.tx_type LIKE '%" . $this->tagging . "'
                 AND rxo.estatus = 'S'
                 AND rxo.dodtepost BETWEEN '" . $from . "' AND '" . $to . "'
-            GROUP BY rxo.hpercode, pat.patlast, pat.patfirst, dept.deptname, rxo.tx_type, loc.description, enctr.toecode, serv.tsdesc
+            GROUP BY rxo.hpercode, pat.patlast, pat.patfirst, rxo.tx_type, loc.description, enctr.toecode, serv.tsdesc
             ORDER BY pat.patlast ASC, pat.patfirst ASC
         ");
 
