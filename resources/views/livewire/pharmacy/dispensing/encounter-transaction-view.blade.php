@@ -687,7 +687,7 @@
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Department</div>
                             <div class="col-span-4">
-                                <select id="deptcode" class="w-full select select-bordered select-sm" required>
+                                <select id="deptcode" class="w-full select select-bordered select-sm">
                                     <option value="" selected>N/A</option>
                                     @foreach ($departments as $department)
                                     <option value="{{ $department->deptcode }}">{{ $department->deptname }}</option>
