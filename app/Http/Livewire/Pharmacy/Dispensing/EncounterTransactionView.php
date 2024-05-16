@@ -63,7 +63,6 @@ class EncounterTransactionView extends Component
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
 
     public $stock_changes = false;
-    public $departments;
 
     public function render()
     {
@@ -87,6 +86,8 @@ class EncounterTransactionView extends Component
                                 GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
                                 ORDER BY drug_concat");
 
+        $departments = DB::select("SELECT * FROM hdept WHERE deptstat = 'A'");
+
         $this->dispatchBrowserEvent('issued');
         $encounter = $this->encounter;
 
@@ -94,6 +95,7 @@ class EncounterTransactionView extends Component
             'rxos',
             'stocks',
             'encounter',
+            'departments',
         ));
     }
 
@@ -189,8 +191,7 @@ class EncounterTransactionView extends Component
                 ->whereIn('chrgcode', array('DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS', 'DRUMAD', 'DRUMAE', 'DRUMAF', 'DRUMAG', 'DRUMAH', 'DRUMAI', 'DRUMAJ'))
                 ->get();
         }
-        $this->departments = Department::where('deptstat', 'A')->get();
-        // $this->departments = DB::raw("SELECT * FROM hdept WHERE deptstat = 'A'");
+        // $this->departments = Department::where('deptstat', 'A')->get();
     }
 
     public function charge_items()
