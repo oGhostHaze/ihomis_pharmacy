@@ -92,7 +92,12 @@
                         <td>{!! $tran->stat() !!}</td>
                         <td>{{ $tran->updated_at2() }}</td>
                         <td>
-                            {{ $tran->remarks_request }}
+                            @if ($tran->remarks_cancel)
+                                {{ $tran->remarks_cancel }}
+                            @else
+                                {{ $tran->remarks_request }}
+                                {{ $tran->remarks_issue }}
+                            @endif
                         </td>
                     </tr>
                 @empty

@@ -76,6 +76,7 @@
                                 {{ $tran->remarks_cancel }}
                             @else
                                 {{ $tran->remarks_request }}
+                                {{ $tran->remarks_issue }}
                             @endif
                         </td>
                     </tr>

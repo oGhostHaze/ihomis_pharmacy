@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Pharmacy\Dispensing;
 
 use App\Jobs\LogDrugStockIssue;
+use App\Models\Hospital\Department;
 use App\Models\Pharmacy\Dispensing\DrugOrder;
 use App\Models\Pharmacy\Dispensing\DrugOrderIssue;
 use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
@@ -59,9 +60,10 @@ class EncounterTransactionView extends Component
     public $patfirst;
     public $patmiddle, $billstat = null;
 
-    public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss;
+    public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
 
     public $stock_changes = false;
+    public $departments;
 
     public function render()
     {
@@ -187,6 +189,8 @@ class EncounterTransactionView extends Component
                 ->whereIn('chrgcode', array('DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS', 'DRUMAD', 'DRUMAE', 'DRUMAF', 'DRUMAG', 'DRUMAH', 'DRUMAI', 'DRUMAJ'))
                 ->get();
         }
+        $this->departments = Department::where('deptstat', 'A')->get();
+        // $this->departments = DB::raw("SELECT * FROM hdept WHERE deptstat = 'A'");
     }
 
     public function charge_items()
@@ -198,7 +202,7 @@ class EncounterTransactionView extends Component
         $cnt = 0;
         foreach ($this->selected_items as $docointkey) {
             $cnt = DB::update(
-                "UPDATE hospital.dbo.hrxo SET pcchrgcod = '" . $pcchrgcod . "', estatus = 'P' WHERE docointkey = " . $docointkey . " AND (estatus = 'U' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
+                "UPDATE hospital.dbo.hrxo SET pcchrgcod = '" . $pcchrgcod . "', estatus = 'P' WHERE docointkey = " . $docointkey . " AND (estatus = 'U' OR orderfrom = 'DRUMK' OR pchrgup = 0 OR pcchrgcod IS NULL)"
             );
         }
 
@@ -333,7 +337,7 @@ class EncounterTransactionView extends Component
                 }
                 if ($cnt == 1) {
                     $cnt = DB::update(
-                        "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = '" . $rxo->pchrgqty . "', tx_type = '" . $this->type . "', dodtepost = '" . now() . "', dotmepost = '" . now() . "' WHERE docointkey = '" . $rxo->docointkey . "' AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
+                        "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = '" . $rxo->pchrgqty . "', tx_type = '" . $this->type . "', dodtepost = '" . now() . "', dotmepost = '" . now() . "', deptcode = '" . $this->deptcode . "' WHERE docointkey = '" . $rxo->docointkey . "' AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
                     );
                     $this->log_hrxoissue($rxo->docointkey, $rxo->enccode, $rxo->hpercode, $rxo->dmdcomb, $rxo->dmdctr, $rxo->pchrgqty, session('employeeid'), $rxo->orderfrom, $rxo->pcchrgcod, $rxo->pchrgup, $rxo->ris, $rxo->prescription_data_id, now(), $rxo->dmdprdte);
                 }

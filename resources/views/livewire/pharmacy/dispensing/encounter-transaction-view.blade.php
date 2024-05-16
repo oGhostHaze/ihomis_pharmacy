@@ -681,7 +681,22 @@
                                 </label>
                             </div>
                         </div>
-                    `,
+                    `
+                    @if ($toecode == 'WALKN')
+                        +`
+                        <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
+                            <div class="col-span-4 font-bold">Department</div>
+                            <div class="col-span-4">
+                                <select id="deptcode" class="w-full select select-bordered select-sm" required>
+                                    <option value="" selected>N/A</option>
+                                    @foreach ($departments as $department)
+                                    <option value="{{ $department->deptcode }}">{{ $department->deptname }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        `
+                    @endif ,
                     showCancelButton: true,
                     confirmButtonText: `Confirm`,
                     didOpen: () => {
@@ -695,6 +710,7 @@
                         const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                         const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                         const phic = Swal.getHtmlContainer().querySelector('#phic')
+                        const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
                     }
                 }).then((result) => {
                     /* Read more about isConfirmed, isDenied below */
@@ -707,6 +723,7 @@
                         @this.set('phic', phic.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
+                        @this.set('deptcode', deptcode.value);
                         Livewire.emit('issue_order')
                     }
                 })
@@ -1019,74 +1036,6 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     Livewire.emit('deactivate_rx', rx_id);
-                }
-            });
-        }
-
-        function return_issued(docointkey, drug, up, or_qty) {
-            Swal.fire({
-                html: `
-                        <div class="text-xl font-bold">` + drug + `</div>
-
-                        <div class="w-full px-2 mb-3 form-control">
-                            <label class="label">
-                                <span class="label-text">Issued Qty</span>
-                            </label>
-                            <input id="order_qty" type="number" class="w-full input input-bordered disabled bg-slate-200" readonly tabindex='-1' />
-                        </div>
-
-                        <div class="w-full px-2 mb-3 form-control">
-                            <label class="label">
-                                <span class="label-text">Return Qty</span>
-                            </label>
-                            <input id="return_qty" type="number" max="` + or_qty + `" class="w-full input input-bordered" autofocus/>
-                        </div>
-
-                        <div class="w-full px-2 mb-3 form-control">
-                            <label class="label">
-                                <span class="label-text">Unit Price</span>
-                            </label>
-                            <input id="unit_price" type="number" step="0.01" class="w-full input input-bordered disabled bg-slate-200" readonly tabindex='-1' />
-                        </div>
-
-                        <div class="w-full px-2 mb-3 form-control">
-                            <label class="label">
-                                <span class="label-text">TOTAL</span>
-                            </label>
-                            <input id="total" type="number" step="0.01" class="w-full input input-bordered disabled bg-slate-200" readonly tabindex='-1' />
-                        </div>
-                            `,
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: `Confirm`,
-                didOpen: () => {
-                    const order_qty = Swal.getHtmlContainer().querySelector('#order_qty');
-                    const return_qty = Swal.getHtmlContainer().querySelector('#return_qty');
-                    const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
-                    const total = Swal.getHtmlContainer().querySelector('#total');
-                    order_qty.value = or_qty;
-                    unit_price.value = up;
-                    return_qty.focus();
-
-                    return_qty.addEventListener('input', () => {
-                        total.value = parseFloat(return_qty.value) * parseFloat(unit_price
-                            .value);
-                    })
-
-                    unit_price.addEventListener('input', () => {
-                        total.value = parseFloat(return_qty.value) * parseFloat(unit_price
-                            .value);
-                    })
-                }
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    @this.set('unit_price', unit_price.value);
-                    @this.set('order_qty', or_qty);
-                    @this.set('docointkey', docointkey);
-                    @this.set('return_qty', return_qty.value);
-
-                    Livewire.emit('return_issued', docointkey);
                 }
             });
         }

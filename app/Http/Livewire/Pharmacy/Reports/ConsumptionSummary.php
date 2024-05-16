@@ -22,13 +22,14 @@ class ConsumptionSummary extends Component
         $locations = PharmLocation::all();
 
         $transactions = DB::select("
-            SELECT loc.description location, MAX(dept.deptname) prescribing_department, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, COUNT(DISTINCT(pcchrgcod)) 'rx', MAX(serv.tsdesc) tsdesc1, MAX(serv2.tsdesc) tsdesc2
+            SELECT loc.description location, MAX(dept.deptname) prescribing_department, MAX(dept2.deptname) walkn_dept, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, COUNT(DISTINCT(pcchrgcod)) 'rx', MAX(serv.tsdesc) tsdesc1, MAX(serv2.tsdesc) tsdesc2
             FROM hrxo rxo
                 RIGHT JOIN hperson pat ON rxo.hpercode = pat.hpercode
                 RIGHT JOIN henctr enctr ON rxo.enccode = enctr.enccode
                 RIGHT JOIN pharm_locations loc ON rxo.loc_code = loc.id
                 LEFT JOIN hpersonal emp ON rxo.prescribed_by = emp.employeeid
                 LEFT JOIN hdept dept ON emp.deptcode = dept.deptcode
+                LEFT JOIN hdept dept2 ON rxo.deptcode = dept2.deptcode
                 LEFT JOIN hopdlog opdlog ON rxo.enccode = opdlog.enccode
                 LEFT JOIN hadmlog admlog ON rxo.enccode = admlog.enccode
                 LEFT JOIN htypser serv ON opdlog.tscode = serv.tscode
