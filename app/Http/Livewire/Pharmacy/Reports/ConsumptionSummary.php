@@ -22,20 +22,22 @@ class ConsumptionSummary extends Component
         $locations = PharmLocation::all();
 
         $transactions = DB::select("
-            SELECT loc.description location, MAX(dept.deptname) prescribing_department, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, serv.tsdesc, COUNT(DISTINCT(pcchrgcod)) 'rx'
+            SELECT loc.description location, MAX(dept.deptname) prescribing_department, rxo.tx_type transaction_type, rxo.hpercode, pat.patlast, pat.patfirst, COUNT(rxo.docointkey) line_item, SUM(rxo.pchrgup * rxo.pchrgqty) amount, enctr.toecode, COUNT(DISTINCT(pcchrgcod)) 'rx', MAX(serv.tsdesc) tsdesc1, MAX(serv2.tsdesc) tsdesc2
             FROM hrxo rxo
                 RIGHT JOIN hperson pat ON rxo.hpercode = pat.hpercode
                 RIGHT JOIN henctr enctr ON rxo.enccode = enctr.enccode
                 RIGHT JOIN pharm_locations loc ON rxo.loc_code = loc.id
                 LEFT JOIN hpersonal emp ON rxo.prescribed_by = emp.employeeid
                 LEFT JOIN hdept dept ON emp.deptcode = dept.deptcode
-                LEFT JOIN hopdlog log ON rxo.enccode = log.enccode
-                LEFT JOIN htypser serv ON log.tscode = serv.tscode
+                LEFT JOIN hopdlog opdlog ON rxo.enccode = opdlog.enccode
+                LEFT JOIN hadmlog admlog ON rxo.enccode = admlog.enccode
+                LEFT JOIN htypser serv ON opdlog.tscode = serv.tscode
+                LEFT JOIN htypser serv2 ON admlog.tscode = serv2.tscode
             WHERE rxo.loc_code = '" . $this->location_id . "'
                 AND rxo.tx_type LIKE '%" . $this->tagging . "'
                 AND rxo.estatus = 'S'
                 AND rxo.dodtepost BETWEEN '" . $from . "' AND '" . $to . "'
-            GROUP BY rxo.hpercode, pat.patlast, pat.patfirst, rxo.tx_type, loc.description, enctr.toecode, serv.tsdesc
+                GROUP BY rxo.hpercode, pat.patlast, pat.patfirst, rxo.tx_type, loc.description, enctr.toecode
             ORDER BY pat.patlast ASC, pat.patfirst ASC
         ");
 
@@ -55,5 +57,6 @@ class ConsumptionSummary extends Component
     {
         $this->location_id = session('pharm_location_id');
         $this->date_from = date('Y-m-d');
+        // $this->date_from = '2024-05-14';
     }
 }

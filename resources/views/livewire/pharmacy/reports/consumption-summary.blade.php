@@ -133,7 +133,8 @@
                                 {{ $txn->patlast . ', ' . $txn->patfirst }} <span
                                     class="text-xs">({{ $txn->hpercode }})</span></td>
                             <td class="text-sm border">
-                                {{ $txn->prescribing_department ?? $txn->tsdesc . ' [' . $txn->toecode . ']' }}</td>
+                                {{ $txn->prescribing_department ?? ($txn->tsdesc1 ?? $txn->tsdesc2) . ' [' . $txn->toecode . ']' }}
+                            </td>
                             <td class="text-sm uppercase border">{{ $tag }}</td>
                             <td class="text-sm text-center border">{{ $txn->rx ?? '' }}</td>
                             <td class="text-sm text-center border">{{ $txn->line_item }}</td>

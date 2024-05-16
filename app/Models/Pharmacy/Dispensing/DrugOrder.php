@@ -2,6 +2,7 @@
 
 namespace App\Models\Pharmacy\Dispensing;
 
+use App\Models\Hospital\Department;
 use App\Models\Hospital\Employee;
 use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
 use App\Models\Pharmacy\Drug;
@@ -39,7 +40,13 @@ class DrugOrder extends Model
         'prescription_data_id',
         'prescribed_by',
         'remarks',
+        'deptcode',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'deptcode', 'deptcode');
+    }
 
     public function enctr()
     {
