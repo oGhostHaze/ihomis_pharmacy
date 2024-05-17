@@ -33,6 +33,14 @@
             @endcan
             <div class="ml-3 form-control">
                 <label class="label">
+                    <span class="label-text">Request Orders to Warehouse</span>
+                </label>
+                <button onclick="bulk_request()" class="btn btn-sm btn-info" wire:loading.attr="disabled">
+                    <i class="las la-lg la-mail-bulk"></i>Batch Request
+                </button>
+            </div>
+            <div class="ml-3 form-control">
+                <label class="label">
                     <span class="label-text">Export to .csv</span>
                 </label>
                 <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
@@ -140,6 +148,23 @@
 
 @push('scripts')
     <script>
+        function bulk_request() {
+            Swal.fire({
+                title: 'Are you sure?',
+                showCancelButton: true,
+                confirmButtonText: 'Continue',
+                html: `
+                        <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
+                        <div class="mt-2 text-slate-500" id="inf">Bulk request items below reorder-level. Continue?</div>
+                    `,
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    Livewire.emit('bulk_request')
+                }
+            })
+        }
+
         function ExportToExcel(type, fn, dl) {
             var elt = document.getElementById('table');
             var wb = XLSX.utils.table_to_book(elt, {
