@@ -120,9 +120,7 @@
             document.body.innerHTML = printContents;
 
             window.print();
-
-            document.body.innerHTML = originalContents;
-            history.go(-1);
+            window.close();
         }
     </script>
 @endpush
