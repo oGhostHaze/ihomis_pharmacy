@@ -25,11 +25,12 @@ class IoTransList extends Component
     use WithPagination;
     use LivewireAlert;
 
-    protected $listeners = ['add_request', 'cancel_issued', 'refreshComponent' => '$refresh', 'issue_request', 'deny_request'];
+    protected $listeners = ['add_request', 'cancel_issued', 'refreshComponent' => '$refresh', 'issue_request', 'deny_request', 'bypass_add_request'];
     // protected $listeners = ['add_request', 'cancel_issued', 'echo:io-trans,new-request' => 'notifyRequest'];
     // protected $listeners = ['add_request', 'cancel_issued', 'echo:private-io-trans,new-request' => 'notifyRequest', 'echo:io-trans,new-request' => 'notifyRequest'];
 
     public $stock_id, $requested_qty, $remarks;
+    public $location_id;
     public $selected_request, $chrgcode, $issue_qty = 0;
     public $issued_qty = 0;
     public $received_qty = 0;
@@ -45,14 +46,21 @@ class IoTransList extends Component
                     ->orWhere('request_from', session('pharm_location_id'));
             });
 
-        // $drugs = DrugStock::with('drug')->select(DB::raw('MAX(id) as id'), 'dmdcomb', 'dmdctr', DB::raw('SUM(stock_bal) as "avail"'))
-        //     ->where('loc_code', session('pharm_location_id'))
-        //     ->where('stock_bal', '>', '0')->where('exp_date', '>', now())
-        //     ->groupBy('dmdcomb', 'dmdctr');
+        $locations = PharmLocation::where('id', '<>', session('pharm_location_id'))->get();
+
+        $drugs = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date
+                                FROM hospital.dbo.pharm_drug_stocks
+                                INNER JOIN hcharge on hcharge.chrgcode = pharm_drug_stocks.chrgcode
+                                INNER JOIN hdmhdrprice on hdmhdrprice.dmdprdte = pharm_drug_stocks.dmdprdte
+                                WHERE loc_code = '" . session('pharm_location_id') . "'
+                                AND stock_bal > 0
+                                GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
+                                ORDER BY drug_concat");
 
         return view('livewire.pharmacy.drugs.io-trans-list', [
             'trans' => $trans->latest()->paginate(20),
-            // 'drugs' => $drugs->get(),
+            'locations' => $locations,
+            'drugs' => $drugs,
         ]);
     }
 
@@ -85,6 +93,33 @@ class IoTransList extends Component
         ]);
 
         $this->alert('success', 'Request added!');
+    }
+
+    public function bypass_add_request()
+    {
+        $dm = explode(',', $this->stock_id);
+        $dmdcomb = $dm[0];
+        $dmdctr = $dm[1];
+
+        $this->validate([
+            'requested_qty' => ['required', 'numeric', 'min:1'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $reference_no = Carbon::now()->format('y-m-') . (sprintf("%04d", count(InOutTransaction::select(DB::raw('COUNT(trans_no)'))->groupBy('trans_no')->get()) + 1));
+
+        $txn = InOutTransaction::create([
+            'trans_no' => $reference_no,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'requested_qty' => $this->requested_qty,
+            'requested_by' => session('user_id'),
+            'loc_code' => $this->location_id,
+            'request_from' => session('pharm_location_id'),
+            'remarks_request' => $this->remarks,
+        ]);
+
+        $this->select_request($txn);
     }
 
     public function select_request(InOutTransaction $txn)
@@ -180,7 +215,7 @@ class IoTransList extends Component
             IoTransRequestUpdated::dispatch($this->selected_request, 'A requested drugs/medicine has been issued from the warehouse.');
             $this->dispatchBrowserEvent('toggleIssue');
             $this->alert('success', 'Request issued successfully!');
-            $this->reset('selected_request', 'issue_qty', 'available_drugs');
+            return redirect(route('iotrans.list'));
         } else {
             $this->alert('error', 'Failed to issue medicine. Selected fund source insufficient stock!');
         }

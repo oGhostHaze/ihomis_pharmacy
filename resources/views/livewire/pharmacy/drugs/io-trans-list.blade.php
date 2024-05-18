@@ -14,7 +14,10 @@
 <div class="flex flex-col p-5 mx-auto">
     <div class="flex justify-between">
         <div>
-            {{-- <button class="btn btn-sm btn-primary" onclick="add_request()">Add Request</button> --}}
+            <div class="flex space-x-2">
+                <button class="btn btn-sm btn-primary" onclick="bypass_issue()">Issue Item</button>
+                <button class="btn btn-sm btn-secondary" onclick="add_more_request()">Add To Last Request</button>
+            </div>
         </div>
         <div>
             <div class="form-control">
@@ -156,6 +159,72 @@
 
 @push('scripts')
     <script>
+        function bypass_issue() {
+            Swal.fire({
+                html: `
+                    <span class="text-xl font-bold"> Request Drugs/Medicine </span>
+                    <div class="w-full form-control">
+                        <label class="label" for="location_id">
+                            <span class="label-text">Request FROM</span>
+                        </label>
+                        <select class="select select-bordered select2" id="location_id">
+                            @foreach ($locations as $location)
+                                <option value="{{ $location->id }}" @if ($location->id == 1) selected @endif>{{ $location->description }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="stock_id">
+                            <span class="label-text">Drug/Medicine</span>
+                        </label>
+                        <select class="select select-bordered select2" id="stock_id">
+                            <option disabled selected>Choose drug/medicine</option>
+                            @foreach ($drugs as $drug)
+                                <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">{{ $drug->drug_concat }} - [avail
+                                    QTY: {{ $drug->stock_bal }}]</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="requested_qty">
+                            <span class="label-text">Request QTY</span>
+                        </label>
+                        <input id="requested_qty" type="text" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="remarks">
+                            <span class="label-text">Remarks</span>
+                        </label>
+                        <input id="remarks" type="text" class="w-full input input-bordered" />
+                    </div>`,
+                showCancelButton: true,
+                confirmButtonText: `Save`,
+                didOpen: () => {
+                    const location_id = Swal.getHtmlContainer().querySelector('#location_id');
+                    const stock_id = Swal.getHtmlContainer().querySelector('#stock_id');
+                    const requested_qty = Swal.getHtmlContainer().querySelector('#requested_qty');
+                    const remarks = Swal.getHtmlContainer().querySelector('#remarks');
+
+                    $('.select2').select2({
+                        dropdownParent: $('.swal2-container'),
+                        width: 'resolve',
+                        dropdownCssClass: "text-sm",
+                    });
+
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    @this.set('location_id', location_id.value);
+                    @this.set('stock_id', stock_id.value);
+                    @this.set('requested_qty', requested_qty.value);
+                    @this.set('remarks', remarks.value);
+
+                    Livewire.emit('bypass_add_request');
+                }
+            });
+        }
+
         function issue_request() {
             Swal.fire({
                 title: 'Are you sure you want to issue items for this request?',
