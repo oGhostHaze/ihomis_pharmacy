@@ -16,7 +16,7 @@
         <div>
             <div class="flex space-x-2">
                 <button class="btn btn-sm btn-primary" onclick="bypass_issue()">Issue Item</button>
-                <button class="btn btn-sm btn-secondary" onclick="add_more_request()">Add To Last Request</button>
+                <button class="btn btn-sm btn-secondary" onclick="bypass_issue(true)">Issue To Last Request</button>
             </div>
         </div>
         <div>
@@ -94,7 +94,7 @@
     </div>
 
     <!-- Put this part before </body> tag -->
-    <input type="checkbox" id="issueModal" class="modal-toggle" />
+    <input type="checkbox" id="issueModal" wire:model="issueModal" class="modal-toggle" />
     <div class="modal">
         <div class="relative modal-box">
             <label for="issueModal" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
@@ -159,13 +159,13 @@
 
 @push('scripts')
     <script>
-        function bypass_issue() {
+        function bypass_issue(last_request = false) {
             Swal.fire({
                 html: `
                     <span class="text-xl font-bold"> Request Drugs/Medicine </span>
-                    <div class="w-full form-control">
+                    <div class="w-full form-control" id="locDiv">
                         <label class="label" for="location_id">
-                            <span class="label-text">Request FROM</span>
+                            <span class="label-text">Issue TO</span>
                         </label>
                         <select class="select select-bordered select2" id="location_id">
                             @foreach ($locations as $location)
@@ -201,6 +201,7 @@
                 confirmButtonText: `Save`,
                 didOpen: () => {
                     const location_id = Swal.getHtmlContainer().querySelector('#location_id');
+                    const locDiv = Swal.getHtmlContainer().querySelector('#locDiv');
                     const stock_id = Swal.getHtmlContainer().querySelector('#stock_id');
                     const requested_qty = Swal.getHtmlContainer().querySelector('#requested_qty');
                     const remarks = Swal.getHtmlContainer().querySelector('#remarks');
@@ -211,6 +212,10 @@
                         dropdownCssClass: "text-sm",
                     });
 
+                    if (last_request) {
+                        locDiv.style.display = "none";
+                    }
+
                 }
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
@@ -220,7 +225,7 @@
                     @this.set('requested_qty', requested_qty.value);
                     @this.set('remarks', remarks.value);
 
-                    Livewire.emit('bypass_add_request');
+                    Livewire.emit('bypass_add_request', last_request);
                 }
             });
         }

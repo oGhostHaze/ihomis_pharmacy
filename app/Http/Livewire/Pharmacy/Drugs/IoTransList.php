@@ -34,7 +34,7 @@ class IoTransList extends Component
     public $selected_request, $chrgcode, $issue_qty = 0;
     public $issued_qty = 0;
     public $received_qty = 0;
-    public $available_drugs;
+    public $available_drugs, $issueModal = false;
 
 
     public function render()
@@ -95,7 +95,7 @@ class IoTransList extends Component
         $this->alert('success', 'Request added!');
     }
 
-    public function bypass_add_request()
+    public function bypass_add_request($last_request = false)
     {
         $dm = explode(',', $this->stock_id);
         $dmdcomb = $dm[0];
@@ -106,7 +106,13 @@ class IoTransList extends Component
             'remarks' => ['nullable', 'string'],
         ]);
 
-        $reference_no = Carbon::now()->format('y-m-') . (sprintf("%04d", count(InOutTransaction::select(DB::raw('COUNT(trans_no)'))->groupBy('trans_no')->get()) + 1));
+        if ($last_request) {
+            $past = InOutTransaction::where('loc_code', session('pharm_location_id'))->latest()->first();
+            $reference_no = $past->trans_no;
+            $this->location_id = $past->loc_code;
+        } else {
+            $reference_no = Carbon::now()->format('y-m-') . (sprintf("%04d", count(InOutTransaction::select(DB::raw('COUNT(trans_no)'))->groupBy('trans_no')->get()) + 1));
+        }
 
         $txn = InOutTransaction::create([
             'trans_no' => $reference_no,
@@ -136,7 +142,8 @@ class IoTransList extends Component
                     AND pdsl.exp_date > '" . now() . "'
                 GROUP BY charge.chrgcode, charge.chrgdesc
             ");
-        $this->dispatchBrowserEvent('toggleIssue');
+        $this->issueModal = true;
+        // $this->dispatchBrowserEvent('toggleIssue');
     }
 
     public function issue_request()
@@ -213,7 +220,8 @@ class IoTransList extends Component
             $this->selected_request->save();
 
             IoTransRequestUpdated::dispatch($this->selected_request, 'A requested drugs/medicine has been issued from the warehouse.');
-            $this->dispatchBrowserEvent('toggleIssue');
+            $this->issueModal = false;
+            // $this->dispatchBrowserEvent('toggleIssue');
             $this->alert('success', 'Request issued successfully!');
             return redirect(route('iotrans.list'));
         } else {
@@ -285,8 +293,7 @@ class IoTransList extends Component
         $this->selected_request->issued_by = session('user_id');
         $this->selected_request->save();
 
-        $this->dispatchBrowserEvent('toggleIssue');
-        $this->reset('selected_request', 'available_drugs');
+        $this->reset('selected_request', 'available_drugs', 'issueModal');
 
         $this->alert('warning', 'Request denied!');
     }
