@@ -36,8 +36,8 @@
                     <label class="label">
                         <span class="label-text">Request Orders to Warehouse</span>
                     </label>
-                    <button onclick="bulk_request()" class="btn btn-sm btn-info" wire:loading.attr="disabled">
-                        <i class="las la-lg la-mail-bulk"></i>Batch Request
+                    <button onclick="bulk_request()" class="btn btn-sm btn-secondary" wire:loading.attr="disabled">
+                        <i class="mr-1 las la-lg la-mail-bulk"></i>Batch Request
                     </button>
                 </div>
             @endif
@@ -116,12 +116,12 @@
                                         <i class="las la-lg la-check"></i>
                                     </span>
                                 @else
-                                    <span class="text-error">
+                                    <span class="text-error tooltip" data-tip="below set reorder point">
                                         <i class="las la-lg la-exclamation-triangle"></i>
                                     </span>
                                 @endif
                             @else
-                                <span class="text-warning">
+                                <span class="text-warning tooltip" data-tip="near set reorder point">
                                     <i class="las la-lg la-pause-circle"></i>
                                 </span>
                             @endif
