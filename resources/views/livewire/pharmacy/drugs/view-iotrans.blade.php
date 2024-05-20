@@ -14,7 +14,7 @@
     </div>
 </x-slot>
 
-<div class="flex flex-col p-5 mx-auto mt-5 max-w-screen-2xl">
+<div class="flex flex-col p-5 mx-auto mt-5">
     <div class="p-4 mb-3 bg-white rounded-lg">
         <div class="flex justify-end space-x-3">
             @if ($trans[0]->loc_code == session('pharm_location_id'))

@@ -96,7 +96,7 @@
                             ),
                         )->first();
 
-                        $max_level = $issued->average ? ($issued->average / 7) * 2 : 0;
+                        $max_level = $issued->average ? $issued->average * 2 : 0;
                         $order_qty =
                             $max_level > $stk->stock_bal
                                 ? number_format($max_level - $stk->stock_bal)
@@ -126,7 +126,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="text-end">{{ $issued->average ? number_format($issued->average / 7, 2) : '' }}</td>
+                        <td class="text-end">{{ $issued->average ? number_format($issued->average, 2) : '' }}</td>
                         <td class="text-end">{{ $issued->average ? number_format($max_level) : '' }}
                         </td>
                         <td class="text-end">

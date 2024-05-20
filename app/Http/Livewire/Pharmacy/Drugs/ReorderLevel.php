@@ -111,7 +111,7 @@ class ReorderLevel extends Component
                 )
             )->first();
 
-            $max_level = $issued->average ? ($issued->average / 7) * 2 : 0;
+            $max_level = $issued->average ? $issued->average * 2 : 0;
             if ($stk->reorder_point) {
                 $order_qty = $stk->reorder_point;
             } else {
