@@ -31,14 +31,16 @@
                     </select>
                 </div>
             @endcan
-            <div class="ml-3 form-control">
-                <label class="label">
-                    <span class="label-text">Request Orders to Warehouse</span>
-                </label>
-                <button onclick="bulk_request()" class="btn btn-sm btn-info" wire:loading.attr="disabled">
-                    <i class="las la-lg la-mail-bulk"></i>Batch Request
-                </button>
-            </div>
+            @if (!$current_io)
+                <div class="ml-3 form-control">
+                    <label class="label">
+                        <span class="label-text">Request Orders to Warehouse</span>
+                    </label>
+                    <button onclick="bulk_request()" class="btn btn-sm btn-info" wire:loading.attr="disabled">
+                        <i class="las la-lg la-mail-bulk"></i>Batch Request
+                    </button>
+                </div>
+            @endif
             <div class="ml-3 form-control">
                 <label class="label">
                     <span class="label-text">Export to .csv</span>
@@ -127,7 +129,12 @@
                         <td class="text-end">{{ $issued->average ? number_format($issued->average / 7, 2) : '' }}</td>
                         <td class="text-end">{{ $issued->average ? number_format($max_level) : '' }}
                         </td>
-                        <td class="text-end">{{ $order_qty }}
+                        <td class="text-end">
+                            {{ $order_qty }}
+                            @if ($order_qty > 0 and $order_qty != 'over' and $current_io)
+                                [requested]
+                            @endif
+
                         </td>
                         <td class="text-end">
                             <button class="btn btn-ghost btn-sm text-primary tooltip" data-tip="update point"

@@ -23,6 +23,9 @@ class ReorderLevel extends Component
     public function render()
     {
 
+        $from = Carbon::parse(now())->startOfWeek();
+        $to = Carbon::parse(now())->endOfWeek();
+
         $stocks = DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                             (SELECT reorder_point
                                 FROM pharm_drug_stock_reorder_levels as level
@@ -37,10 +40,16 @@ class ReorderLevel extends Component
 
         $locations = PharmLocation::all();
 
+        $current_io = InOutTransaction::where('remarks_request', 'Reorder level')
+            ->where('trans_stat', 'Requested')
+            ->where('loc_code', session('pharm_location_id'))
+            ->whereBetween('created_at', [$from, $to])
+            ->count();
 
         return view('livewire.pharmacy.drugs.reorder-level', [
             'stocks' => $stocks,
             'locations' => $locations,
+            'current_io' => $current_io,
         ]);
     }
 
