@@ -54,7 +54,7 @@ class TotalDrugsIssued extends Component
 
         return view('livewire.pharmacy.reports.total-drugs-issued', [
             'charge_codes' => $charge_codes,
-            'current_charge' => $filter_charge[1],
+            'current_charge' => $filter_charge[1] ?? 'All Fund Sources',
             'drugs_issued' => $drugs_issued,
             'locations' => $locations,
         ]);

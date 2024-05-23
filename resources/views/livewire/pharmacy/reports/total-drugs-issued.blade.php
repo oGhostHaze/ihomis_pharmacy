@@ -65,6 +65,7 @@
                         <span>Fund Source</span>
                         <select class="select select-bordered select-sm" wire:model="filter_charge">
                             <option></option>
+                            <option value="%%">All</option>
                             @foreach ($charge_codes as $charge)
                                 <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
                                     {{ $charge->chrgdesc }}</option>
@@ -74,7 +75,7 @@
                 </div>
             </div>
         </div>
-        <div id="print" class="mx-auto max-w-screen-2xl">
+        <div id="print" class="mx-auto">
             {{ $current_charge }}
             <table class="table w-full bg-white shadow-md table-fixed" id="table">
                 <thead class="font-bold bg-gray-200">
