@@ -178,4 +178,14 @@ class WardRisTrans extends Component
             $this->alert('error', 'No RIS found!');
         }
     }
+
+    public function view_trans($trans_no)
+    {
+        return $this->redirect(route('dmd.view.ris.ref', ['reference_no' => $trans_no]));
+    }
+
+    public function view_trans_date($date)
+    {
+        return $this->redirect(route('dmd.view.ris.date', ['date' => $date]));
+    }
 }

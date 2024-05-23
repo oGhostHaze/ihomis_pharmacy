@@ -39,6 +39,8 @@ use App\Http\Livewire\Pharmacy\Drugs\StockPullOutList;
 use App\Http\Livewire\Pharmacy\Drugs\StockSummary;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIotrans;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIoTransDate;
+use App\Http\Livewire\Pharmacy\Drugs\ViewWardRisDate;
+use App\Http\Livewire\Pharmacy\Drugs\ViewWardRisRef;
 use App\Http\Livewire\Pharmacy\Drugs\WardRisTrans;
 use App\Http\Livewire\Pharmacy\Logs\ConsumptionLogReport;
 use App\Http\Livewire\Pharmacy\References\PndfGenerics;
@@ -86,6 +88,8 @@ Route::middleware([
         Route::get('/stocks/reorder-levels', ReorderLevel::class)->name('stk.reorder');
         Route::get('/stocks/for-pull-out', StockPullOutList::class)->name('stk.pullout');
         Route::get('/stocks/ris', WardRisTrans::class)->name('stk.ris');
+        Route::get('/stocks/ris/view/referenceno/{reference_no}', ViewWardRisRef::class)->name('view.ris.ref');
+        Route::get('/stocks/ris/view/date/{date}', ViewWardRisDate::class)->name('view.ris.date');
     });
 
     Route::name('iotrans.')->prefix('iotrans')->group(function () {
