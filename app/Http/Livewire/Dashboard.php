@@ -89,7 +89,7 @@ class Dashboard extends Component
 
     public function mount()
     {
-        $this->location_id = session('pharm_location_id');
+        $this->location_id = Auth::user()->pharm_location_id;
         $this->below_date = Carbon::parse(now())->addMonths(6)->format('Y-m-d');
     }
 
