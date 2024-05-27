@@ -46,7 +46,7 @@
                 @forelse ($users as $user)
                     <tr class="hover" wire:key='select-user-{{ $user->id }}'>
                         <th>{{ $user->id }}</th>
-                        <td>{{ $user->name }}</td>
+                        <td><span class="uppercase">{{ $user->name }}</span></td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->location->description }}</td>
                         <td>{{ $user->getRoleNames()->first() }}</td>

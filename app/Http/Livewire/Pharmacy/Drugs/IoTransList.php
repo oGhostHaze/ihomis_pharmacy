@@ -107,25 +107,32 @@ class IoTransList extends Component
         ]);
 
         if ($last_request) {
-            $past = InOutTransaction::where('loc_code', session('pharm_location_id'))->latest()->first();
-            $reference_no = $past->trans_no;
-            $this->location_id = $past->loc_code;
+            $past = InOutTransaction::where('loc_code', $this->location_id)->latest()->first();
+            if ($past) {
+                $reference_no = $past->trans_no;
+            } else {
+                $reference_no = null;
+            }
         } else {
             $reference_no = Carbon::now()->format('y-m-') . (sprintf("%04d", count(InOutTransaction::select(DB::raw('COUNT(trans_no)'))->groupBy('trans_no')->get()) + 1));
         }
 
-        $txn = InOutTransaction::create([
-            'trans_no' => $reference_no,
-            'dmdcomb' => $dmdcomb,
-            'dmdctr' => $dmdctr,
-            'requested_qty' => $this->requested_qty,
-            'requested_by' => session('user_id'),
-            'loc_code' => $this->location_id,
-            'request_from' => session('pharm_location_id'),
-            'remarks_request' => $this->remarks,
-        ]);
+        if ($reference_no) {
+            $txn = InOutTransaction::create([
+                'trans_no' => $reference_no,
+                'dmdcomb' => $dmdcomb,
+                'dmdctr' => $dmdctr,
+                'requested_qty' => $this->requested_qty,
+                'requested_by' => session('user_id'),
+                'loc_code' => $this->location_id,
+                'request_from' => session('pharm_location_id'),
+                'remarks_request' => $this->remarks,
+            ]);
 
-        $this->select_request($txn);
+            $this->select_request($txn);
+        } else {
+            return $this->alert('No previous request from selected location!');
+        }
     }
 
     public function select_request(InOutTransaction $txn)

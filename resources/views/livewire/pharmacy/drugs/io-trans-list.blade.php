@@ -167,7 +167,7 @@
                         <label class="label" for="location_id">
                             <span class="label-text">Issue TO</span>
                         </label>
-                        <select class="select select-bordered select2" id="location_id">
+                        <select class="select select-bordered" id="location_id">
                             @foreach ($locations as $location)
                                 <option value="{{ $location->id }}" @if ($location->id == 1) selected @endif>{{ $location->description }}</option>
                             @endforeach
@@ -211,10 +211,6 @@
                         width: 'resolve',
                         dropdownCssClass: "text-sm",
                     });
-
-                    if (last_request) {
-                        locDiv.style.display = "none";
-                    }
 
                 }
             }).then((result) => {
