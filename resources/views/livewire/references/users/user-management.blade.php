@@ -38,23 +38,37 @@
                     <th>Email</th>
                     <th>Location</th>
                     <th>Role</th>
+                    <th class="text-center">Active</th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($users as $user)
-                    <tr class="hover">
+                    <tr class="hover" wire:key='select-user-{{ $user->id }}'>
                         <th>{{ $user->id }}</th>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->location->description }}</td>
                         <td>{{ $user->getRoleNames()->first() }}</td>
+                        <td class="text-center">
+                            @if (!$user->deleted_at)
+                                <button class="px-2 py-1 mr-2 tooltip" data-tip="Deactivate"
+                                    wire:click="toggle_active({{ $user->id }})"><i
+                                        class="text-success las la-toggle-on"></i></button>
+                            @else
+                                <button class="px-2 py-1 text-danger tooltip" data-tip="Reactivate"
+                                    wire:click="toggle_active({{ $user->id }})"><i
+                                        class="las la-toggle-off"></i></button>
+                            @endif
+                        </td>
                         <td>
                             <div class="flex justify-end gap-1">
                                 <div><button class="btn btn-sm btn-info"
                                         onclick="update_role('{{ $user->id }}', '{{ $user->getRoleNames()->first() }}')"><i
                                             class="las la-user-shield la-lg"></i></button></div>
-                                <div><button class="btn btn-sm btn-warning"><i class="las la-undo la-lg"></i></button>
+                                <div><button class="btn btn-sm btn-warning"
+                                        wire:click="toggle_active({{ $user->id }})"><i
+                                            class="las la-undo la-lg"></i></button>
                                 </div>
                             </div>
                         </td>

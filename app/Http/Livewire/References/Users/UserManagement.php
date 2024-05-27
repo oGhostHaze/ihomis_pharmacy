@@ -20,7 +20,7 @@ class UserManagement extends Component
 
     public function render()
     {
-        $users = User::with('location')->where('email', 'LIKE', '%' . $this->search . '%');
+        $users = User::with('location')->where('email', 'LIKE', '%' . $this->search . '%')->orWhere('name', 'LIKE', '%' . $this->search . '%')->withTrashed();
         $roles = Role::where('name', '<>', 'Super Admin')->get();
 
         return view('livewire.references.users.user-management', [
@@ -35,6 +35,17 @@ class UserManagement extends Component
 
         if ($user->syncRoles($this->role_name)) {
             $this->alert('success', $this->role_name . ' role assigned to user ' . $user->name);
+        }
+    }
+
+    public function toggle_active($user_id)
+    {
+        if ($user = User::find($user_id)) {
+            $user->delete();
+            $this->alert('success', 'User has been deactivated!');
+        } else {
+            User::withTrashed()->find($user_id)->restore();
+            $this->alert('success', 'User has been reactivated!');
         }
     }
 }
