@@ -234,9 +234,8 @@ class IoTransListRequestor extends Component
 
     public function issue_request()
     {
-        $requested_qty = $this->selected_request->requested_qty;
         $this->validate([
-            'issue_qty' => ['required', 'numeric', 'min:1', 'max:' . $requested_qty],
+            'issue_qty' => ['required', 'numeric', 'min:1'],
             'chrgcode' => ['required'],
             'selected_request' => ['required'],
             'remarks' => ['nullable', 'string', 'max:255']
