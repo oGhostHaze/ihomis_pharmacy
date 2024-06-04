@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Pharmacy\Drugs;
 use App\Models\Pharmacy\Drugs\DrugStockReorderLevel;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -47,7 +48,7 @@ class StockSummary extends Component
 
     public function mount()
     {
-        $this->location_id = session('pharm_location_id');
+        $this->location_id = Auth::user()->pharm_location_id;
 
         $this->charges = ChargeCode::where('bentypcod', 'DRUME')
             ->where('chrgstat', 'A')
