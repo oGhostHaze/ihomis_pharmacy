@@ -138,6 +138,12 @@
                         <x-jet-dropdown-link href="{{ route('reports.consumption.depts') }}">
                             {{ __('Consumption Department') }}
                         </x-jet-dropdown-link>
+                        @if (session('pharm_location_id' == 1))
+                            <div class="border-t border-gray-100"></div>
+                            <x-jet-dropdown-link href="{{ route('reports.issuance.consol.loc') }}">
+                                {{ __('Consolidated Drug Issuances') }}
+                            </x-jet-dropdown-link>
+                        @endif
                         <div class="border-t border-gray-100"></div>
                         <x-jet-dropdown-link href="{{ route('reports.issuance.all') }}">
                             {{ __('Drug Issuance') }}

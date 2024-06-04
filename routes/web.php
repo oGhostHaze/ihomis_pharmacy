@@ -47,6 +47,7 @@ use App\Http\Livewire\Pharmacy\References\PndfGenerics;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionSummary;
 use App\Http\Livewire\Pharmacy\Reports\DailyStockCard;
 use App\Http\Livewire\Pharmacy\Reports\DeliverySummary;
+use App\Http\Livewire\Pharmacy\Reports\DrugsIssuedAllLocation;
 use App\Http\Livewire\Pharmacy\Reports\DrugsReturnedSummary;
 use App\Http\Livewire\Pharmacy\Reports\TotalDrugsIssued;
 use App\Http\Livewire\Records\PatientRegister;
@@ -126,6 +127,7 @@ Route::middleware([
     Route::name('reports.')->prefix('/reports')->group(function () {
         Route::get('/delivery-summary', DeliverySummary::class)->name('delivery.sum');
         Route::get('/stock-card', DailyStockCard::class)->name('stkcrd');
+        Route::get('/issuance/consolidated-location', DrugsIssuedAllLocation::class)->name('issuance.consol.loc');
         Route::get('/issuance/log', DrugsTransactionLog::class)->name('issuance.log');
         Route::get('/issuance/all', DrugsIssued::class)->name('issuance.all');
         Route::get('/issuance/total', TotalDrugsIssued::class)->name('issuance.total');
