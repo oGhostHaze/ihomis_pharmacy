@@ -13,61 +13,79 @@ class DrugsIssuedAllLocation extends Component
 {
     use WithPagination;
 
-    public $filter_charge = 'DRUMB,*Drugs and Meds (Revolving) Satellite';
-    public $date_from, $date_to, $dmdcomb, $dmdctr;
-
-    public function updatedSelectedDrug()
-    {
-        $drug = $this->selected_drug;
-        $selected_drug = explode(',', $drug);
-        $this->dmdcomb = $selected_drug[0];
-        $this->dmdctr = $selected_drug[1];
-    }
-
-    public function updatingFilterCharge()
-    {
-        $this->resetPage();
-    }
-    public function updatingMonth()
-    {
-        $this->resetPage();
-    }
+    public $date_from, $date_to;
 
     public function render()
     {
-        $date_from = Carbon::parse($this->date_from)->format('Y-m-d H:i:s');
-        $date_to = Carbon::parse($this->date_to)->format('Y-m-d H:i:s');
+        $date_from = Carbon::parse($this->date_from)->format('Y-m-d H:i');
+        $date_to = Carbon::parse($this->date_to)->format('Y-m-d H:i');
 
-        $charge_codes = ChargeCode::where('bentypcod', 'DRUME')
-            ->where('chrgstat', 'A')
-            ->whereIn('chrgcode', array('DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS', 'DRUMAD', 'DRUMAE', 'DRUMAF', 'DRUMAG', 'DRUMAH', 'DRUMAI', 'DRUMAJ'))
-            ->get();
+        $opd_issued = DB::select("SELECT hdmhdr.drug_concat, COUNT(henctr.enccode) total_issue, CASE henctr.toecode
+                                                                                                    WHEN 'OPD' THEN 'Outpatient'
+                                                                                                    WHEN 'OPDAD' THEN 'Admitted'
+                                                                                                END
+                                                                                                 encounter, serv2.tsdesc tsdesc
+                                    FROM henctr
+                                        LEFT JOIN hopdlog ON henctr.enccode = hopdlog.enccode
+                                        INNER JOIN hrxo ON henctr.enccode = hrxo.enccode
+                                        INNER JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
+                                        LEFT JOIN htypser serv2 ON hopdlog.tscode = serv2.tscode
+                                    WHERE hrxo.dodate BETWEEN '".$date_from."' AND '".$date_to."' AND (henctr.toecode = 'OPD' OR henctr.toecode = 'OPDAD')
+                                    GROUP BY serv2.tsdesc, hrxo.dmdcomb, hrxo.dmdctr, hdmhdr.drug_concat, henctr.toecode
+                                    ORDER BY hdmhdr.drug_concat");
 
-        $filter_charge = explode(',', $this->filter_charge);
+        $er_issued = DB::select("SELECT hdmhdr.drug_concat, COUNT(henctr.enccode) total_issue,  CASE henctr.toecode
+                                                                                                    WHEN 'ER' THEN 'Emergency Room'
+                                                                                                    WHEN 'ERADM' THEN 'Admitted'
+                                                                                                END
+                                                                                                encounter, serv3.tsdesc tsdesc
+                            FROM henctr
+                                LEFT JOIN herlog ON henctr.enccode = herlog.enccode
+                                INNER JOIN hrxo ON henctr.enccode = hrxo.enccode
+                                INNER JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
+                                LEFT JOIN htypser serv3 ON herlog.tscode = serv3.tscode
+                            WHERE hrxo.dodate BETWEEN '".$date_from."' AND '".$date_to."' AND (henctr.toecode = 'ER' OR henctr.toecode = 'ERADM')
+                            GROUP BY serv3.tsdesc, hrxo.dmdcomb, hrxo.dmdctr, hdmhdr.drug_concat, henctr.toecode
+                            ORDER BY hdmhdr.drug_concat");
 
-        $drugs_issued = DB::select("SELECT rxi.enccode, rxi.qty, rxi.hpercode, rxi.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename
-        FROM hrxoissue rxi
-        INNER JOIN hrxo rxo ON rxi.docointkey = rxo.docointkey
-        INNER JOIN hperson as pat ON rxi.hpercode = pat.hpercode
-        LEFT JOIN hpersonal as emp ON rxi.issuedby = emp.employeeid
-        LEFT JOIN pharm_users as emp2 ON rxi.issuedby = emp2.employeeid
-        INNER JOIN hospital.dbo.hdmhdr hdr ON rxo.dmdcomb = hdr.dmdcomb AND rxo.dmdctr = hdr.dmdctr
-        LEFT JOIN hward ward ON (SELECT TOP(1) wardcode FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = ward.wardcode
-        LEFT JOIN hroom room ON (SELECT TOP(1) rmintkey FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = room.rmintkey
-        WHERE issuedfrom = '" . $filter_charge[0] . "'
-        AND issuedte BETWEEN '" . $date_from . "' AND '" . $date_to . "'
-        ORDER BY hdr.drug_concat ASC, rxi.issuedte DESC");
+        $adm_issued = DB::select("SELECT hdmhdr.drug_concat, COUNT(henctr.enccode) total_issue, 'Admitted' encounter, serv.tsdesc tsdesc
+                            FROM henctr
+                                LEFT JOIN hadmlog ON henctr.enccode = hadmlog.enccode
+                                INNER JOIN hrxo ON henctr.enccode = hrxo.enccode
+                                INNER JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
+                                LEFT JOIN htypser serv ON hadmlog.tscode = serv.tscode
+                            WHERE hrxo.dodate BETWEEN '".$date_from."' AND '".$date_to."' AND henctr.toecode = 'ADM'
+                            GROUP BY serv.tsdesc, hrxo.dmdcomb, hrxo.dmdctr, hdmhdr.drug_concat, henctr.toecode
+                            ORDER BY hdmhdr.drug_concat");
+
+        $walkn_issued = DB::select("SELECT hdmhdr.drug_concat, COUNT(henctr.enccode) total_issue, 'Walk In' encounter, hdept.deptname tsdesc
+                            FROM henctr
+                                INNER JOIN hrxo ON henctr.enccode = hrxo.enccode
+                                INNER JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
+                                LEFT JOIN hdept ON hrxo.deptcode = hdept.deptcode
+                            WHERE hrxo.dodate BETWEEN '".$date_from."' AND '".$date_to."' AND henctr.toecode = 'WALKN'
+                            GROUP BY hrxo.dmdcomb, hrxo.dmdctr, hdmhdr.drug_concat, henctr.toecode, hrxo.deptcode, hdept.deptname
+                            ORDER BY hdmhdr.drug_concat");
+
+        $departments = DB::select("SELECT hdept.deptname FROM hdept WHERE deptstat = 'A' UNION SELECT tsdesc FROM htypser WHERE tsstat = 'A'");
 
         return view('livewire.pharmacy.reports.drugs-issued-all-location', [
-            'charge_codes' => $charge_codes,
-            'current_charge' => $filter_charge[1],
-            'drugs_issued' => $drugs_issued,
+            'opd_issued' => $opd_issued,
+            'er_issued' => $er_issued,
+            'adm_issued' => $adm_issued,
+            'walkn_issued' => $walkn_issued,
+            'departments' => $departments,
         ]);
     }
 
     public function mount()
     {
-        $this->date_from = Carbon::parse(now())->startOfWeek()->format('Y-m-d H:i:s');
-        $this->date_to = Carbon::parse(now())->endOfWeek()->format('Y-m-d H:i:s');
+        if (isset($_GET['from']) and isset($_GET['to'])) {
+            $this->date_from = Carbon::parse($_GET['from'])->format('Y-m-d H:i');
+            $this->date_to = Carbon::parse($_GET['to'])->format('Y-m-d H:i');
+        } else {
+            $this->date_from = Carbon::parse(now())->startOfWeek()->format('Y-m-d H:i');
+            $this->date_to = Carbon::parse(now())->endOfWeek()->format('Y-m-d H:i');
+        }
     }
 }

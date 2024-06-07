@@ -32,93 +32,96 @@
                     <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
                         Print</button>
                 </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>From</span>
-                            <input type="datetime-local" class="w-full input input-sm input-bordered"
-                                max="{{ $date_to }}" wire:model.lazy="date_from" />
-                        </label>
+                <form action="{{ route('reports.issuance.consol.loc') }}" method="GET" class="flex">
+                    <div class="ml-2">
+                        <div class="form-control">
+                            <label class="input-group">
+                                <span>From</span>
+                                <input type="datetime-local" class="w-full input input-sm input-bordered"
+                                    max="{{ $date_to }}" wire:model.defer="date_from" name="from" />
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>To</span>
-                            <input type="datetime-local" class="w-full input input-sm input-bordered"
-                                min="{{ $date_from }}" wire:model.lazy="date_to" />
-                        </label>
+                    <div class="ml-2">
+                        <div class="form-control">
+                            <label class="input-group">
+                                <span>To</span>
+                                <input type="datetime-local" class="w-full input input-sm input-bordered"
+                                    min="{{ $date_from }}" wire:model.defer="date_to" name="to" />
+                            </label>
+                        </div>
                     </div>
-                </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>Fund Source</span>
-                            <select class="select select-bordered select-sm" wire:model="filter_charge">
-                                <option></option>
-                                @foreach ($charge_codes as $charge)
-                                    <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
-                                        {{ $charge->chrgdesc }}</option>
-                                @endforeach
-                            </select>
-                        </label>
+                    <div class="ml-2">
+                        <button class="btn btn-sm btn-info" type="submit"><i class="las la-search"></i></button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
-        <div id="print" class="w-full">
-            <table class="w-full bg-white shadow-md table-sm" id="table">
-                <thead class="font-bold bg-gray-200">
-                    <tr class="text-center">
-                        <td class="text-sm uppercase border">#</td>
-                        <td class="text-sm border">Item Description</td>
-                        <td class="text-sm border">QTY</td>
-                        <td class="text-sm border">Date/Time</td>
-                        <td class="text-sm border">Hosp #</td>
-                        <td class="text-sm border">CS #</td>
-                        <td class="text-sm border">Patient's Name</td>
-                        <td class="text-sm border">Location</td>
-                        <td class="text-sm border">Issued By</td>
+        <div id="print" class="w-full bg-white">
+            <table id="table" class="display" style="width:100%">
+                <thead>
+                    <tr>
+                        <th>Item Description</th>
+                        <th>QTY</th>
+                        <th>Encounter Type</th>
+                        <th>Department</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse ($drugs_issued as $rxi)
+                <tbody id="tableBody">
+                    @foreach ($adm_issued as $rxi)
                         @php
                             $concat = implode(',', explode('_,', $rxi->drug_concat));
                         @endphp
-                        <tr classs="border border-black">
-                            <td class="text-sm text-right border">{{ $loop->iteration }}</td>
-                            <td class="text-sm border">
-                                <div class="text-xs">{{ $concat }}</div>
-                            </td>
-                            <td class="text-sm text-right border">{{ number_format($rxi->qty) }}</td>
-                            <td class="text-sm border">{{ date('Y-m-d h:i A', strtotime($rxi->issuedte)) }}</td>
-                            <td class="text-sm border">{{ $rxi->hpercode }}</td>
-                            <td class="text-sm border">
-                                <a rel="noopener noreferrer" class="font-semibold text-blue-600"
-                                    href="{{ route('dispensing.rxo.chargeslip', $rxi->pcchrgcod) }}"
-                                    target="_blank">{{ $rxi->pcchrgcod }}</a>
-                            </td>
-                            <td class="text-sm border">
-                                {{ $rxi->patlast . ', ' . $rxi->patfirst . ' ' . $rxi->patmiddle }}</td>
-                            <td class="text-sm border">
-                                <div>{{ $rxi->wardname }} ({{ $rxi->rmname }})</div>
-                            </td>
-                            <td class="text-xs border">
-                                @if ($rxi->lastname and $rxi->firstname)
-                                    {{ $rxi->lastname . ', ' . $rxi->firstname . ' ' . $rxi->middlename }}
-                                @else
-                                    {{ $rxi->name }}
-                                @endif
-                            </td>
+                        <tr>
+                            <td class="text-xs">{{ $concat }}</td>
+                            <td>{{ number_format($rxi->total_issue) }}</td>
+                            <td>{{ $rxi->encounter }}</td>
+                            <td> {{ $rxi->tsdesc }} </td>
                         </tr>
-                    @empty
-                    @endforelse
+                    @endforeach
+                    @foreach ($opd_issued as $rxi)
+                        @php
+                            $concat = implode(',', explode('_,', $rxi->drug_concat));
+                        @endphp
+                        <tr>
+                            <td class="text-xs">{{ $concat }}</td>
+                            <td>{{ number_format($rxi->total_issue) }}</td>
+                            <td>{{ $rxi->encounter }}</td>
+                            <td> {{ $rxi->tsdesc }} </td>
+                        </tr>
+                    @endforeach
+                    @foreach ($er_issued as $rxi)
+                        @php
+                            $concat = implode(',', explode('_,', $rxi->drug_concat));
+                        @endphp
+                        <tr>
+                            <td class="text-xs">{{ $concat }}</td>
+                            <td>{{ number_format($rxi->total_issue) }}</td>
+                            <td>{{ $rxi->encounter }}</td>
+                            <td> {{ $rxi->tsdesc }} </td>
+                        </tr>
+                    @endforeach
+                    @foreach ($walkn_issued as $rxi)
+                        @php
+                            $concat = implode(',', explode('_,', $rxi->drug_concat));
+                        @endphp
+                        <tr>
+                            <td class="text-xs">{{ $concat }}</td>
+                            <td>{{ number_format($rxi->total_issue) }}</td>
+                            <td>{{ $rxi->encounter }}</td>
+                            <td> {{ $rxi->tsdesc ?? 'N/A' }} </td>
+                        </tr>
+                    @endforeach
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <th>Item Description</th>
+                        <th></th>
+                        <th>Encounter Type</th>
+                        <th>Department</th>
+                    </tr>
+                </tfoot>
             </table>
-        </div>
-        <div class="mt-2">
-            {{-- {{ $drugs_issued->links() }} --}}
         </div>
     </div>
 </div>
@@ -140,39 +143,42 @@
                 XLSX.writeFile(wb, fn || ('Ward Consumption Report.' + (type || 'xlsx')));
         }
 
-        $('#table').dataTable({
-            "bPaginate": false,
-            "searching": false,
-            "pageLength": 1000000,
-            "bInfo": false,
-            "columns": [{
-                    "width": "5%"
-                },
-                {
-                    "width": "20%"
-                },
-                {
-                    "width": "5%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "20%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                }
-            ]
+        new DataTable('#table', {
+            initComplete: function() {
+                this.api()
+                    .columns()
+                    .every(function() {
+                        let column = this;
+                        if (column[0] != 1) {
+                            // Create select element
+                            let select = document.createElement('select');
+                            select.className = "select select-bordered select-sm"
+                            select.add(new Option('All', ''));
+                            column.footer().replaceChildren(select);
+
+                            // Apply listener for user change in value
+                            select.addEventListener('change', function() {
+                                column
+                                    .search(select.value, {
+                                        exact: true
+                                    })
+                                    .draw();
+                            });
+
+                            // Add list of options
+                            column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function(d, j) {
+                                    select.add(new Option(d));
+                                });
+                        }
+                    });
+            },
+            paging: false,
+            scrollY: 600,
+            dom: 'lrtip',
         });
 
         function printMe() {
