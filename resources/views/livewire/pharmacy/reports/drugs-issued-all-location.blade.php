@@ -120,6 +120,12 @@
                         <th>Encounter Type</th>
                         <th>Department</th>
                     </tr>
+                    <tr>
+                        <th>Item Description</th>
+                        <th></th>
+                        <th>Encounter Type</th>
+                        <th>Department</th>
+                    </tr>
                 </tfoot>
             </table>
         </div>
