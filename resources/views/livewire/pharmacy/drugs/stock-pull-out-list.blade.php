@@ -15,7 +15,7 @@
     <div class="flex justify-end">
         <div class="flex">
             <div class="mt-auto">
-                <button class="btn btn-sm btn-warning" onclick="pull_out()">Pull-out
+                <button class="btn btn-sm btn-warning" onclick="pull_out()" wire:loading.attr="disabled">Pull-out
                     Items</button>
             </div>
             @can('filter-stocks-location')

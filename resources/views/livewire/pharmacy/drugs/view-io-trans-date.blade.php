@@ -19,8 +19,10 @@
         <div class="flex justify-end space-x-3">
             @can('request-drugs')
                 <div class="flex space-x-2">
-                    <button class="btn btn-sm btn-primary" onclick="add_request()">Add Request</button>
-                    <button class="btn btn-sm btn-secondary" onclick="add_more_request()">Add To Last Request</button>
+                    <button class="btn btn-sm btn-primary" onclick="add_request()" wire:loading.attr="disabled">Add
+                        Request</button>
+                    <button class="btn btn-sm btn-secondary" onclick="add_more_request()" wire:loading.attr="disabled">Add
+                        To Last Request</button>
                 </div>
             @endcan
             <button class="btn btn-sm" onclick="printMe()" wire:loading.attr="disabled">Print</button>
@@ -162,7 +164,8 @@
                 </div>
                 <div class="flex justify-end mt-3">
                     <div>
-                        <button class="btn btn-primary" onclick="issue_request()">Issue</button>
+                        <button class="btn btn-primary" onclick="issue_request()"
+                            wire:loading.attr="disabled">Issue</button>
                     </div>
                 </div>
             @endif

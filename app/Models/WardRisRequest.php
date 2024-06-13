@@ -26,6 +26,7 @@ class WardRisRequest extends Model
         'loc_code',
         'chrgcode',
         'issued_qty',
+        'return_qty',
         'issued_by',
         'trans_stat',
         'dmdprdte'

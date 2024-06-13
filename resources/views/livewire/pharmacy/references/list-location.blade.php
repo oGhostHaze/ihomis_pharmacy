@@ -17,7 +17,8 @@
 <div class="flex flex-col py-5 mx-auto max-w-screen-2xl">
     <div class="flex justify-between">
         <div>
-            <button class="btn btn-sm btn-primary" onclick="location_modal()">Create Location</button>
+            <button class="btn btn-sm btn-primary" onclick="location_modal()" wire:loading.attr="disabled">Create
+                Location</button>
         </div>
         <div>
             <div class="form-control">

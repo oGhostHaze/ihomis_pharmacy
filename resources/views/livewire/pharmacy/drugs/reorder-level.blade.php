@@ -138,7 +138,8 @@
                         </td>
                         <td class="text-end">
                             <button class="btn btn-ghost btn-sm text-primary tooltip" data-tip="update point"
-                                onclick="update_reorder(`{{ $stk->dmdcomb }}`, `{{ $stk->dmdctr }}`, `{{ $stk->reorder_point ?? 0 }}`)">
+                                onclick="update_reorder(`{{ $stk->dmdcomb }}`, `{{ $stk->dmdctr }}`, `{{ $stk->reorder_point ?? 0 }}`)"
+                                wire:loading.attr="disabled">
                                 <i class="las la-edit"></i>
                             </button>{{ $stk->reorder_point ?? 'Not Set' }}
                         </td>

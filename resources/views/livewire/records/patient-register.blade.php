@@ -15,7 +15,8 @@
                 Patient Registration Form
             </span>
         </div>
-        <button class="btn btn-sm btn-primary" wire:click="submit_request"><i class="las la-lg la-save"></i>
+        <button class="btn btn-sm btn-primary" wire:click="submit_request" wire:loading.attr="disabled"><i
+                class="las la-lg la-save"></i>
             Save</button>
     </div>
     <div class="shadow-xl card bg-base-100">
@@ -227,7 +228,8 @@
                                     <small class="text-error">{{ $message }}</small>
                                 @enderror
 
-                                <button class="mt-3 btn btn-sm btn-secondary" wire:click='check_record'>Check
+                                <button class="mt-3 btn btn-sm btn-secondary" wire:click='check_record'
+                                    wire:loading.attr="disabled">Check
                                     Record</button>
                             </div>
                         </div>

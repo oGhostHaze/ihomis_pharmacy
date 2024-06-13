@@ -102,9 +102,11 @@
                             <div class="flex space-x-2">
                                 @can('update-stock-item')
                                     <button class="text-xs btn bg-warning btn-xs"
-                                        onclick="update_item({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgcode }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}', '{{ $stk->dmduprice }}', '{{ $stk->has_compounding }}', '{{ $stk->compounding_fee }}')">Update</button>
+                                        onclick="update_item({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgcode }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}', '{{ $stk->dmduprice }}', '{{ $stk->has_compounding }}', '{{ $stk->compounding_fee }}')"
+                                        wire:loading.attr="disabled">Update</button>
                                     <button class="text-xs btn bg-info btn-xs"
-                                        onclick="adjust_qty({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgdesc }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}')">Adjust
+                                        onclick="adjust_qty({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgdesc }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}')"
+                                        wire:loading.attr="disabled">Adjust
                                         QTY</button>
                                 @endcan
                             </div>

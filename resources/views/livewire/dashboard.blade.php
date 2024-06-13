@@ -24,9 +24,11 @@
                                 : '<span class="p-3 text-xl font-bold uppercase badge badge-error">Inactive</span>' !!}</p>
                             <div class="justify-end card-actions">
                                 @if (session('active_consumption'))
-                                    <button class="btn btn-xs btn-error" onclick="stop_log()">Stop</button>
+                                    <button class="btn btn-xs btn-error" onclick="stop_log()"
+                                        wire:loading.attr="disabled">Stop</button>
                                 @else
-                                    <button class="btn btn-xs btn-primary" onclick="start_log()">Start</button>
+                                    <button class="btn btn-xs btn-primary" onclick="start_log()"
+                                        wire:loading.attr="disabled">Start</button>
                                 @endif
                             </div>
                         </div>

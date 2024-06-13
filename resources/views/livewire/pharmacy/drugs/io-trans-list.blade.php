@@ -15,8 +15,10 @@
     <div class="flex justify-between">
         <div>
             <div class="flex space-x-2">
-                <button class="btn btn-sm btn-primary" onclick="bypass_issue()">Issue Item</button>
-                <button class="btn btn-sm btn-secondary" onclick="bypass_issue(true)">Issue To Last Request</button>
+                <button class="btn btn-sm btn-primary" onclick="bypass_issue()" wire:loading.attr="disabled">Issue
+                    Item</button>
+                <button class="btn btn-sm btn-secondary" onclick="bypass_issue(true)" wire:loading.attr="disabled">Issue
+                    To Last Request</button>
             </div>
         </div>
         <div>
@@ -146,10 +148,12 @@
                 </div>
                 <div class="flex justify-between mt-3">
                     <div>
-                        <button class="btn btn-error" onclick="deny_request()">Deny</button>
+                        <button class="btn btn-error" onclick="deny_request()"
+                            wire:loading.attr="disabled">Deny</button>
                     </div>
                     <div>
-                        <button class="btn btn-primary" onclick="issue_request()">Issue</button>
+                        <button class="btn btn-primary" onclick="issue_request()"
+                            wire:loading.attr="disabled">Issue</button>
                     </div>
                 </div>
             @endif

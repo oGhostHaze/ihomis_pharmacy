@@ -64,13 +64,20 @@
                         </th>
                         <td class="text-xs">{{ $tran->created_at }}</td>
                         <td class="text-xs">{{ $tran->ward->ward_name }}</td>
-                        <td class="text-xs cursor-pointer">
+                        <td class="text-xs cursor-pointer"
+                            @if ($tran->issued_qty > 0) onclick="cancel_issue({{ $tran->id }})" @endif>
                             <span class="text-blue-500">
                                 <i class="las la-lg la-hand-pointer"></i>
                                 {{ $tran->drug->drug_concat() }}
                             </span>
                         </td>
-                        <td class="text-xs">{{ number_format($tran->issued_qty < 1 ? '0' : $tran->issued_qty) }}</td>
+                        <td class="text-xs">
+                            @if ($tran->return_qty > 0)
+                                <span class="text-error">{{ number_format($tran->return_qty) }} (returned)</span>
+                            @else
+                                {{ number_format($tran->issued_qty < 1 ? '0' : $tran->issued_qty) }}
+                            @endif
+                        </td>
                         <td class="text-xs">
                             {{ $tran->charge->chrgdesc }}
                         </td>
@@ -82,6 +89,24 @@
 
 @push('scripts')
     <script>
+        function cancel_issue(trans_id) {
+            Swal.fire({
+                title: 'Are you sure you want to cancel this transaction?',
+                showCancelButton: true,
+                confirmButtonText: 'Continue',
+                confirmButtonColor: 'red',
+                html: `
+                    <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
+                    <div class="mt-2 text-slate-500" id="inf">All items issued that have not been received will return to warehouse. <br>This process cannot be undone. Continue?</div>
+                `,
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    Livewire.emit('cancel_issue', trans_id)
+                }
+            })
+        }
+
         function printMe() {
             var printContents = document.getElementById('print').innerHTML;
             var originalContents = document.body.innerHTML;

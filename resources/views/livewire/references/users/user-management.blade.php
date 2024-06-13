@@ -66,10 +66,6 @@
                                 <div><button class="btn btn-sm btn-info"
                                         onclick="update_role('{{ $user->id }}', '{{ $user->getRoleNames()->first() }}')"><i
                                             class="las la-user-shield la-lg"></i></button></div>
-                                <div><button class="btn btn-sm btn-warning"
-                                        wire:click="toggle_active({{ $user->id }})"><i
-                                            class="las la-undo la-lg"></i></button>
-                                </div>
                             </div>
                         </td>
                     </tr>

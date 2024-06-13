@@ -15,16 +15,12 @@
     <div class="flex justify-between">
         @can('request-drugs')
             <div class="flex space-x-2">
-                <button class="btn btn-sm btn-primary" onclick="add_request()">Add Request</button>
-                <button class="btn btn-sm btn-secondary" onclick="add_more_request()">Add To Last Request</button>
+                <button class="btn btn-sm btn-primary" onclick="add_request()" wire:loading.attr="disabled">Add
+                    Request</button>
+                <button class="btn btn-sm btn-secondary" onclick="add_more_request()" wire:loading.attr="disabled">Add To
+                    Last Request</button>
             </div>
         @endcan
-        {{-- <div>
-            <button class="btn btn-sm btn-primary" wire:click="notify_request()">notify_request</button>
-        </div>
-        <div>
-            <button class="btn btn-sm btn-primary" wire:click="notify_user()">notify_user</button>
-        </div> --}}
         <div>
             <div class="form-control">
                 <label class="input-group input-group-sm">
@@ -158,7 +154,8 @@
                 </div>
                 <div class="flex justify-end mt-3">
                     <div>
-                        <button class="btn btn-primary" onclick="issue_request()">Issue</button>
+                        <button class="btn btn-primary" onclick="issue_request()"
+                            wire:loading.attr="disabled">Issue</button>
                     </div>
                 </div>
             @endif

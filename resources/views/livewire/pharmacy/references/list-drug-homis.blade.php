@@ -108,7 +108,8 @@
                     <input type="text" class="w-full input input-bordered" wire:model.defer="interactions" />
                 </label>
 
-                <button class="mt-3 ml-auto btn btn-sm btn-primary" wire:click="new_generic">Save</button>
+                <button class="mt-3 ml-auto btn btn-sm btn-primary" wire:click="new_generic"
+                    wire:loading.attr="disabled">Save</button>
             </p>
         </div>
     </div>
@@ -201,7 +202,8 @@
                     </select>
                 </label>
 
-                <button class="mt-3 ml-auto btn btn-sm btn-primary" wire:click="new_generic">Save</button>
+                <button class="mt-3 ml-auto btn btn-sm btn-primary" wire:click="new_generic"
+                    wire:loading.attr="disabled">Save</button>
             </p>
         </div>
     </div>

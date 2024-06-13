@@ -162,7 +162,8 @@
                 </div>
                 <div class="flex justify-end mt-3">
                     <div>
-                        <button class="btn btn-primary" onclick="issue_request()">Issue</button>
+                        <button class="btn btn-primary" onclick="issue_request()"
+                            wire:loading.attr="disabled">Issue</button>
                     </div>
                 </div>
             @endif

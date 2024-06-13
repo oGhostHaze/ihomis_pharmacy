@@ -534,31 +534,6 @@ class EncounterTransactionView extends Component
         $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
 
         //RECORD RETURN ITEM TO hrxoreturn table
-        // DrugOrderReturn::create([
-        //     'docointkey' => $item->docointkey,
-        //     'enccode' => $item->enccode,
-        //     'hpercode' => $item->hpercode,
-        //     'dmdcomb' => $item->dmdcomb,
-        //     'returndate' => now(),
-        //     'returntime' => now(),
-        //     'qty' => $this->return_qty,
-        //     'returnby' => session('employeeid'),
-        //     'status' => 'A',
-        //     'rxolock' => 'N',
-        //     'updsw' => 'N',
-        //     'confdl' => 'N',
-        //     'entryby' => session('employeeid'),
-        //     'locacode' => $item->locacode,
-        //     'dmdctr' => $item->dmdctr,
-        //     'dmdprdte' => $item->dmdprdte,
-        //     'remarks' => $item->remarks,
-        //     'returnfrom' => $item->orderfrom,
-        //     'chrgcode' => $item->orderfrom,
-        //     'pcchrgcod' => $item->pcchrgcod,
-        //     'rcode' => '',
-        //     'unit_price' => $item->pchrgup,
-        //     'pchrgup' => $item->pchrgup,
-        // ]);
 
         DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
                 docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
@@ -612,7 +587,6 @@ class EncounterTransactionView extends Component
                 $stock_issued->qty = 0;
             }
             //Return QTY to DrugStock table
-            // $stock_issued->stock->stock_bal += $returned_qty;
             $stock = DrugStock::firstOrCreate([
                 'dmdcomb' => $item->dmdcomb,
                 'dmdctr' => $item->dmdctr,
@@ -635,7 +609,6 @@ class EncounterTransactionView extends Component
             $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
 
             $log = DrugStockLog::firstOrNew([
-                // 'loc_code' => $stock_issued->stock->loc_code,
                 'loc_code' => $this->location_id,
                 'dmdcomb' => $stock_issued->stock->dmdcomb,
                 'dmdctr' => $stock_issued->stock->dmdctr,
@@ -649,7 +622,6 @@ class EncounterTransactionView extends Component
             $log->return_qty += $returned_qty;
 
             $log->save();
-            // $stock_issued->stock->save();
             $stock->save();
             $stock_issued->save();
         }

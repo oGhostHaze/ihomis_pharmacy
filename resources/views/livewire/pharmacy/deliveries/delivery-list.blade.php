@@ -14,7 +14,8 @@
 <div class="flex flex-col py-5 mx-auto max-w-screen-2xl">
     <div class="flex justify-between">
         <div>
-            <button class="btn btn-sm btn-primary" onclick="new_delivery()">Add Delivery</button>
+            <button class="btn btn-sm btn-primary" onclick="new_delivery()" wire:loading.attr="disabled">Add
+                Delivery</button>
         </div>
         <div>
             <div class="form-control">

@@ -15,9 +15,9 @@
     <div class="flex justify-between">
         <div class="flex space-x-2">
             @can('view-ris')
-                <label class="btn btn-sm btn-primary" for="issueModal">Issue RIS</label>
-                <button class="btn btn-sm btn-warning" wire:click="append">Append Last RIS</button>
-                {{-- <button class="btn btn-sm btn-secondary" onclick="issue_more_ris()">Add To Last Request</button> --}}
+                <label class="btn btn-sm btn-primary" for="issueModal" wire:loading.attr="disabled">Issue RIS</label>
+                <button class="btn btn-sm btn-warning" wire:click="append" wire:loading.attr="disabled">Append Last
+                    RIS</button>
             @endcan
         </div>
         <div>
@@ -61,13 +61,20 @@
                         </td>
                         <td class="text-xs">{{ $tran->location->description }}</td>
                         <td class="text-xs">{{ $tran->ward->ward_name }}</td>
-                        <td class="text-xs cursor-pointer">
+                        <td class="text-xs cursor-pointer"
+                            @if ($tran->issued_qty > 0) onclick="cancel_issue({{ $tran->id }})" @endif>
                             <span class="text-blue-500">
                                 <i class="las la-lg la-hand-pointer"></i>
                                 {{ $tran->drug->drug_concat() }}
                             </span>
                         </td>
-                        <td class="text-xs">{{ number_format($tran->issued_qty < 1 ? '0' : $tran->issued_qty) }}</td>
+                        <td class="text-xs">
+                            @if ($tran->return_qty > 0)
+                                <span class="text-error">{{ number_format($tran->return_qty) }} (returned)</span>
+                            @else
+                                {{ number_format($tran->issued_qty < 1 ? '0' : $tran->issued_qty) }}
+                            @endif
+                        </td>
                         <td class="text-xs">
                             {{ $tran->charge->chrgdesc }}
                         </td>
@@ -154,10 +161,10 @@
                     </div>
                 </div>
                 <div class="flex mt-auto space-x-2">
-                    <button class="mt-auto btn btn-primary" wire:click="issue_ris"
-                        x-bind:disabled="!accept">Issue</button>
-                    <button class="mt-auto btn btn-warning" wire:click="issue_ris(true)"
-                        x-bind:disabled="!accept">Issue and Append</button>
+                    <button class="mt-auto btn btn-primary" wire:click="issue_ris" x-bind:disabled="!accept"
+                        wire:loading.attr="disabled">Issue</button>
+                    <button class="mt-auto btn btn-warning" wire:click="issue_ris(true)" x-bind:disabled="!accept"
+                        wire:loading.attr="disabled">Issue and Append</button>
                 </div>
             </div>
         </div>
@@ -236,10 +243,10 @@
                     </div>
                 </div>
                 <div class="mt-auto">
-                    <button class="mt-auto btn btn-primary" wire:click="issue_ris"
-                        x-bind:disabled="!accept">Issue</button>
-                    <button class="mt-auto btn btn-warning" wire:click="issue_ris(true)"
-                        x-bind:disabled="!accept">Issue and Append</button>
+                    <button class="mt-auto btn btn-primary" wire:click="issue_ris" x-bind:disabled="!accept"
+                        wire:loading.attr="disabled">Issue</button>
+                    <button class="mt-auto btn btn-warning" wire:click="issue_ris(true)" x-bind:disabled="!accept"
+                        wire:loading.attr="disabled">Issue and Append</button>
                 </div>
             </div>
         </div>
@@ -248,7 +255,7 @@
 
 @push('scripts')
     <script>
-        function cancel_tx(trans_id) {
+        function cancel_issue(trans_id) {
             Swal.fire({
                 title: 'Are you sure you want to cancel this transaction?',
                 showCancelButton: true,
@@ -261,7 +268,7 @@
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
-                    Livewire.emit('cancel_tx', trans_id)
+                    Livewire.emit('cancel_issue', trans_id)
                 }
             })
         }
