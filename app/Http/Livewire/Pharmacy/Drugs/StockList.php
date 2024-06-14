@@ -80,7 +80,11 @@ class StockList extends Component
 
     public function mount()
     {
-        $this->location_id = session('pharm_location_id');
+        if (isset($_GET['location_id'])) {
+            $this->location_id = $_GET['location_id'];
+        } else {
+            $this->location_id = session('pharm_location_id');
+        }
 
         $this->locations = PharmLocation::all();
 
@@ -190,6 +194,7 @@ class StockList extends Component
 
         $this->resetExcept('location_id', 'drugs', 'locations', 'charge_codes');
         $this->alert('success', 'Item beginning balance has been saved!');
+        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
     }
 
     public function update_item_new(DrugStock $stock)
@@ -296,6 +301,7 @@ class StockList extends Component
 
         $this->resetExcept('location_id', 'drugs', 'locations', 'charge_codes');
         $this->alert('success', 'Item beginning balance has been saved!');
+        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
     }
 
     public function add_item()
@@ -370,12 +376,14 @@ class StockList extends Component
 
         $this->resetExcept('location_id', 'drugs', 'locations', 'charge_codes');
         $this->alert('success', 'Item beginning balance has been saved!');
+        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
     }
 
     public function sync_items()
     {
         Artisan::call('init:drugconcat');
         $this->alert('success', 'Items in sync');
+        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
     }
 
     public function adjust_qty($stock_id, $qty)
@@ -394,6 +402,7 @@ class StockList extends Component
             'to_qty' => $qty,
         ]);
 
-        return $this->alert('success', 'Success!');
+        $this->alert('success', 'Success!');
+        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
     }
 }

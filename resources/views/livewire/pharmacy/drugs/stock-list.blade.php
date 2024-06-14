@@ -35,31 +35,23 @@
                 </div>
             @endcan
             @can('filter-stocks-location')
-                <div class="mt-auto form-control">
-                    <label class="label">
-                        <span class="label-text">Current Location</span>
-                    </label>
-                    <select class="w-full max-w-xs text-xs select select-bordered select-xs select-success"
-                        wire:model="location_id">
-                        @foreach ($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->description }}</option>
-                        @endforeach
-                    </select>
-                </div>
+                <form action="{{ route('dmd.stk') }}" method="GET" class="flex">
+                    <div class="mt-auto form-control">
+                        <select class="w-full max-w-xs text-xs select select-bordered select-xs select-success"
+                            wire:model.defer="location_id" name="location_id">
+                            @foreach ($locations as $loc)
+                                <option value="{{ $loc->id }}">{{ $loc->description }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mt-auto">
+                        <button class="btn btn-xs btn-secondary" type="submit"><i class="las la-search"></i></button>
+                    </div>
+                </form>
             @endcan
             <div class="mt-auto">
                 <button class="btn btn-xs bg-info" wire:click="sync_items" wire:loading.attr="disabled"><i
                         class="mr-1 las la-lg la-sync"></i>Sync</button>
-            </div>
-            <div class="form-control">
-                <label class="label">
-                    <span class="label-text">Seach generic name</span>
-                </label>
-                <label class="input-group input-group-xs">
-                    <span><i class="las la-search"></i></span>
-                    <input type="text" placeholder="Search" class="input input-bordered input-xs"
-                        wire:model.lazy="search" />
-                </label>
             </div>
         </div>
     </div>
@@ -70,20 +62,17 @@
         <span class="mr-1 shadow-md badge badge-sm badge-warning">Below 6 Months till expiry</span>
         <span class="mr-1 shadow-md badge badge-sm badge-error">Expired</span>
     </div>
-    <div class="flex flex-col justify-center w-full mt-2 overflow-x-auto bg-white">
-        <table class="w-full border">
+    <div class="flex flex-col justify-center w-full p-5 mt-2 overflow-x-auto bg-white">
+        <table class="w-full border" id="table">
             <thead>
                 <tr class="text-white bg-slate-500">
-                    <th class="px-1 border">Source of Fund</th>
-                    <th class="px-1 border">Balance as of</th>
-                    <th class="px-1 border">Generic</th>
-                    @role('warehouse')
-                        <th class="px-1 border">Cost</th>
-                    @endrole
-                    <th class="px-1 border text-end">Price</th>
-                    <th class="px-1 border text-end">Stock Balance</th>
-                    <th class="px-1 text-center border">Expiry Date</th>
-                    <th class="px-1 border">Actions</th>
+                    <th class="px-1 text-sm border">Source of Fund</th>
+                    <th class="px-1 text-sm border">Balance as of</th>
+                    <th class="px-1 text-sm border">Generic</th>
+                    <th class="px-1 text-sm border text-end">Price</th>
+                    <th class="px-1 text-sm border text-end">Stock Balance</th>
+                    <th class="px-1 text-sm text-center border">Expiry Date</th>
+                    <th class="px-1 text-sm border">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -92,9 +81,6 @@
                         <th class="px-1 text-xs border">{{ $stk->chrgdesc }}</th>
                         <td class="px-1 text-xs border">{{ $stk->updated_at }}</td>
                         <td class="px-1 text-xs font-bold border">{{ $stk->drug_concat() }}</td>
-                        @role('warehouse')
-                            <th class="px-1 text-xs border">{{ $stk->dmduprice }}</th>
-                        @endrole
                         <td class="px-1 text-xs border text-end">{{ $stk->dmselprice }}</td>
                         <td class="px-1 text-xs border text-end">{{ number_format($stk->stock_bal) }}</td>
                         <td class="px-1 text-xs text-center border">{!! $stk->expiry() !!}</td>
@@ -118,8 +104,27 @@
                     </tr>
                 @endforelse
             </tbody>
+            <tfoot>
+                <tr>
+                    <th>Source of Fund</th>
+                    <th></th>
+                    <th>Generic</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr class="text-xs text-white bg-slate-500">
+                    <th>Source of Fund</th>
+                    <th></th>
+                    <th>Generic</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </tfoot>
         </table>
-        {{-- {{ $stocks->links() }} --}}
     </div>
 </div>
 
@@ -345,5 +350,44 @@
                 }
             });
         }
+
+        new DataTable('#table', {
+            initComplete: function() {
+                this.api()
+                    .columns()
+                    .every(function() {
+                        let column = this;
+                        var warehouse = false;
+                        if (column[0] != 6 && column[0] != 5 && column[0] != 4 && column[0] != 3 && column[
+                                0] != 1) {
+                            // Create select element
+                            let select = document.createElement('select');
+                            select.className = "select select-bordered select-xs"
+                            select.add(new Option('All', ''));
+                            column.footer().replaceChildren(select);
+
+                            // Apply listener for user change in value
+                            select.addEventListener('change', function() {
+                                column
+                                    .search(select.value, {
+                                        exact: true
+                                    })
+                                    .draw();
+                            });
+
+                            // Add list of options
+                            column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function(d, j) {
+                                    select.add(new Option(d));
+                                });
+                        }
+                    });
+            },
+            paging: false,
+            scrollY: 400,
+        });
     </script>
 @endpush
