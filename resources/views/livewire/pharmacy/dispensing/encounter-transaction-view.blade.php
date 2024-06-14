@@ -1,5 +1,5 @@
 <x-slot name="header">
-    <div class="text-sm breadcrumbs">
+    <div class="text-xs breadcrumbs">
         <ul>
             <li class="font-bold">
                 <i class="mr-1 las la-map-marked la-lg"></i> {{ session('pharm_location_name') }}
@@ -50,47 +50,18 @@
                         </div>
                     @endif
                 </div>
-                <table class="w-full mb-40 text-sm table-compact">
+                <table class="w-full mb-40 table-compact table-xs">
                     <thead class="sticky font-bold bg-gray-200" wire:ignore>
                         <tr>
-                            <td colspan="4" class="w-1/3 border border-black"><span>Hospital #: </span> <span
-                                    class="fw-bold">{{ $hpercode }}</span></td>
-                            <td colspan="7" class="w-2/3 border border-black">
+                            <td colspan="3" class="text-xs border border-black"><span class="text-xs">Hospital #:
+                                </span> <span class="fw-bold">{{ $hpercode }}</span></td>
+                            <td colspan="4" class="text-xs border border-black">
                                 <span>Diagnosis: </span>
                                 <div class="text-xs font-light">
-                                    {{-- <p class="break-words">{{ $encounter->diag->diagtext ?? 'N/A' }}</p> --}}
-                                    <p class="break-words">{{ $diagtext ?? 'N/A' }}</p>
+                                    <p class="text-xs break-words">{{ $diagtext ?? 'N/A' }}</p>
                                 </div>
                             </td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="w-1/3 border border-black"><span>Last Name: </span> <span
-                                    class="fw-bold">{{ $patlast }}</span></td>
-                            <td colspan="5" class="w-1/3 border border-black"><span>First Name: </span> <span
-                                    class="fw-bold">{{ $patfirst }}</span></td>
-                            <td colspan="3" class="w-1/3 border border-black"><span>Middle Name: </span> <span
-                                    class="fw-bold">{{ $patmiddle }}</span></td>
-                        </tr>
-                        <tr>
-                            <td colspan="5" class="w-1/3 border border-black">
-                                <span class="fw-bold">
-                                    <div class="flex space-x-2">
-                                        <span>Room/Encounter Type: </span>
-                                        @if ($toecode == 'ADM' or $toecode == 'OPDAD' or $toecode == 'ERADM')
-                                            <div> {{ $wardname }}</div>
-                                            <div class="text-sm">{{ $rmname }} /
-                                            </div>
-                                        @endif
-                                        {{ $toecode }}
-                                    </div>
-                                </span>
-                            </td>
-                            <td colspan="6" class="border border-black"><span>Encounter Date/Time: </span> <span
-                                    class="fw-bold">{{ \Carbon\Carbon::create($encdate)->format('F j, Y / g:i A') }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td colspan="11" class="border border-black">Patient Classification:
+                            <td colspan="4" class="text-xs border border-black">Patient Classification:
                                 @php
                                     $class = '---';
                                     // if ($mss) {
@@ -121,7 +92,36 @@
                                     }
                                     // }
                                 @endphp
-                                <span class="uppercase">{{ $class }}</span>
+                                <span class="text-xs uppercase">{{ $class }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="w-1/3 text-xs border border-black"><span class="text-xs">Last
+                                    Name: </span> <span class="text-xs fw-bold">{{ $patlast }}</span></td>
+                            <td colspan="5" class="w-1/3 text-xs border border-black"><span class="text-xs">First
+                                    Name: </span> <span class="text-xs fw-bold">{{ $patfirst }}</span></td>
+                            <td colspan="3" class="w-1/3 text-xs border border-black"><span class="text-xs">Middle
+                                    Name: </span>
+                                <span class="text-xs fw-bold">{{ $patmiddle }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="5" class="w-1/3 text-xs border border-black">
+                                <span class="fw-bold">
+                                    <div class="flex space-x-2">
+                                        <span>Room/Encounter Type: </span>
+                                        @if ($toecode == 'ADM' or $toecode == 'OPDAD' or $toecode == 'ERADM')
+                                            <div> {{ $wardname }}</div>
+                                            <div class="text-xs">{{ $rmname }} /
+                                            </div>
+                                        @endif
+                                        {{ $toecode }}
+                                    </div>
+                                </span>
+                            </td>
+                            <td colspan="6" class="text-xs border border-black"><span>Encounter Date/Time: </span>
+                                <span
+                                    class="fw-bold">{{ \Carbon\Carbon::create($encdate)->format('F j, Y / g:i A') }}</span>
                             </td>
                         </tr>
                         <tr class="border border-black">
@@ -132,7 +132,7 @@
                             <td></td>
                             <td></td>
                             <td></td>
-                            <td colspan="3" class="text-right uppercase">Grand Total:
+                            <td colspan="3" class="text-xs text-right uppercase">Grand Total:
                                 <span id="sum"></span>
                                 {{-- {{ number_format($encounter->rxo->sum('pcchrgamt'), 2) }}</td> --}}
                             </td>
@@ -161,13 +161,13 @@
                                 $drug = implode('', $concat);
                             @endphp
                             <tr class="border">
-                                <td class="w-10 text-center">
+                                <td class="w-10 text-xs text-center">
                                     <input type="checkbox"
                                         class="checkbox{{ '-' . ($rxo->pcchrgcod ?? 'blank') }}{{ date('mdY', strtotime($rxo->dodate)) }}"
                                         wire:model.defer="selected_items" wire:key="item-{{ $rxo->docointkey }}"
                                         name="docointkey" value="'{{ $rxo->docointkey }}'" />
                                 </td>
-                                <td class="whitespace-nowrap w-min" title="View Charge Slip">
+                                <td class="text-xs whitespace-nowrap w-min" title="View Charge Slip">
                                     <div class="flex flex-col align-center">
                                         @if ($rxo->pcchrgcod)
                                             <a rel="noopener noreferrer" class="font-semibold text-blue-600"
@@ -177,21 +177,21 @@
                                         <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
                                     </div>
                                 </td>
-                                <td class="align-center whitespace-nowrap w-min">
+                                <td class="text-xs align-center whitespace-nowrap w-min">
                                     <div class="flex flex-col">
                                         <div>{{ date('m/d/Y', strtotime($rxo->dodate)) }}</div>
                                         <div>{{ date('h:i A', strtotime($rxo->dodate)) }}</div>
                                     </div>
                                 </td>
-                                <td class="w-max">
+                                <td class="w-6/12 text-xs">
                                     <div class="flex flex-col">
                                         <div class="text-xs text-slate-600">{{ $rxo->chrgdesc ?? '' }}</div>
-                                        <div class="text-sm font-bold whitespace-nowrap">{{ $concat[0] }}</div>
-                                        <div class="text-xs text-center text-slate-800">
+                                        <div class="text-xs font-bold">{{ $concat[0] }}</div>
+                                        <div class="ml-10 text-xs text-slate-800">
                                             {{ $concat[1] }}</div>
                                     </div>
                                 </td>
-                                <td class="w-20 text-right whitespace-nowrap">
+                                <td class="w-20 text-xs text-right whitespace-nowrap">
                                     @if (!$rxo->pcchrgcod)
                                         <span class="cursor-pointer tooltip" data-tip="Update"
                                             onclick="update_qty('{{ $rxo->docointkey }}', {{ $rxo->pchrgqty }}, {{ $rxo->pchrgup }}, {{ $rxo->pcchrgamt }}, `{{ $concat[0] }} <br>{{ $concat[1] }}`)">
@@ -202,7 +202,7 @@
                                         {{ number_format($rxo->pchrgqty) }}
                                     @endif
                                 </td>
-                                <td class="w-20 text-right whitespace-nowrap">
+                                <td class="w-20 text-xs text-right whitespace-nowrap">
                                     @if ($rxo->estatus == 'S' and $rxo->qtyissued > 0)
                                         <span class="cursor-pointer tooltip" data-tip="Return"
                                             onclick="return_issued('{{ $rxo->docointkey }}', `{{ $concat[0] }} <br>{{ $concat[1] }}`, {{ $rxo->pchrgup }}, {{ $rxo->qtyissued }})">
@@ -213,23 +213,23 @@
                                         {{ number_format($rxo->qtyissued) }}
                                     @endif
                                 </td>
-                                <td class="text-right w-min">{{ number_format($rxo->pchrgup, 2) }}</td>
-                                <td class="text-right w-min total">{{ number_format($rxo->pcchrgamt, 2) }}</td>
-                                <td>
+                                <td class="text-xs text-right w-min">{{ number_format($rxo->pchrgup, 2) }}</td>
+                                <td class="text-xs text-right w-min total">{{ number_format($rxo->pcchrgamt, 2) }}
+                                </td>
+                                <td class="text-xs ">
                                     <div class="form-control">
-                                        <label class="input-group">
+                                        <label class="input-group input-group-xs">
                                             @if ($selected_remarks == $rxo->docointkey)
-                                                <input type="text" class="input input-bordered"
-                                                    value="{{ $rxo->remarks }}" wire:model.lazy="new_remarks"
-                                                    wire:key="rem-input-{{ $rxo->docointkey }}" />
+                                                <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
+                                                    wire:key="rem-input-{{ $rxo->docointkey }}">{{ $rxo->remarks }}</textarea>
                                                 <button class="btn-primary btn btn-square"
                                                     wire:click="update_remarks()"
                                                     wire:key="update-rem-{{ $rxo->docointkey }}">
                                                     <i class="las la-lg la-save"></i>
                                                 </button>
                                             @else
-                                                <input type="text" class="input input-bordered"
-                                                    value="{{ $rxo->remarks }}" disabled />
+                                                <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
+                                                    wire:key="rem-input-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
                                                 <button class="btn btn-square"
                                                     wire:click="$set('selected_remarks', '{{ $rxo->docointkey }}')"
                                                     wire:key="set-rem-id-{{ $rxo->docointkey }}">
@@ -249,7 +249,7 @@
                                         $badge = '<span class="badge badge-sm badge-success">Issued</span>';
                                     }
                                 @endphp
-                                <td class="text-center w-min">{!! $badge !!}</td>
+                                <td class="text-xs text-center w-min">{!! $badge !!}</td>
                             </tr>
                         @empty
                             <tr>
@@ -310,7 +310,7 @@
                                                 {{ Carbon\Carbon::create($stock->exp_date)->format('F j, Y') }}</span>
                                         @endif
 
-                                        <div class="text-sm font-bold text-slate-800">
+                                        <div class="text-xs font-bold text-slate-800">
                                             {{ $concat[0] }}</div>
                                         <div class="text-xs text-center text-slate-800">
                                             {{ $concat[1] }}</div>

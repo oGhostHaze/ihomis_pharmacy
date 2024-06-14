@@ -119,7 +119,7 @@
                 </thead>
                 <tbody>
                     @forelse($enc_list as $enc)
-                        <tr class="{{ $enc->encstat != 'A' ? 'bg-red-100 hover:bg-red-300' : 'bg-green-100 hover:bg-green-300' }} border hover"
+                        <tr class="@php if((!$enc->opddtedis AND !$enc->erdtedis AND !$enc->disdate) and ($enc->billstat != '02' or $enc->billstat != '03')){ echo 'bg-green-100 hover:bg-green-300'; } else{echo 'bg-red-100 hover:bg-red-300';} @endphp border hover"
                             wire:click="view_enctr('{{ $enc->enccode }}')" wire:key="view_enctr-{{ $enc->enccode }}"
                             style="cursor: pointer">
                             <td>{{ $enc->toecode ?? '' }}</td>

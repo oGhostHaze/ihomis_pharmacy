@@ -20,8 +20,9 @@
             <table class="table w-full mb-3 table-compact" id="table">
                 <thead>
                     <tr>
+                        <th class="w-2/12">Date of Admission</th>
                         <th class="w-1/12">Hospital #</th>
-                        <th class="w-6/12">Patient Name</th>
+                        <th class="w-4/12">Patient Name</th>
                         <th class="w-3/12">Ward/Room</th>
                         <th class="w-2/12">MSS Classification</th>
                     </tr>
@@ -29,12 +30,14 @@
                 <tbody>
                     @forelse ($patients as $patient)
                         <tr wire:key="select-patient-{{ $patient->hpercode }}-{{ $loop->iteration }}"
-                            wire:click="select_patient('{{ $patient->hpercode }}')" style="cursor: pointer">
+                            wire:click="view_enctr('{{ $patient->enccode }}')" style="cursor: pointer">
+                            <td>{{ $patient->admdate }}</td>
                             <td>{{ $patient->hpercode }}</td>
                             <td><span class="font-semibold">{{ $patient->patlast }}, {{ $patient->patfirst }}
                                     {{ $patient->patsuffix }}
                                     {{ $patient->patmiddle }}</span></td>
-                            <td>{{ $patient->wardname }} / {{ $patient->rmname }}</td>
+                            <td> <span class="font-semibold">{{ $patient->wardname }} </span> ({{ $patient->rmname }})
+                            </td>
                             <td>
                                 @php
                                     $class = '---';

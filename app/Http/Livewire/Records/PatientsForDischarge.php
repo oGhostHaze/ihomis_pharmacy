@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Records;
 
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
@@ -29,5 +30,11 @@ class PatientsForDischarge extends Component
         return view('livewire.records.patients-for-discharge', [
             'patients' => $patients,
         ]);
+    }
+
+    public function view_enctr($enccode)
+    {
+        $enccode = Crypt::encrypt(str_replace(' ', '--', $enccode));
+        return redirect()->route('dispensing.view.enctr', ['enccode' => $enccode]);
     }
 }

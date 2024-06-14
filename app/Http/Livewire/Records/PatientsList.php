@@ -81,9 +81,13 @@ class PatientsList extends Component
 
     public function select_patient($hpercode)
     {
-        $this->enc_list = DB::select("SELECT enctr.enccode, enctr.encstat, enctr.toecode, diag.diagtext, enctr.encdate
+        $this->enc_list = DB::select("SELECT enctr.enccode, enctr.encstat, enctr.toecode, diag.diagtext, enctr.encdate, track.billstat, opd.opddtedis, er.erdtedis, adm.disdate
                                     FROM henctr enctr
+                                    LEFT JOIN hopdlog opd ON enctr.enccode = opd.enccode
+                                    LEFT JOIN herlog er ON enctr.enccode = er.enccode
+                                    LEFT JOIN hadmlog adm ON enctr.enccode = adm.enccode
                                     LEFT JOIN hencdiag diag ON enctr.enccode = diag.enccode
+                                    LEFT JOIN hactrack as track ON enctr.enccode = track.enccode
                                     WHERE enctr.toecode <> 'WALKN' AND enctr.toecode <> '32' AND enctr.hpercode = ?
                                     ORDER BY enctr.encdate DESC
                                 ", [$hpercode]);
