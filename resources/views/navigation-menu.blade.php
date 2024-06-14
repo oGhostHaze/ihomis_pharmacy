@@ -36,10 +36,19 @@
                     </x-jet-nav-link>
                 </li>
                 @can('view-patients')
-                    <li class="mt-2 dropdown">
-                        <x-jet-nav-link href="{{ route('patients.list') }}" :active="request()->routeIs('patients.*')">
+                    <li tabindex="0" class="mt-2 dropdown">
+                        <x-jet-nav-link :active="request()->routeIs('patients.*') || request()->routeIs('dispensing.rxo.pending')">
                             <i class="las la-lg la-user-alt"></i> {{ __('Patients') }}
+                            <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
                         </x-jet-nav-link>
+                        <ul
+                            class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
+                            <li><a href="{{ route('patients.list') }}">Patient Search</a></li>
+                            <li><a href="{{ route('patients.fordisc') }}">For Discharge</a></li>
+                        </ul>
                     </li>
                 @endcan
                 @can('view-prescriptions')

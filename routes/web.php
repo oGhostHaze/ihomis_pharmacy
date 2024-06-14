@@ -51,6 +51,7 @@ use App\Http\Livewire\Pharmacy\Reports\DrugsIssuedAllLocation;
 use App\Http\Livewire\Pharmacy\Reports\DrugsReturnedSummary;
 use App\Http\Livewire\Pharmacy\Reports\TotalDrugsIssued;
 use App\Http\Livewire\Records\PatientRegister;
+use App\Http\Livewire\Records\PatientsForDischarge;
 use App\Http\Livewire\References\ListRisWards;
 
 /*
@@ -74,6 +75,7 @@ Route::middleware([
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
     Route::get('/patients', PatientsList::class)->name('patients.list');
+    Route::get('/patients/for-discharge', PatientsForDischarge::class)->name('patients.fordisc');
     Route::get('/patients/register', PatientRegister::class)->name('patients.new');
     Route::get('/prescriptions', PrescriptionList::class)->name('rx.list');
 

@@ -17,10 +17,6 @@
 <div class="flex flex-col p-5 mx-auto mt-5">
     <div class="p-4 mb-3 bg-white rounded-lg">
         <div class="flex justify-end space-x-3">
-            {{-- @if ($trans[0]->loc_code == session('pharm_location_id'))
-                <button class="btn btn-sm btn-primary" onclick="add_request()" wire:loading.attr="disabled">Add
-                    Item</button>
-            @endif --}}
             <button class="btn btn-sm" onclick="printMe()" wire:loading.attr="disabled">Print</button>
         </div>
     </div>
