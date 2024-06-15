@@ -228,11 +228,10 @@
                                                     <i class="las la-lg la-save"></i>
                                                 </button>
                                             @else
-                                                <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
-                                                    wire:key="rem-input-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
+                                                <textarea class="textarea textarea-bordered textarea-xs" wire:key="rem-input-dis-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
                                                 <button class="btn btn-square"
                                                     wire:click="$set('selected_remarks', '{{ $rxo->docointkey }}')"
-                                                    wire:key="set-rem-id-{{ $rxo->docointkey }}">
+                                                    wire:key="set-rem-id-dis-{{ $rxo->docointkey }}">
                                                     <i class="las la-lg la-edit"></i>
                                                 </button>
                                             @endif

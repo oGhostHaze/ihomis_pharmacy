@@ -723,9 +723,8 @@ class EncounterTransactionView extends Component
         $rxo = DrugOrder::find($this->selected_remarks);
         $rxo->remarks = $this->new_remarks;
         $rxo->save();
-        $this->emit('refresh');
         $this->alert('success', 'Remarks updated');
-        $this->reset('selected_remarks', 'new_remarks');
+        return redirect(route('dispensing.view.enctr', $this->enccode));
     }
 
     public function deactivate_rx($rx_id)
