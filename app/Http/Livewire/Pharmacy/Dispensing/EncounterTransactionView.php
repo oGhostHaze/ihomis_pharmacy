@@ -10,9 +10,12 @@ use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
 use App\Models\Pharmacy\Dispensing\OrderChargeCode;
 use App\Models\Pharmacy\Drug;
 use App\Models\Pharmacy\Drugs\DrugStock;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
 use App\Models\Pharmacy\Drugs\DrugStockIssue;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
 use App\Models\Record\Encounters\EncounterLog;
+use App\Models\Record\Patients\Patient;
+use App\Models\Record\Patients\PatientMss;
 use App\Models\Record\Prescriptions\Prescription;
 use App\Models\Record\Prescriptions\PrescriptionData;
 use App\Models\Record\Prescriptions\PrescriptionDataIssued;
@@ -331,7 +334,8 @@ class EncounterTransactionView extends Component
                         $drug_concat = '';
                         $drug_concat = implode("", explode('_', $stock->drug_concat));
 
-                        LogDrugStockIssue::dispatch($stock->id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $stock->exp_date, $trans_qty, $unit_price, $pcchrgamt, session('user_id'), $rxo->hpercode, $rxo->enccode, $this->toecode, $pcchrgcod, $tag, $rxo->ris, $stock->dmdprdte, $stock->retail_price, $drug_concat, date('Y-m-d'), now(), session('active_consumption'), $stock->dmduprice);
+                        // LogDrugStockIssue::dispatch($stock->id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $stock->exp_date, $trans_qty, $unit_price, $pcchrgamt, session('user_id'), $rxo->hpercode, $rxo->enccode, $this->toecode, $pcchrgcod, $tag, $rxo->ris, $stock->dmdprdte, $stock->retail_price, $drug_concat, date('Y-m-d'), now(), session('active_consumption'), $stock->dmduprice);
+                        $this->log_stock_issue($stock->id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $stock->exp_date, $trans_qty, $unit_price, $pcchrgamt, session('user_id'), $rxo->hpercode, $rxo->enccode, $this->toecode, $pcchrgcod, $tag, $rxo->ris, $stock->dmdprdte, $stock->retail_price, $drug_concat, date('Y-m-d'), now(), session('active_consumption'), $stock->dmduprice);
                     }
                 }
                 if ($cnt == 1) {
@@ -415,6 +419,89 @@ class EncounterTransactionView extends Component
             'issuetype' => 'c', //c
             'ris' =>  $ris ? true : false,
         ]);
+    }
+
+    public function log_stock_issue($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption = null, $unit_cost)
+    {
+        $issued_drug = DrugStockIssue::create([
+            'stock_id' => $stock_id,
+            'docointkey' => $docointkey,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'loc_code' => $loc_code,
+            'chrgcode' => $chrgcode,
+            'exp_date' => $exp_date,
+            'qty' =>  $trans_qty,
+            'pchrgup' =>  $unit_price,
+            'pcchrgamt' =>  $pcchrgamt,
+            'status' => 'Issued',
+            'user_id' => $user_id,
+            'hpercode' => $hpercode,
+            'enccode' => $enccode,
+            'toecode' => $toecode,
+            'pcchrgcod' => $pcchrgcod,
+
+            'ems' => $tag == 'ems' ? $trans_qty : false,
+            'maip' => $tag == 'maip' ? $trans_qty : false,
+            'wholesale' => $tag == 'wholesale' ? $trans_qty : false,
+            'pay' => $tag == 'pay' ? $trans_qty : false,
+            'opdpay' => $tag == 'opdpay' ? $trans_qty : false,
+            'service' => $tag == 'service' ? $trans_qty : false,
+            'caf' => $tag == 'caf' ? $trans_qty : false,
+            'ris' =>  $ris ? true : false,
+
+            'konsulta' => $tag == 'konsulta' ? $trans_qty : false,
+            'pcso' => $tag == 'pcso' ? $trans_qty : false,
+            'phic' => $tag == 'phic' ? $trans_qty : false,
+
+            'dmdprdte' => $dmdprdte,
+        ]);
+
+        $date = Carbon::parse($date)->startOfMonth()->format('Y-m-d');
+
+        $log = DrugStockLog::firstOrNew([
+            'loc_code' => $loc_code,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'chrgcode' => $chrgcode,
+            'date_logged' => $date,
+            'unit_cost' => $unit_cost,
+            'unit_price' => $retail_price,
+            'consumption_id' => $active_consumption,
+        ]);
+        $log->time_logged = $date;
+        $log->issue_qty += $trans_qty;
+
+        $log->wholesale += $issued_drug->wholesale;
+        $log->ems += $issued_drug->ems;
+        $log->maip += $issued_drug->maip;
+        $log->caf += $issued_drug->caf;
+        $log->ris += $issued_drug->ris ? 1 : 0;
+
+        $log->pay += $issued_drug->pay;
+        $log->service += $issued_drug->service;
+
+        // added columns
+        $log->konsulta += $issued_drug->konsulta;
+        $log->pcso += $issued_drug->pcso;
+        $log->phic += $issued_drug->phic;
+
+        $log->save();
+
+        $card = DrugStockCard::firstOrNew([
+            'chrgcode' => $chrgcode,
+            'loc_code' => $loc_code,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'exp_date' => $exp_date,
+            'stock_date' => $stock_date,
+            'drug_concat' => $concat,
+        ]);
+        $card->iss += $trans_qty;
+        $card->bal -= $trans_qty;
+
+        $card->save();
+        return;
     }
 
     public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date)
