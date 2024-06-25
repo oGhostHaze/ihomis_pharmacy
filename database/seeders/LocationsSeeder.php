@@ -15,13 +15,15 @@ class LocationsSeeder extends Seeder
     public function run()
     {
         PharmLocation::create([
-           'description' => 'Warehouse',
+            'description' => 'Warehouse',
         ]);
+
         PharmLocation::create([
-           'description' => 'OPD',
+            'description' => 'OPD',
         ]);
+
         PharmLocation::create([
-           'description' => 'Satellite',
+            'description' => 'Satellite',
         ]);
     }
 }

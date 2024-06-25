@@ -48,6 +48,7 @@
                             class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
                             <li><a href="{{ route('patients.list') }}">Patient Search</a></li>
                             <li><a href="{{ route('patients.fordisc') }}">For Discharge</a></li>
+                            <li><a href="{{ route('patients.discharged') }}">Discharged Patients</a></li>
                         </ul>
                     </li>
                 @endcan

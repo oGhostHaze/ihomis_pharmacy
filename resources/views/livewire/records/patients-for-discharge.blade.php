@@ -32,8 +32,8 @@
                 <tbody>
                     @forelse ($patients as $patient)
                         <tr wire:key="select-patient-{{ $patient->hpercode }}-{{ $loop->iteration }}"
-                            wire:click="view_enctr('{{ $patient->enccode }}')" style="cursor: pointer">
-                            <td>{{ $patient->admdate }}</td>
+                            wire:click="view_enctr('{{ $patient->enccode }}')" style="cursor: pointer" class="hover">
+                            <td>{{ date('m/d/Y h:i A', strtotime($patient->admdate)) }}</td>
                             <td>{{ $patient->hpercode }}</td>
                             <td><span class="font-semibold">{{ $patient->patlast }}, {{ $patient->patfirst }}
                                     {{ $patient->patsuffix }}

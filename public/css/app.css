@@ -2971,14 +2971,6 @@ html {
   min-height: 1.875rem;
   font-size: 0.875rem;
 }
-.input-xs {
-  height: 1.5rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  line-height: 1.625;
-}
 .input-sm {
   height: 2rem;
   padding-left: 0.75rem;
@@ -3044,14 +3036,6 @@ html {
   font-size: 0.75rem;
   line-height: 1rem;
   line-height: 1.625;
-}
-.textarea-sm {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-  font-size: 0.875rem;
-  line-height: 2rem;
 }
 .btn-group .btn:not(:first-child):not(:last-child) {
   border-start-start-radius: 0;
@@ -3706,6 +3690,9 @@ html {
 .ml-2 {
   margin-left: 0.5rem !important;
 }
+.ml-20 {
+  margin-left: 5rem !important;
+}
 .ml-3 {
   margin-left: 0.75rem !important;
 }
@@ -3759,6 +3746,9 @@ html {
 }
 .mt-auto {
   margin-top: auto !important;
+}
+.-mb-10 {
+  margin-bottom: -2.5rem !important;
 }
 .box-border {
   box-sizing: border-box !important;
