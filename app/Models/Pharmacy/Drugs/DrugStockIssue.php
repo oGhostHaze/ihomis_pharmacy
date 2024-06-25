@@ -47,6 +47,7 @@ class DrugStockIssue extends Model
         'govt_emp',
         'caf',
         'ris',
+        'phic',
         'dmdprdte',
     ];
 
