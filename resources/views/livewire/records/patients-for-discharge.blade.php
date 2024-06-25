@@ -24,6 +24,8 @@
                         <th class="w-1/12">Hospital #</th>
                         <th class="w-4/12">Patient Name</th>
                         <th class="w-3/12">Ward/Room</th>
+                        <th class="w-3/12">Department</th>
+                        <th class="w-3/12">Condition/Status</th>
                         <th class="w-2/12">MSS Classification</th>
                     </tr>
                 </thead>
@@ -37,6 +39,41 @@
                                     {{ $patient->patsuffix }}
                                     {{ $patient->patmiddle }}</span></td>
                             <td> <span class="font-semibold">{{ $patient->wardname }} </span> ({{ $patient->rmname }})
+                            <td> <span class="font-semibold">{{ $patient->tsdesc }} </span></td>
+                            <td>
+                                <span class="font-semibold">
+                                    @php
+                                        switch ($patient->condcode) {
+                                            case 'RECOV':
+                                                echo 'Recovered';
+                                                break;
+
+                                            case 'DIEMI':
+                                                echo '< 48 hours Autopsied';
+                                                break;
+
+                                            case 'DIENA':
+                                                echo 'Died < 48 hours Not Autopsied';
+                                                break;
+
+                                            case 'DIEPO':
+                                                echo 'Died>48 hours Autopsied';
+                                                break;
+
+                                            case 'DPONA':
+                                                echo 'Died >48 hours Not Autopsied';
+                                                break;
+
+                                            case 'IMPRO':
+                                                echo 'Improved';
+                                                break;
+
+                                            case 'UNIMP':
+                                                echo 'Unimproved';
+                                                break;
+                                        }
+                                    @endphp
+                                </span>
                             </td>
                             <td>
                                 @php
