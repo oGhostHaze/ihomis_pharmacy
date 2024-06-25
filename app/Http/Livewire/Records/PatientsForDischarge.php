@@ -12,9 +12,9 @@ class PatientsForDischarge extends Component
     {
         $patients = DB::select("
             SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname, mss.mssikey, serv.tsdesc, adm.condcode
-            FROM hospital.dbo.henctr enctr RIGHT JOIN webapp.dbo.prescription rx ON enctr.enccode = rx.enccode
+            FROM hospital.dbo.henctr enctr
                 LEFT JOIN hospital.dbo.hadmlog adm ON enctr.enccode = adm.enccode
-                RIGHT JOIN hospital.dbo.hpatroom pat_room ON rx.enccode = pat_room.enccode
+                RIGHT JOIN hospital.dbo.hpatroom pat_room ON enctr.enccode = pat_room.enccode
                 RIGHT JOIN hospital.dbo.hroom room ON pat_room.rmintkey = room.rmintkey
                 RIGHT JOIN hospital.dbo.hward ward ON pat_room.wardcode = ward.wardcode
                 RIGHT JOIN hospital.dbo.hperson pt ON enctr.hpercode = pt.hpercode
@@ -23,9 +23,9 @@ class PatientsForDischarge extends Component
                 RIGHT JOIN hospital.dbo.htypser serv ON adm.tscode = serv.tscode
             WHERE (toecode = 'ADM' OR toecode = 'OPDAD' OR toecode = 'ERADM')
                 AND pat_room.patrmstat = 'A'
-                AND rx.stat = 'A'
                 AND ord.orcode = 'DISCH'
-            ORDER BY pt.patlast ASC, pt.patfirst ASC, pt.patmiddle ASC, rx.created_at DESC
+                AND adm.disdate IS NULL
+            ORDER BY pt.patlast ASC, pt.patfirst ASC, pt.patmiddle ASC
         ");
 
         return view('livewire.records.patients-for-discharge', [
