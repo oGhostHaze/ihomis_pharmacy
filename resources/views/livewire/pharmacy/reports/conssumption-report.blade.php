@@ -62,7 +62,7 @@
             </div>
         </div>
         <div id="print" class="w-full overflow-auto">
-            <table class="w-full text-xs bg-white shadow-md table-compact" id="table">
+            <table class="w-full text-xs bg-white shadow-md" id="table">
                 <thead class="sticky top-0 font-bold bg-gray-200">
                     <tr class="text-center uppercase">
                         <td class="w-2/12 text-xs border border-black">Source of Fund</td>
@@ -141,13 +141,6 @@
                         <tr classs="border border-black hover" itemcode="{{ $rxi->dmdcomb . ', ' . $rxi->dmdctr }}">
                             <td class="text-xs border border-black whitespace-nowrap">
                                 {{ $concat }}
-                                {{-- <div class="flex flex-col">
-                                    <div class="text-xs">{{ $rxi->location }}</div>
-                                    <div class="text-sm font-bold">{{ $rxi->gendesc }}</div>
-                                    <div class="ml-10 text-xs text-slate-800">
-                                        {{ $rxi->dmdnost }}{{ $rxi->stredesc ?? '' }}
-                                        {{ $rxi->formdesc ?? '' }}</div>
-                                </div> --}}
                             </td>
                             <td class="text-xs text-right bg-gray-100 border border-black whitespace-nowrap">
                                 {{ number_format($rxi->beg_bal) }}</td>
