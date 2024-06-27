@@ -122,19 +122,9 @@ class EncounterTransactionView extends Component
                                 LEFT JOIN hward as ward ON patroom.wardcode = ward.wardcode
                                 LEFT JOIN hroom as room ON patroom.rmintkey = room.rmintkey
                                 WHERE enctr.enccode = '" . $enccode . "'
-                                ORDER BY patroom.hprdate DESC
+                                    AND patroom.updsw = 'Y'
                                 "))->first();
 
-        // dd($this->encounter);
-        // $this->mss = PatientMss::where('enccode', $enccode)->first();
-        // $this->patient = Patient::find($this->encounter->hpercode);
-        // $this->active_prescription = collect(DB::select('SELECT data.id, data.qty, data.remarks, data.empid, data.dmdcomb, data.dmdctr, drug.drug_concat, data.updated_at
-        //                                     FROM webapp.prescription as presc
-        //                                     INNER JOIN webapp.prescription_data as data ON presc.id = data.presc_id
-        //                                     INNER JOIN hospital.hdmhdr as drug ON presc.dmdcomb = data.dmdcomb AND presc.dmdctr = data.dmdctr
-        //                                     WHERE presc.enccode = ? AND data.stat = ?
-        //                                 '), [$enccode, 'A'])->all();
-        // dd($this->active_prescription);
         $this->active_prescription = Prescription::where('enccode', $enccode)->with('data_active')->has('data_active')->get();
         $this->active_prescription_all = Prescription::where('enccode', $enccode)->with('data')->get();
         $past_log = null;
