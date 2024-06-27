@@ -26,6 +26,7 @@ class DischargedPatients extends Component
             WHERE adm.disdate BETWEEN '" . $this->date_from . "' AND '" . $this->date_to . "'
                 AND (toecode = 'ADM' OR toecode = 'OPDAD' OR toecode = 'ERADM')
                 AND adm.disdate IS NOT NULL
+                AND pat_room.patrmstat = 'A'
             ORDER BY pt.patlast ASC, pt.patfirst ASC, pt.patmiddle ASC
         ");
 
