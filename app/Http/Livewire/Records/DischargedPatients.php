@@ -14,7 +14,8 @@ class DischargedPatients extends Component
     public function render()
     {
         $patients = DB::select("
-            SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname, mss.mssikey, serv.tsdesc, adm.condcode, adm.disdate
+            SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname,
+                    mss.mssikey, serv.tsdesc, adm.condcode, adm.disdate
             FROM henctr enctr
                 LEFT JOIN hadmlog adm ON enctr.enccode = adm.enccode
                 RIGHT JOIN hpatroom pat_room ON enctr.enccode = pat_room.enccode
@@ -26,7 +27,7 @@ class DischargedPatients extends Component
             WHERE adm.disdate BETWEEN '" . $this->date_from . "' AND '" . $this->date_to . "'
                 AND (toecode = 'ADM' OR toecode = 'OPDAD' OR toecode = 'ERADM')
                 AND adm.disdate IS NOT NULL
-                AND pat_room.patrmstat = 'A'
+                AND pat_room.updsw = 'Y'
             ORDER BY pt.patlast ASC, pt.patfirst ASC, pt.patmiddle ASC
         ");
 
