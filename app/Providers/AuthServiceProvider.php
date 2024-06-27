@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
@@ -25,7 +26,12 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        App::singleton('chargetable', function () {
+            return array(
+                'DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS',
+                'DRUMAD', 'DRUMAE', 'DRUMAF', 'DRUMAG', 'DRUMAH', 'DRUMAI', 'DRUMAJ', 'DRUMAK'
+            );
+        });
 
         Gate::after(function ($user, $ability) {
             return $user->hasRole('Super Admin'); // note this returns boolean
