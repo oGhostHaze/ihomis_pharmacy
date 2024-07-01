@@ -278,7 +278,7 @@ class EncounterTransactionView extends Component
                 $this->type = 'opdpay';
             }
         }
-
+        // dd($this->type);
         $temp_type = $this->type;
 
         foreach ($rxos as $rxo) {

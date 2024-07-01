@@ -34,7 +34,6 @@ class PendingOrders extends Component
             JOIN hperson pat ON rxo.hpercode = pat.hpercode
             WHERE   (dodate BETWEEN ? and ?) AND ((rxo.estatus = 'U' OR rxo.estatus = 'P') OR (rxo.estatus = 'S' AND (rxo.pcchrgcod IS NULL OR rxo.pcchrgcod = '')) AND rxo.loc_code = ?)
             GROUP BY pat.patlast, pat.patfirst, pat.patmiddle, rxo.hpercode, rxo.enccode, rxo.entryby
-            ORDER BY rxo.dodate
             ", [$date_from, $date_to, $this->location_id]))->all(10);
 
         return view('livewire.pharmacy.dispensing.pending-orders', [

@@ -34,7 +34,8 @@
                         </div>
                     </div>
                 @endcan
-                <div class="w-full h-40 shadow-xl card bg-base-100">
+                <a class="w-full h-40 shadow-xl cursor-pointer card bg-base-100"
+                    href="{{ route('dispensing.rxo.pending') }}" target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Pending/Charged Orders</h2>
                         <p class="text-xl text-center">
@@ -44,7 +45,7 @@
                             </span>
                         </p>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="w-full h-40 shadow-xl card bg-base-100">

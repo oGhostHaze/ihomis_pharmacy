@@ -3690,9 +3690,6 @@ html {
 .ml-2 {
   margin-left: 0.5rem !important;
 }
-.ml-20 {
-  margin-left: 5rem !important;
-}
 .ml-3 {
   margin-left: 0.75rem !important;
 }
@@ -3746,9 +3743,6 @@ html {
 }
 .mt-auto {
   margin-top: auto !important;
-}
-.-mb-10 {
-  margin-bottom: -2.5rem !important;
 }
 .box-border {
   box-sizing: border-box !important;

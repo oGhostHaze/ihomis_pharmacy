@@ -37,7 +37,7 @@
                 </li>
                 @can('view-patients')
                     <li tabindex="0" class="mt-2 dropdown">
-                        <x-jet-nav-link :active="request()->routeIs('patients.*') || request()->routeIs('dispensing.rxo.pending')">
+                        <x-jet-nav-link :active="request()->routeIs('patients.*') && !request()->routeIs('dispensing.rxo.pending')">
                             <i class="las la-lg la-user-alt"></i> {{ __('Patients') }}
                             <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                 viewBox="0 0 24 24">
