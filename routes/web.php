@@ -49,6 +49,8 @@ use App\Http\Livewire\Pharmacy\Reports\DailyStockCard;
 use App\Http\Livewire\Pharmacy\Reports\DeliverySummary;
 use App\Http\Livewire\Pharmacy\Reports\DrugsIssuedAllLocation;
 use App\Http\Livewire\Pharmacy\Reports\DrugsReturnedSummary;
+use App\Http\Livewire\Pharmacy\Reports\ItemsExpiredOverview;
+use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Reports\TotalDrugsIssued;
 use App\Http\Livewire\Records\DischargedPatients;
 use App\Http\Livewire\Records\PatientRegister;
@@ -145,6 +147,8 @@ Route::middleware([
         Route::get('/consumption/wards', DrugsIssuedWards::class)->name('consumption.wards');
         Route::get('/consumption/departments', DrugsIssuedDepartments::class)->name('consumption.depts');
         Route::get('/consumption-summary', ConsumptionSummary::class)->name('cons.sum');
+        Route::get('/items-near-expiry', ItemsNearExpiryOverview::class)->name('near.exp');
+        Route::get('/items-expired', ItemsExpiredOverview::class)->name('exp');
     });
 
     Route::get('/pusher', Pusher::class)->name('pusher');

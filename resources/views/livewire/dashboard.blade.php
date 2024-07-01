@@ -48,7 +48,8 @@
                 </a>
             </div>
             <div class="grid grid-flow-row grid-cols-1 gap-4 mt-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="w-full h-40 shadow-xl card bg-base-100">
+                <a class="w-full h-40 shadow-xl card bg-base-100 hover:bg-slate-600"
+                    href="{{ route('reports.near.exp') }}" target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Items Near Expiry</h2>
                         <p class="text-xl text-center">
@@ -58,8 +59,8 @@
                             </span>
                         </p>
                     </div>
-                </div>
-                <div class="w-full h-40 shadow-xl card bg-base-100">
+                </a>
+                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('reports.exp') }}" target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Expired Items</h2>
                         <p class="text-xl text-center">
@@ -69,8 +70,8 @@
                             </span>
                         </p>
                     </div>
-                </div>
-                <div class="w-full h-40 shadow-xl card bg-base-100">
+                </a>
+                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder') }}" target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Near Reorder Level</h2>
                         <p class="text-xl text-center whitespace-nowrap text-warning">
@@ -80,8 +81,8 @@
                             </span>
                         </p>
                     </div>
-                </div>
-                <div class="w-full h-40 shadow-xl card bg-base-100">
+                </a>
+                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder') }}" target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Critical Stock</h2>
                         <p class="text-xl text-center text-error whitespace-nowrap">
@@ -91,7 +92,7 @@
                             </span>
                         </p>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
