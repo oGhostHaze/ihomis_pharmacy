@@ -48,6 +48,7 @@ class DrugStockIssue extends Model
         'caf',
         'ris',
         'phic',
+        'opdpay',
         'dmdprdte',
     ];
 

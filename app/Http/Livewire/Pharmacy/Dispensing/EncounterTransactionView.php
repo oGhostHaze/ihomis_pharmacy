@@ -485,6 +485,7 @@ class EncounterTransactionView extends Component
         $log->konsulta += $issued_drug->konsulta;
         $log->pcso += $issued_drug->pcso;
         $log->phic += $issued_drug->phic;
+        $log->opdpay += $issued_drug->opdpay;
 
         $log->save();
 

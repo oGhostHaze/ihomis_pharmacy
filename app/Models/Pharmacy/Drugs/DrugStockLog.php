@@ -53,6 +53,7 @@ class DrugStockLog extends Model
         'konsulta',
         'phic',
         'pcso',
+        'opdpay',
 
         // 'sc_pwd', //nullable()->default(0);
         // 'medicare', //nullable()->default(0);
