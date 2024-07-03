@@ -272,11 +272,9 @@ class StockList extends Component
             ->where('dmdcomb', $stock->dmdcomb)
             ->where('dmdctr', $stock->dmdctr)
             ->where('chrgcode', $old_chrgcode)
-            ->where('date_logged', date('Y-m-d', strtotime($stock->created_at)))
             ->where('dmdprdte', $stock->dmdprdte)
             ->first();
         if ($old_log) {
-            $old_log->time_logged = date('Y-m-d H:i:s');
             $old_log->beg_bal -= $old_stock_bal;
             $old_log->save();
         }

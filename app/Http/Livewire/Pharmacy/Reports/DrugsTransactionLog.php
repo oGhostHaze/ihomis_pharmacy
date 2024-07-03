@@ -49,7 +49,6 @@ class DrugsTransactionLog extends Component
                                         SUM(pdsl.return_qty) as return_qty
                                         ")
             ->where('chrgcode', $filter_charge[0])
-            ->whereBetween('time_logged', [$date_from, $date_to])
             ->with('charge')->with('drug')
             ->groupBy('pdsl.dmdcomb', 'pdsl.dmdctr', 'pdsl.chrgcode')
             ->get();

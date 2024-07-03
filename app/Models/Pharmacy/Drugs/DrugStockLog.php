@@ -26,8 +26,6 @@ class DrugStockLog extends Model
         'dmdcomb',
         'dmdctr',
         'chrgcode',
-        'date_logged',
-        'time_logged',
 
         'dmdprdte',
         'unit_cost',
@@ -79,11 +77,6 @@ class DrugStockLog extends Model
     {
         return $this->belongsTo(Drug::class, ['dmdcomb', 'dmdctr'], ['dmdcomb', 'dmdctr'])
             ->with('strength')->with('form')->with('route')->with('generic');
-    }
-
-    public function date_logged()
-    {
-        return date('m/d/Y', strtotime($this->date_logged));
     }
 
     public function time_logged()
