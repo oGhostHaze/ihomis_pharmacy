@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Models\Pharmacy\Drugs\DrugStock;
+use App\Models\Pharmacy\Drugs\DrugStockLog;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
 use App\Models\Pharmacy\Dispensing\DrugOrder;
 use App\Models\Pharmacy\Dispensing\DrugOrderIssue;
-use App\Models\Pharmacy\Drugs\DrugStock;
-use Illuminate\Http\Request;
 
 class SharedController extends Controller
 {
@@ -52,5 +56,37 @@ class SharedController extends Controller
         ]);
 
         return $issued;
+    }
+
+    public function stocklogger($pharm_location_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $dmdprdte, $unit_cost, $retail_price, $qty, $stock_id, $exp_date, $drug_concat, $date, $active_consumption = null)
+    {
+        $date = Carbon::parse($trans_date)->startOfMonth()->format('Y-m-d');
+
+        $log = DrugStockLog::firstOrNew([
+            'loc_code' =>  $pharm_location_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'chrgcode' => $chrgcode,
+            'unit_cost' => $unit_cost,
+            'unit_price' => $retail_price,
+            'consumption_id' => $active_consumption,
+        ]);
+        $log->beg_bal += $qty;
+
+        $log->save();
+
+        $card = DrugStockCard::firstOrNew([
+            'chrgcode' => $chrgcode,
+            'loc_code' => $pharm_location_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'exp_date' => $exp_date,
+            'stock_date' => $date,
+            'drug_concat' => $drug_concat,
+        ]);
+        $card->reference += $qty;
+        $card->bal += $qty;
+
+        $card->save();
     }
 }

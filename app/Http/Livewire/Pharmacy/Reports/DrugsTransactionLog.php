@@ -36,17 +36,14 @@ class DrugsTransactionLog extends Component
         //                     ->paginate(15);
 
         $logs = DrugStockLog::from('pharm_drug_stock_logs as pdsl')
-            ->selectRaw("chrgcode, pdsl.dmdcomb, pdsl.dmdctr, pdsl.dmdprdte,
+            ->selectRaw("chrgcode, pdsl.dmdcomb, pdsl.dmdctr,
                                         SUM(pdsl.purchased) as purchased,
                                         SUM(pdsl.beg_bal) as beg_bal,
-                                        SUM(pdsl.sc_pwd) as sc_pwd,
                                         SUM(pdsl.ems) as ems,
                                         SUM(pdsl.maip) as maip,
                                         SUM(pdsl.wholesale) as wholesale,
                                         SUM(pdsl.pay) as pay,
-                                        SUM(pdsl.medicare) as medicare,
                                         SUM(pdsl.service) as service,
-                                        SUM(pdsl.govt_emp) as govt_emp,
                                         SUM(pdsl.caf) as caf,
                                         SUM(pdsl.issue_qty) as issue_qty,
                                         SUM(pdsl.return_qty) as return_qty
@@ -55,7 +52,6 @@ class DrugsTransactionLog extends Component
             ->whereBetween('time_logged', [$date_from, $date_to])
             ->with('charge')->with('drug')
             ->groupBy('pdsl.dmdcomb', 'pdsl.dmdctr', 'pdsl.chrgcode')
-            ->groupBy('pdsl.dmdprdte')
             ->get();
 
         return view('livewire.pharmacy.reports.drugs-transaction-log', [

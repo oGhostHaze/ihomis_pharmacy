@@ -287,90 +287,13 @@ class StockList extends Component
             'dmdcomb' => $stock->dmdcomb,
             'dmdctr' => $stock->dmdctr,
             'chrgcode' => $stock->chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $unit_cost,
             'unit_price' => $retail_price,
             'consumption_id' => session('active_consumption'),
         ]);
-        $log->time_logged = now();
         $log->beg_bal += $this->qty;
         $stock->dmdprdte =  $new_price->dmdprdte;
         $new_price->save();
-        $log->save();
-        $stock->save();
-
-        $this->resetExcept('location_id', 'drugs', 'locations', 'charge_codes');
-        $this->alert('success', 'Item beginning balance has been saved!');
-        return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
-    }
-
-    public function add_item()
-    {
-        $this->validate([
-            'dmdcomb' => 'required',
-            'unit_cost' => 'required',
-            'qty' => 'required',
-            'expiry_date' => 'required',
-            'chrgcode' => 'required',
-        ]);
-
-        $retail_price = $this->unit_cost + ((float)$this->unit_cost * 0.30);
-        $total_amount = $this->unit_cost * $this->qty;
-        $dm = explode(',', $this->dmdcomb);
-
-        $stock = DrugStock::firstOrCreate([
-            'dmdcomb' => $dm[0],
-            'dmdctr' => $dm[1],
-            'loc_code' =>  session('pharm_location_id'),
-            'chrgcode' => $this->chrgcode,
-            'exp_date' => $this->expiry_date,
-            'retail_price' => $retail_price,
-        ]);
-        $stock->stock_bal = $stock->stock_bal + $this->qty;
-        $stock->beg_bal = $stock->beg_bal + $this->qty;
-
-        $current_price = DrugPrice::where('dmdcomb', $dm[0])
-            ->where('dmdctr', $dm[1])
-            ->where('dmhdrsub', $this->chrgcode)
-            ->latest('dmdprdte')
-            ->first();
-
-        if ($current_price and $current_price->dmduprice == $this->unit_cost and $current_price->dmselprice) {
-            $dmdprdte = $current_price->dmdprdte;
-            $dmduprice = $current_price->dmduprice;
-            $dmselprice = $current_price->dmselprice;
-        } else {
-            $new_price = new DrugPrice;
-            $new_price->dmdcomb = $stock->dmdcomb;
-            $new_price->dmdctr = $stock->dmdctr;
-            $new_price->dmhdrsub = $stock->chrgcode;
-            $new_price->dmduprice = (100 / 130) * $stock->retail_price;
-            $new_price->dmselprice = $stock->retail_price;
-            $new_price->dmdprdte = now();
-            $new_price->expdate = $stock->exp_date;
-            $new_price->stock_id = $stock->id;
-            $new_price->save();
-
-            $dmdprdte = $new_price->dmdprdte;
-            $dmduprice = $new_price->dmduprice;
-            $dmselprice = $new_price->dmselprice;
-        }
-        $stock->dmdprdte = $dmdprdte;
-
-        $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
-        $log = DrugStockLog::firstOrNew([
-            'loc_code' =>  session('pharm_location_id'),
-            'dmdcomb' => $stock->dmdcomb,
-            'dmdctr' => $stock->dmdctr,
-            'chrgcode' => $stock->chrgcode,
-            'date_logged' => $date,
-            'unit_cost' => $dmduprice,
-            'unit_price' => $dmselprice,
-            'consumption_id' => session('active_consumption'),
-        ]);
-        $log->time_logged = now();
-        $log->beg_bal += $this->qty;
-
         $log->save();
         $stock->save();
 

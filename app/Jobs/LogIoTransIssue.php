@@ -62,12 +62,10 @@ class LogIoTransIssue implements ShouldQueue
             'dmdcomb' => $this->dmdcomb,
             'dmdctr' => $this->dmdctr,
             'chrgcode' => $this->chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $this->unit_cost,
             'unit_price' => $this->retail_price,
             'consumption_id' => $this->active_consumption,
         ]);
-        $log->time_logged = $this->trans_time;
         $log->transferred += $this->qty;
         $log->save();
 

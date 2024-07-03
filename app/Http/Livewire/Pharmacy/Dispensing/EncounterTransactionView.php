@@ -464,12 +464,10 @@ class EncounterTransactionView extends Component
             'dmdcomb' => $dmdcomb,
             'dmdctr' => $dmdctr,
             'chrgcode' => $chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $unit_cost,
             'unit_price' => $retail_price,
             'consumption_id' => $active_consumption,
         ]);
-        $log->time_logged = $date;
         $log->issue_qty += $trans_qty;
 
         $log->wholesale += $issued_drug->wholesale;
@@ -701,12 +699,10 @@ class EncounterTransactionView extends Component
                 'dmdcomb' => $stock_issued->stock->dmdcomb,
                 'dmdctr' => $stock_issued->stock->dmdctr,
                 'chrgcode' => $stock_issued->stock->chrgcode,
-                'date_logged' => $date,
                 'unit_cost' => $stock_issued->stock->current_price ? $stock_issued->stock->current_price->acquisition_cost : 0,
                 'unit_price' => $stock_issued->stock->retail_price,
                 'consumption_id' => session('active_consumption'),
             ]);
-            $log->time_logged = now();
             $log->return_qty += $returned_qty;
 
             $log->save();

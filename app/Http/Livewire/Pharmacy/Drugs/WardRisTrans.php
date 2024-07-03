@@ -128,12 +128,10 @@ class WardRisTrans extends Component
                         'dmdcomb' => $dmdcomb,
                         'dmdctr' => $dmdctr,
                         'chrgcode' => $this->chrgcode,
-                        'date_logged' => $date,
                         'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
                         'unit_price' => $stock->retail_price,
                         'consumption_id' => session('active_consumption'),
                     ]);
-                    $log->time_logged = now();
                     $log->ris += $issued_qty;
                     $log->save();
 
@@ -202,12 +200,10 @@ class WardRisTrans extends Component
                 'dmdcomb' => $item->dmdcomb,
                 'dmdctr' => $item->dmdctr,
                 'chrgcode' => $item->chrgcode,
-                'date_logged' => $date,
                 'unit_cost' => $drug->current_price ? $drug->current_price->acquisition_cost : 0,
                 'unit_price' => $drug->retail_price,
                 'consumption_id' => session('active_consumption'),
             ]);
-            $log->time_logged = now();
             $log->return_qty += $item->issued_qty;
             $log->save();
 

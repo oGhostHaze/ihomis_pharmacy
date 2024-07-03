@@ -62,12 +62,10 @@ class LogIoTransReceive implements ShouldQueue
             'dmdcomb' => $this->dmdcomb,
             'dmdctr' => $this->dmdctr,
             'chrgcode' => $this->chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $this->unit_cost,
             'unit_price' => $this->retail_price,
             'consumption_id' => $this->active_consumption,
         ]);
-        $log->time_logged = $this->time_logged;
         $log->received += $this->qty;
         $log->save();
 

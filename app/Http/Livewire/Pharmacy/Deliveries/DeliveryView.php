@@ -261,12 +261,10 @@ class DeliveryView extends Component
                 'dmdcomb' => $add_to->dmdcomb,
                 'dmdctr' => $add_to->dmdctr,
                 'chrgcode' => $add_to->chrgcode,
-                'date_logged' => $date,
                 'unit_cost' => $item->unit_price,
                 'unit_price' => $item->retail_price,
                 'consumption_id' => session('active_consumption'),
             ]);
-            $log->time_logged = now();
             $log->purchased += $item->qty;
             $add_to->dmdprdte = $item->dmdprdte;
 

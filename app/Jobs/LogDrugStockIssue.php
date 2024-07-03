@@ -109,12 +109,10 @@ class LogDrugStockIssue implements ShouldQueue
             'dmdcomb' => $this->dmdcomb,
             'dmdctr' => $this->dmdctr,
             'chrgcode' => $this->chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $this->unit_cost,
             'unit_price' => $this->retail_price,
             'consumption_id' => $this->active_consumption,
         ]);
-        $log->time_logged = $this->date;
         $log->issue_qty += $this->trans_qty;
 
         $log->wholesale += $issued_drug->wholesale;

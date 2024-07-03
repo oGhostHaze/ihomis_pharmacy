@@ -172,12 +172,10 @@ class EmergencyPurchases extends Component
             'dmdcomb' => $add_to->dmdcomb,
             'dmdctr' => $add_to->dmdctr,
             'chrgcode' => $add_to->chrgcode,
-            'date_logged' => $date,
             'unit_cost' => $purchase->unit_price,
             'unit_price' => $purchase->retail_price,
             'consumption_id' => session('active_consumption'),
         ]);
-        $log->time_logged = now();
         $log->purchased += $purchase->qty;
         $add_to->dmdprdte = $purchase->dmdprdte;
 

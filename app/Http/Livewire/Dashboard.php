@@ -130,14 +130,11 @@ class Dashboard extends Component
                         'dmdcomb' => $stock->dmdcomb,
                         'dmdctr' => $stock->dmdctr,
                         'chrgcode' => $stock->chrgcode,
-                        'date_logged' => $date,
                         'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
                         'unit_price' => $stock->retail_price,
                         'beg_bal' => $stock->stock_bal,
                         'consumption_id' => $active_consumption->id,
                     ]);
-                    $log->time_logged = now();
-                    $log->save();
 
                     DrugManualLogItem::create([
                         'loc_code' => $stock->loc_code,
