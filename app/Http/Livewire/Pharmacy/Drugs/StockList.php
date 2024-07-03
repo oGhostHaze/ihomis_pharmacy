@@ -272,7 +272,6 @@ class StockList extends Component
             ->where('dmdcomb', $stock->dmdcomb)
             ->where('dmdctr', $stock->dmdctr)
             ->where('chrgcode', $old_chrgcode)
-            ->where('dmdprdte', $stock->dmdprdte)
             ->first();
         if ($old_log) {
             $old_log->beg_bal -= $old_stock_bal;
