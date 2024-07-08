@@ -19,8 +19,6 @@ class CreateDrugStockLogsTable extends Migration
             $table->string('dmdcomb', 30);
             $table->string('dmdctr', 30);
             $table->string('chrgcode', 30);
-            $table->date('date_logged');
-            $table->dateTime('time_logged');
 
             $table->dateTime('dmdprdte');
             $table->decimal('unit_cost', 12, 2)->nullable()->default(0);
