@@ -50,7 +50,7 @@
                         <td>{{ $delivery->delivery_date }}</td>
                         <td>{{ $delivery->po_no }}</td>
                         <td>{{ $delivery->si_no }}</td>
-                        <td>{{ $delivery->supplier->suppname }}</td>
+                        <td>{{ $delivery->supplier ? $delivery->supplier->suppname : '' }}</td>
                         <td>{{ $delivery->items->sum('qty') }}</td>
                         <td>{{ $delivery->items->sum('total_amount') }}</td>
                         <td>{{ $delivery->charge->chrgdesc }}</td>

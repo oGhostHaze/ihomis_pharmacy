@@ -47,6 +47,11 @@ class DeliveryList extends Component
 
     public function add_delivery()
     {
+        $this->validate([
+            'suppcode' => 'required',
+            'charge_code' => 'required',
+        ]);
+
         $delivery = new DeliveryDetail();
         $delivery->po_no = $this->po_no;
         $delivery->si_no = $this->si_no;

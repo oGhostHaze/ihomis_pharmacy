@@ -42,6 +42,8 @@ class DrugStock extends Model
         'dmdrem',
         'dmdrxot',
         'gencode',
+
+        'lot_no',
     ];
 
     public function charge()

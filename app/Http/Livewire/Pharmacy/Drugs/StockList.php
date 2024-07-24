@@ -49,7 +49,6 @@ class StockList extends Component
         $stocks = DrugStock::join('hcharge', 'hcharge.chrgcode', 'pharm_drug_stocks.chrgcode')
             ->join('hdmhdrprice', 'hdmhdrprice.dmdprdte', 'pharm_drug_stocks.dmdprdte')
             ->join('pharm_locations', 'pharm_locations.id', 'pharm_drug_stocks.loc_code')
-            ->where('drug_concat', 'LIKE', '%' . $this->search . '%')
             ->where('loc_code', $this->location_id)
             ->where('stock_bal', '>', 0)
             ->select(
@@ -69,6 +68,7 @@ class StockList extends Component
                 'hdmhdrprice.has_compounding',
                 'hdmhdrprice.compounding_fee',
                 'pharm_locations.description',
+                'pharm_drug_stocks.lot_no',
             )
             ->orderBy('drug_concat', 'ASC')
             ->get();
@@ -163,6 +163,7 @@ class StockList extends Component
             'dmdrem' => $drug->dmdrem,
             'dmdrxot' => $drug->dmdrxot,
             'gencode' => $drug->generic->gzencode,
+            'lot_no' => $this->lot_no,
         ]);
         $stock->stock_bal = $stock->stock_bal + $this->qty;
         $stock->beg_bal = $stock->beg_bal + $this->qty;

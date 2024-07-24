@@ -72,6 +72,7 @@
                     <th class="px-1 text-sm border text-end">Price</th>
                     <th class="px-1 text-sm border text-end">Stock Balance</th>
                     <th class="px-1 text-sm text-center border">Expiry Date</th>
+                    <th class="px-1 text-sm text-center border">Lot No</th>
                     <th class="px-1 text-sm border">Actions</th>
                 </tr>
             </thead>
@@ -84,6 +85,7 @@
                         <td class="px-1 text-xs border text-end">{{ $stk->dmselprice }}</td>
                         <td class="px-1 text-xs border text-end">{{ number_format($stk->stock_bal) }}</td>
                         <td class="px-1 text-xs text-center border">{!! $stk->expiry() !!}</td>
+                        <td class="px-1 text-xs text-center border">{{ $stk->lot_no }}</td>
                         <td class="px-1 text-xs border">
                             <div class="flex space-x-2">
                                 @can('update-stock-item')
@@ -113,11 +115,13 @@
                     <th></th>
                     <th></th>
                     <th></th>
+                    <th></th>
                 </tr>
                 <tr class="text-xs text-white bg-slate-500">
                     <th>Source of Fund</th>
                     <th></th>
                     <th>Generic</th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -358,7 +362,7 @@
                     .every(function() {
                         let column = this;
                         var warehouse = false;
-                        if (column[0] != 6 && column[0] != 5 && column[0] != 4 && column[0] != 3 && column[
+                        if (column[0] != 7 && column[0] != 6 && column[0] != 5 && column[0] != 4 && column[0] != 3 && column[
                                 0] != 1) {
                             // Create select element
                             let select = document.createElement('select');

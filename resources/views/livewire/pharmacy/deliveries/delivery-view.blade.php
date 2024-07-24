@@ -58,7 +58,7 @@
                 </div>
                 <div class="flex">
                     <div class="w-36"> Supplier:</div>
-                    <div class="font-bold uppercase w-96">{{ $details->supplier->suppname }}</div>
+                    <div class="font-bold uppercase w-96">{{ $details->supplier ? $details->supplier->suppname : ''}}</div>
                 </div>
                 <div class="flex">
                     <div class="w-36"> Source of Fund:</div>
