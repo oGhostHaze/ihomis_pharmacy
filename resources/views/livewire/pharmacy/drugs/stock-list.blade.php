@@ -90,7 +90,7 @@
                             <div class="flex space-x-2">
                                 @can('update-stock-item')
                                     <button class="text-xs btn bg-warning btn-xs"
-                                        onclick="update_item({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgcode }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}', '{{ $stk->dmduprice }}', '{{ $stk->has_compounding }}', '{{ $stk->compounding_fee }}')"
+                                        onclick="update_item({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgcode }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}', '{{ $stk->dmduprice }}', '{{ $stk->has_compounding }}', '{{ $stk->compounding_fee }}', '{{ $stk->lot_no }}')"
                                         wire:loading.attr="disabled">Update</button>
                                     <button class="text-xs btn bg-info btn-xs"
                                         onclick="adjust_qty({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgdesc }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}')"
@@ -242,7 +242,7 @@
         }
 
         function update_item(stk_id, stk_drug_name, stk_chrgcode, stk_expiry_date, stk_balance, stk_cost,
-            stk_has_compounding, stk_compounding_fee) {
+            stk_has_compounding, stk_compounding_fee, stk_lot_no) {
             Swal.fire({
                 html: `
                     <span class="text-xl font-bold"> Update Item ` + stk_drug_name + `</span>
@@ -260,7 +260,7 @@
                         <label class="label" for="update_lot_no">
                             <span class="label-text">Lot no</span>
                         </label>
-                        <input id="update_lot_no" type="text" class="w-full input input-bordered" />
+                        <input id="update_lot_no" type="text" value="` + stk_lot_no + `" class="w-full input input-bordered" />
                     </div>
                     <div class="w-full px-2 form-control">
                         <label class="label" for="update_expiry_date">
