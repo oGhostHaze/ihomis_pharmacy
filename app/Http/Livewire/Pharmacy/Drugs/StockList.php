@@ -246,6 +246,7 @@ class StockList extends Component
         $stock->beg_bal = 0;
         $stock->stock_bal = 0;
 
+        $stock->lot_no = $this->lot_no;
         $stock->chrgcode = $this->chrgcode;
         $stock->exp_date = $this->expiry_date;
         $stock->retail_price = $retail_price;

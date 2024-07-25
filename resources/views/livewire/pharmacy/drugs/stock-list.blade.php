@@ -150,6 +150,12 @@
                         </select>
                     </div>
                     <div class="w-full px-2 form-control">
+                        <label class="label" for="lot_no">
+                            <span class="label-text">Lot no</span>
+                        </label>
+                        <input id="lot_no" type="text" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full px-2 form-control">
                         <label class="label" for="dmdcomb">
                             <span class="label-text">Drug/Medicine</span>
                         </label>
@@ -193,6 +199,7 @@
                 showCancelButton: true,
                 confirmButtonText: `Save`,
                 didOpen: () => {
+                    const lot_no = Swal.getHtmlContainer().querySelector('#lot_no');
                     const dmdcomb = Swal.getHtmlContainer().querySelector('#dmdcomb');
                     const expiry_date = Swal.getHtmlContainer().querySelector('#expiry_date');
                     const qty = Swal.getHtmlContainer().querySelector('#qty');
@@ -220,6 +227,7 @@
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
+                    @this.set('lot_no', lot_no.value);
                     @this.set('dmdcomb', $('#dmdcomb').select2('val'));
                     @this.set('expiry_date', expiry_date.value);
                     @this.set('qty', qty.value);
@@ -247,6 +255,12 @@
                                 <option value="{{ $charge->chrgcode }}">{{ $charge->chrgdesc }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="w-full px-2 form-control">
+                        <label class="label" for="update_lot_no">
+                            <span class="label-text">Lot no</span>
+                        </label>
+                        <input id="update_lot_no" type="text" class="w-full input input-bordered" />
                     </div>
                     <div class="w-full px-2 form-control">
                         <label class="label" for="update_expiry_date">
@@ -282,6 +296,7 @@
                 confirmButtonText: `Save`,
                 didOpen: () => {
                     const update_expiry_date = Swal.getHtmlContainer().querySelector('#update_expiry_date');
+                    const update_lot_no = Swal.getHtmlContainer().querySelector('#update_lot_no');
                     const update_qty = Swal.getHtmlContainer().querySelector('#update_qty');
                     const update_unit_cost = Swal.getHtmlContainer().querySelector('#update_unit_cost');
                     const update_chrgcode = Swal.getHtmlContainer().querySelector('#update_chrgcode');
@@ -316,6 +331,7 @@
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
+                    @this.set('lot_no', update_lot_no.value);
                     @this.set('expiry_date', update_expiry_date.value);
                     @this.set('qty', update_qty.value);
                     @this.set('unit_cost', update_unit_cost.value);
