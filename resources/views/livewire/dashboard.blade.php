@@ -96,6 +96,20 @@
             </div>
         </div>
     </div>
+
+    <!-- Put this part before </body> tag -->
+    <input type="checkbox" id="my-modal" class="modal-toggle" wire:loading.attr="checked" />
+    <div class="modal">
+        <div class="modal-box">
+            <div>
+                <span>
+                    <i class="las la-spinner la-lg animate-spin"></i>
+                    Processing... <br>
+                    Please wait. Do not close or refresh the browser!
+                </span>
+            </div>
+        </div>
+    </div>
 </div>
 
 @push('scripts')

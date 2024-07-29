@@ -123,9 +123,13 @@ class Dashboard extends Component
                 }
 
                 $date = Carbon::parse(now())->format('Y-m-d');
-                $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte', 'retail_price')->with('current_price')->where('loc_code', $pharm_location_id)->where('stock_bal', '>', 0)->get();
+                $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte', 'retail_price')
+                ->with('current_price')
+                ->where('loc_code', $pharm_location_id)
+                ->where('stock_bal', '>', 0)
+                ->get();
                 foreach ($stocks as $stock) {
-                    $log = DrugStockLog::firstOrNew([
+                    $log = DrugStockLog::create([
                         'loc_code' => $stock->loc_code,
                         'dmdcomb' => $stock->dmdcomb,
                         'dmdctr' => $stock->dmdctr,

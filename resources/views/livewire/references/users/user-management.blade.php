@@ -91,7 +91,7 @@
                             <span class="label-text">Role</span>
                         </label>
                         <select class="select select-bordered" id="role_name">
-                            <option></option>
+                            <option value="">Disable</option>
                             @foreach ($roles as $role)
                             <option value="{{ $role->name }}">{{ $role->name }}</option>
                             @endforeach
