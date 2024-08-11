@@ -38,15 +38,14 @@ class TotalDrugsIssued extends Component
 
         $filter_charge = explode(',', $this->filter_charge);
 
-        $drugs_issued = DB::select("SELECT drug.drug_concat, charge.chrgdesc, SUM(rxo.qty) as qty, rx.exp_date
-                                    FROM hospital.dbo.hrxoissue rxo
+        $drugs_issued = DB::select("SELECT drug.drug_concat, SUM(rxo.pchrgqty) as qty, rxo.exp_date
+                                    FROM hospital.dbo.hrxo rxo
                                     INNER JOIN hospital.dbo.hdmhdr drug ON rxo.dmdcomb = drug.dmdcomb AND rxo.dmdctr = drug.dmdctr
-                                    INNER JOIN hospital.dbo.hcharge charge ON rxo.chrgcode = charge.chrgcode
-                                    INNER JOIN hospital.dbo.hrxo rx ON rxo.docointkey = rx.docointkey
-                                    WHERE rxo.issuedte BETWEEN ? AND ?
-                                    AND rxo.chrgcode LIKE ?
-                                    AND rx.loc_code = ?
-                                    GROUP BY drug.drug_concat, charge.chrgdesc, rx.exp_date
+                                    WHERE rxo.dodtepost BETWEEN ? AND ?
+                                    AND rxo.orderfrom LIKE ?
+                                    AND rxo.loc_code = ?
+                                    AND rxo.estatus = 'S'
+                                    GROUP BY drug.drug_concat, rxo.exp_date
                                     ORDER BY drug.drug_concat ASC
                                     ", [$date_from, $date_to, $filter_charge[0] ?? '%%', $this->location_id]);
 

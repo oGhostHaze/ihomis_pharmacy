@@ -624,7 +624,7 @@ class EncounterTransactionView extends Component
         DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
                 docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
                 status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
-                returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup)
+                returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup, loc_code)
             VALUES(
             '" . $item->docointkey . "',
             '" . $item->enccode . "',
@@ -649,6 +649,7 @@ class EncounterTransactionView extends Component
             '',
             '" . $item->pchrgup . "',
             '" . $item->pchrgup . "'
+            '" . $this->location_id . "',
             )
         ");
 
