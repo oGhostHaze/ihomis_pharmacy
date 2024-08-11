@@ -21,12 +21,30 @@
 <div class="max-w-screen">
     <div class="flex flex-col w-full px-2 py-5">
         <div class="flex my-2">
-            <div class="ml-2">
+            <div class="ml-2 ">
                 <button class="btn btn-sm btn-info" wire:loading.attr='disabled' wire:click='get_begbal'>Capture Beginning Balance</button>
             </div>
+            @if($ended)
+            <div class="ml-2 ">
+                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ending_balance'>Generate</button>
+            </div>
+            @else
             <div class="ml-2">
                 <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End Logger</button>
             </div>
+            @endif
+            {{-- <div class="flex justify-end w-full ml-2">
+                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_returns'>Generate Returns</button>
+            </div>
+            <div class="flex justify-end w-full ml-2">
+                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_iotrans'>Generate IO Trans</button>
+            </div>
+            <div class="flex justify-end w-full ml-2">
+                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_deliveries'>Generate Deliveries</button>
+            </div> --}}
+            {{-- <div class="flex justify-end w-full ml-2">
+                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ep'>Generate EP</button>
+            </div> --}}
         </div>
         <div class="flex justify-end my-2">
             <div class="ml-2">
@@ -69,7 +87,10 @@
                 </div>
             </div>
         </div>
-        <div id="print" class="w-full overflow-auto">
+        <div class="flex my-2">
+            <progress class="mt-2 mr-2 w-28 progress" wire:loading.inline></progress>
+        </div>
+        <div id="print" class="w-full overflow-auto" wire:loading.class='hidden' wire:target='generate_ending_balance'>
             <table class="w-full text-xs bg-white shadow-md" id="table">
                 <thead class="sticky top-0 font-bold bg-gray-200">
                     <tr class="text-center uppercase">
