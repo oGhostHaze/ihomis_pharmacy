@@ -44,7 +44,7 @@ class InitializeStockCard extends Command
     {
         $locations = PharmLocation::all();
         foreach($locations as $location){
-            $location->under_maintenance;
+            $location->under_maintenance = true;
             $location->save();
         }
 
@@ -85,6 +85,11 @@ class InitializeStockCard extends Command
                 $card->bal = $stock->stock_bal;
                 $card->save();
             }
+        }
+
+        foreach($locations as $location){
+            $location->under_maintenance = false;
+            $location->save();
         }
 
         return 'Stock card reference value captured';
