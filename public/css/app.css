@@ -1448,6 +1448,13 @@ html {
   right: auto;
   bottom: var(--tooltip-offset);
 }
+.tooltip-right:before {
+  transform: translateY(-50%);
+  top: 50%;
+  left: var(--tooltip-offset);
+  right: auto;
+  bottom: auto;
+}
 .alert-error {
   --tw-bg-opacity: 1;
   background-color: hsl(var(--er) / var(--tw-bg-opacity));
@@ -2799,6 +2806,14 @@ html {
   left: 50%;
   right: auto;
   bottom: var(--tooltip-tail-offset);
+}
+.tooltip-right:after {
+  transform: translateY(-50%);
+  border-color: transparent var(--tooltip-color) transparent transparent;
+  top: 50%;
+  left: calc(var(--tooltip-tail-offset) + 1px);
+  right: auto;
+  bottom: auto;
 }
 :root .prose {
   --tw-prose-body: hsla(var(--bc)/.8);

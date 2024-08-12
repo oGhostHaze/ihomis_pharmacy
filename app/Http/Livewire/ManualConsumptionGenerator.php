@@ -21,11 +21,12 @@ class ManualConsumptionGenerator extends Component
     public $location_id;
     public $report_id;
     public $ended = false;
+    public $active_report;
 
     public function updatedReportId()
     {
         $cons = DrugManualLogHeader::find($this->report_id);
-        $this->ended = $cons->consumption_to;
+        $this->ended = $cons ? $cons->consumption_to : NULL;
     }
 
     public function render()
@@ -89,7 +90,10 @@ class ManualConsumptionGenerator extends Component
         $this->date_from = date('Y-m', strtotime(now()));
         $this->location_id = session('pharm_location_id');
         $select_consumption = DrugManualLogHeader::where('loc_code', auth()->user()->pharm_location_id)->latest()->first();
-        $this->report_id = $select_consumption->id;
+        if($select_consumption){
+            $this->report_id = $select_consumption->id;
+            $this->active_report = $select_consumption->consumption_to ? $select_consumption : NULL;
+        }
     }
 
     public function get_begbal()

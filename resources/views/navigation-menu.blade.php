@@ -132,6 +132,27 @@
                         <span class="inline-flex rounded-md">
                             <button type="button"
                                 class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 border border-transparent rounded-md focus:outline-none">
+                                <i class="las la-lg la-code"></i>
+                            </button>
+                        </span>
+                    </x-slot>
+
+                    <x-slot name="content">
+                        <x-jet-dropdown-link href="{{ route('reports.consumption.manual') }}">
+                            {{ __('Generated Consumption Report') }}
+                        </x-jet-dropdown-link>
+                    </x-slot>
+                </x-jet-dropdown>
+            </div>
+        @endcan
+        @can('view-reports')
+            <!-- Reports Dropdown -->
+            <div class="relative ml-3">
+                <x-jet-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <span class="inline-flex rounded-md">
+                            <button type="button"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 border border-transparent rounded-md focus:outline-none">
                                 <i class="las la-lg la-file-excel"></i>
                             </button>
                         </span>

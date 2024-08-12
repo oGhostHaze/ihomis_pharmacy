@@ -20,20 +20,8 @@
 
 <div class="max-w-screen">
     <div class="flex flex-col w-full px-2 py-5">
-        <div class="flex my-2">
-            <div class="ml-2 ">
-                <button class="btn btn-sm btn-info" wire:loading.attr='disabled' wire:click='get_begbal'>Capture Beginning Balance</button>
-            </div>
-            @if($ended)
-            <div class="ml-2 ">
-                <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ending_balance'>Generate</button>
-            </div>
-            @else
-            <div class="ml-2">
-                <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End Logger</button>
-            </div>
-            @endif
-            {{-- <div class="flex justify-end w-full ml-2">
+        {{-- <div class="flex my-2">
+            <div class="flex justify-end w-full ml-2">
                 <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_returns'>Generate Returns</button>
             </div>
             <div class="flex justify-end w-full ml-2">
@@ -41,12 +29,29 @@
             </div>
             <div class="flex justify-end w-full ml-2">
                 <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_deliveries'>Generate Deliveries</button>
-            </div> --}}
-            {{-- <div class="flex justify-end w-full ml-2">
+            </div>
+            <div class="flex justify-end w-full ml-2">
                 <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ep'>Generate EP</button>
-            </div> --}}
-        </div>
+            </div>
+        </div> --}}
         <div class="flex justify-end my-2">
+            @if(!$report_id)
+                @if($ended)
+                    <div class="ml-2 mr-auto">
+                        <button class="btn btn-sm btn-info tooltip tooltip-right" data-tip="Captures beginning balance as of current datetime" wire:loading.attr='disabled' wire:click='get_begbal'>Begin New Report</button>
+                    </div>
+                @endif
+            @else
+                @if($ended)
+                    <div class="ml-2 mr-auto">
+                        <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ending_balance'>Generate</button>
+                    </div>
+                @else
+                    <div class="ml-2 mr-auto">
+                        <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End Logger</button>
+                    </div>
+                @endif
+            @endif
             <div class="ml-2">
                 <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
                         class="las la-lg la-file-excel"></i> Export</button>

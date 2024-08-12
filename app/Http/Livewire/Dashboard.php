@@ -171,6 +171,12 @@ class Dashboard extends Component
                 $active_consumption->closed_by = session('user_id');
                 $active_consumption->save();
 
+                $active_consumption_manual = DrugManualLogHeader::find(session('active_consumption_manual'));
+                $active_consumption_manual->consumption_to = now();
+                $active_consumption_manual->status = 'I';
+                $active_consumption_manual->closed_by = session('user_id');
+                $active_consumption_manual->save();
+
                 session(['active_consumption' => null]);
                 $pharm_location_id = session('pharm_location_id');
                 //
