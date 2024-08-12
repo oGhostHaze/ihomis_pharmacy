@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockCard;
+use App\Models\Pharmacy\PharmLocation;
 use App\Models\UserSession;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,13 @@ class InitializeStockCard extends Command
      */
     public function handle()
     {
+        $locations = PharmLocation::all();
+        foreach($locations as $location){
+            $location->under_maintenance;
+            $location->save();
+        }
+
+
         $sessions = UserSession::where('user_id', '<>', '1')->get();
         foreach ($sessions as $session) {
             $session->delete();

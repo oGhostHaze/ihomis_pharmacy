@@ -39,8 +39,19 @@
         <!-- Page Heading -->
         @if (isset($header))
             <header class="bg-white shadow">
-                <div class="px-4 py-2 mx-auto sm:px-6 lg:px-8">
+                <div class="flex justify-between px-4 py-2 mx-auto sm:px-6 lg:px-8">
                     {{ $header }}
+                    @php
+                        $current = \Carbon\Carbon::parse(now());
+                        $today = \Carbon\Carbon::parse(now());
+                        $tomorrow = \Carbon\Carbon::parse($today->startOfDay())->addDay();
+                        $minutes = $current->diffInMinutes($tomorrow);
+                    @endphp
+                    @if ($minutes <= 30)
+                    <div class="h-8 text-sm max-w-fit alert alert-warning alert-sm">
+                        Inventory maintenance will proceed at 12AM. You will be automatically logged out of the system. Please be sure to refrain from dispensing 1 minute prior to maintenance. {{ $minutes }} minutes till maintenance.
+                    </div>
+                    @endif
                 </div>
             </header>
         @endif
