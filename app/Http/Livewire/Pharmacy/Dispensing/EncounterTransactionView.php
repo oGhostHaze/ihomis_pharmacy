@@ -648,8 +648,8 @@ class EncounterTransactionView extends Component
             '" . $item->pcchrgcod . "',
             '',
             '" . $item->pchrgup . "',
-            '" . $item->pchrgup . "'
-            '" . $this->location_id . "',
+            '" . $item->pchrgup . "',
+            '" . $this->location_id . "'
             )
         ");
 
