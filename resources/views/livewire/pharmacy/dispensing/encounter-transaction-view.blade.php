@@ -50,7 +50,7 @@
                         </div>
                     @endif
                 </div>
-                <table class="w-full mb-40 table-compact table-xs">
+                <table class="w-full table-compact table-xs">
                     <thead class="sticky font-bold bg-gray-200" wire:ignore>
                         <tr>
                             <td colspan="3" class="text-xs border border-black"><span class="text-xs">Hospital #:
@@ -137,126 +137,133 @@
                                 {{-- {{ number_format($encounter->rxo->sum('pcchrgamt'), 2) }}</td> --}}
                             </td>
                         </tr>
-                        <tr class="border border-black">
-                            <td class="text-center w-min"></td>
-                            <td class="whitespace-nowrap w-min">Charge Slip</td>
-                            <td class="whitespace-nowrap w-min">Date of Order</td>
-                            <td class="w-max whitespace-nowrap">Description</td>
-                            <td class="w-20 text-right">
-                                <div class="tooltip" data-tip="Quantity Ordered">Q.O.</div>
-                            </td>
-                            <td class="w-20 text-right">
-                                <div class="tooltip" data-tip="Quantity Issued">Q.I.</div>
-                            </td>
-                            <td class="text-right w-min">Price</td>
-                            <td class="text-right w-min">Total</td>
-                            <td>Remarks</td>
-                            <td class="text-center w-min">Status</td>
-                        </tr>
                     </thead>
-                    <tbody class="bg-white">
-                        @forelse ($rxos as $rxo)
-                            @php
-                                $concat = explode('_,', $rxo->drug_concat);
-                                $drug = implode('', $concat);
-                            @endphp
-                            <tr class="border">
-                                <td class="w-10 text-xs text-center">
-                                    <input type="checkbox"
-                                        class="checkbox{{ '-' . ($rxo->pcchrgcod ?? 'blank') }}{{ date('mdY', strtotime($rxo->dodate)) }}"
-                                        wire:model.defer="selected_items" wire:key="item-{{ $rxo->docointkey }}"
-                                        name="docointkey" value="'{{ $rxo->docointkey }}'" />
-                                </td>
-                                <td class="text-xs whitespace-nowrap w-min" title="View Charge Slip">
-                                    <div class="flex flex-col align-center">
-                                        @if ($rxo->pcchrgcod)
-                                            <a rel="noopener noreferrer" class="font-semibold text-blue-600"
-                                                href="{{ route('dispensing.rxo.chargeslip', $rxo->pcchrgcod) }}"
-                                                target="_blank">{{ $rxo->pcchrgcod }}</a>
-                                        @endif
-                                        <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
-                                    </div>
-                                </td>
-                                <td class="text-xs align-center whitespace-nowrap w-min">
-                                    <div class="flex flex-col">
-                                        <div>{{ date('m/d/Y', strtotime($rxo->dodate)) }}</div>
-                                        <div>{{ date('h:i A', strtotime($rxo->dodate)) }}</div>
-                                    </div>
-                                </td>
-                                <td class="w-6/12 text-xs">
-                                    <div class="flex flex-col">
-                                        <div class="text-xs text-slate-600">{{ $rxo->chrgdesc ?? '' }}</div>
-                                        <div class="text-xs font-bold">{{ $concat[0] }}</div>
-                                        <div class="ml-10 text-xs text-slate-800">
-                                            {{ $concat[1] }}</div>
-                                    </div>
-                                </td>
-                                <td class="w-20 text-xs text-right whitespace-nowrap">
-                                    @if (!$rxo->pcchrgcod)
-                                        <span class="cursor-pointer tooltip" data-tip="Update"
-                                            onclick="update_qty('{{ $rxo->docointkey }}', {{ $rxo->pchrgqty }}, {{ $rxo->pchrgup }}, {{ $rxo->pcchrgamt }}, `{{ $concat[0] }} <br>{{ $concat[1] }}`)">
-                                            <i class="las la-lg la-edit"></i>
-                                            {{ number_format($rxo->pchrgqty) }}
-                                        </span>
-                                    @else
-                                        {{ number_format($rxo->pchrgqty) }}
-                                    @endif
-                                </td>
-                                <td class="w-20 text-xs text-right whitespace-nowrap">
-                                    @if ($rxo->estatus == 'S' and $rxo->qtyissued > 0)
-                                        <span class="cursor-pointer tooltip" data-tip="Return"
-                                            onclick="return_issued('{{ $rxo->docointkey }}', `{{ $concat[0] }} <br>{{ $concat[1] }}`, {{ $rxo->pchrgup }}, {{ $rxo->qtyissued }})">
-                                            <i class="text-red-600 las la-lg la-undo-alt"></i>
-                                            {{ number_format($rxo->qtyissued) }}
-                                        </span>
-                                    @else
-                                        {{ number_format($rxo->qtyissued) }}
-                                    @endif
-                                </td>
-                                <td class="text-xs text-right w-min">{{ number_format($rxo->pchrgup, 2) }}</td>
-                                <td class="text-xs text-right w-min total">{{ number_format($rxo->pcchrgamt, 2) }}
-                                </td>
-                                <td class="text-xs ">
-                                    <div class="form-control">
-                                        <label class="input-group input-group-xs">
-                                            @if ($selected_remarks == $rxo->docointkey)
-                                                <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
-                                                    wire:key="rem-input-{{ $rxo->docointkey }}">{{ $rxo->remarks }}</textarea>
-                                                <button class="btn-primary btn btn-square"
-                                                    wire:click="update_remarks()"
-                                                    wire:key="update-rem-{{ $rxo->docointkey }}">
-                                                    <i class="las la-lg la-save"></i>
-                                                </button>
-                                            @else
-                                                <textarea class="textarea textarea-bordered textarea-xs" wire:key="rem-input-dis-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
-                                                <button class="btn btn-square"
-                                                    wire:click="$set('selected_remarks', '{{ $rxo->docointkey }}')"
-                                                    wire:key="set-rem-id-dis-{{ $rxo->docointkey }}">
-                                                    <i class="las la-lg la-edit"></i>
-                                                </button>
-                                            @endif
-
-                                        </label>
-                                    </div>
-                                </td>
-                                @php
-                                    if ($rxo->estatus == 'U' || !$rxo->pcchrgcod) {
-                                        $badge = '<span class="badge badge-sm badge-warning">Pending</span>';
-                                    } elseif ($rxo->estatus == 'P' && $rxo->pcchrgcod) {
-                                        $badge = '<span class="badge badge-sm badge-secondary">Charged</span>';
-                                    } elseif ($rxo->estatus == 'S' && $rxo->pcchrgcod) {
-                                        $badge = '<span class="badge badge-sm badge-success">Issued</span>';
-                                    }
-                                @endphp
-                                <td class="text-xs text-center w-min">{!! $badge !!}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="12">EMPTY</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
                 </table>
+                <div wire:ignore.self>
+                    <table class="w-full table-compact table-xs" id="table">
+                        <thead>
+                            <tr class="border border-black">
+                                <td class="text-center w-min"></td>
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(1)">Charge Slip <i class="las la-sort"></i></td>
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Date of Order <i class="las la-sort"></i></td>
+                                <td class="w-max whitespace-nowrap" onclick="sortTable(3)">Description <i class="las la-sort"></i></td>
+                                <td class="w-20 text-right">
+                                    <div class="tooltip" data-tip="Quantity Ordered">Q.O.</div>
+                                </td>
+                                <td class="w-20 text-right">
+                                    <div class="tooltip" data-tip="Quantity Issued">Q.I.</div>
+                                </td>
+                                <td class="text-right w-min">Price</td>
+                                <td class="text-right w-min">Total</td>
+                                <td>Remarks</td>
+                                <td class="text-center w-min" onclick="sortTable(9)">Status</td>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @forelse ($rxos as $rxo)
+                                @php
+                                    $concat = explode('_,', $rxo->drug_concat);
+                                    $drug = implode('', $concat);
+                                @endphp
+                                <tr class="border">
+                                    <td class="w-10 text-xs text-center">
+                                        <input type="checkbox"
+                                            class="checkbox{{ '-' . ($rxo->pcchrgcod ?? 'blank') }}{{ date('mdY', strtotime($rxo->dodate)) }}"
+                                            wire:model.defer="selected_items" wire:key="item-{{ $rxo->docointkey }}"
+                                            name="docointkey" value="'{{ $rxo->docointkey }}'" />
+                                    </td>
+                                    <td class="text-xs whitespace-nowrap w-min" title="View Charge Slip">
+                                        <div class="flex flex-col align-center">
+                                            @if ($rxo->pcchrgcod)
+                                                <a rel="noopener noreferrer" class="font-semibold text-blue-600"
+                                                    href="{{ route('dispensing.rxo.chargeslip', $rxo->pcchrgcod) }}"
+                                                    target="_blank">{{ $rxo->pcchrgcod }}</a>
+                                            @endif
+                                            <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-xs align-center whitespace-nowrap w-min">
+                                        <div class="flex flex-col">
+                                            <div>{{ date('m/d/Y', strtotime($rxo->dodate)) }}</div>
+                                            <div>{{ date('h:i A', strtotime($rxo->dodate)) }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="w-6/12 text-xs">
+                                        <span class="hidden">{{ $concat[0] }}</span>
+                                        <div class="flex flex-col">
+                                            <div class="text-xs text-slate-600">{{ $rxo->chrgdesc ?? '' }}</div>
+                                            <div class="text-xs font-bold">{{ $concat[0] }}</div>
+                                            <div class="ml-10 text-xs text-slate-800">
+                                                {{ $concat[1] }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="w-20 text-xs text-right whitespace-nowrap">
+                                        @if (!$rxo->pcchrgcod)
+                                            <span class="cursor-pointer tooltip" data-tip="Update"
+                                                onclick="update_qty('{{ $rxo->docointkey }}', {{ $rxo->pchrgqty }}, {{ $rxo->pchrgup }}, {{ $rxo->pcchrgamt }}, `{{ $concat[0] }} <br>{{ $concat[1] }}`)">
+                                                <i class="las la-lg la-edit"></i>
+                                                {{ number_format($rxo->pchrgqty) }}
+                                            </span>
+                                        @else
+                                            {{ number_format($rxo->pchrgqty) }}
+                                        @endif
+                                    </td>
+                                    <td class="w-20 text-xs text-right whitespace-nowrap">
+                                        @if ($rxo->estatus == 'S' and $rxo->qtyissued > 0)
+                                            <span class="cursor-pointer tooltip" data-tip="Return"
+                                                onclick="return_issued('{{ $rxo->docointkey }}', `{{ $concat[0] }} <br>{{ $concat[1] }}`, {{ $rxo->pchrgup }}, {{ $rxo->qtyissued }})">
+                                                <i class="text-red-600 las la-lg la-undo-alt"></i>
+                                                {{ number_format($rxo->qtyissued) }}
+                                            </span>
+                                        @else
+                                            {{ number_format($rxo->qtyissued) }}
+                                        @endif
+                                    </td>
+                                    <td class="text-xs text-right w-min">{{ number_format($rxo->pchrgup, 2) }}</td>
+                                    <td class="text-xs text-right w-min total">{{ number_format($rxo->pcchrgamt, 2) }}
+                                    </td>
+                                    <td class="text-xs ">
+                                        <div class="form-control">
+                                            <label class="input-group input-group-xs">
+                                                @if ($selected_remarks == $rxo->docointkey)
+                                                    <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
+                                                        wire:key="rem-input-{{ $rxo->docointkey }}">{{ $rxo->remarks }}</textarea>
+                                                    <button class="btn-primary btn btn-square"
+                                                        wire:click="update_remarks()"
+                                                        wire:key="update-rem-{{ $rxo->docointkey }}">
+                                                        <i class="las la-lg la-save"></i>
+                                                    </button>
+                                                @else
+                                                    <textarea class="textarea textarea-bordered textarea-xs" wire:key="rem-input-dis-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
+                                                    <button class="btn btn-square"
+                                                        wire:click="$set('selected_remarks', '{{ $rxo->docointkey }}')"
+                                                        wire:key="set-rem-id-dis-{{ $rxo->docointkey }}">
+                                                        <i class="las la-lg la-edit"></i>
+                                                    </button>
+                                                @endif
+
+                                            </label>
+                                        </div>
+                                    </td>
+                                    @php
+                                        if ($rxo->estatus == 'U' || !$rxo->pcchrgcod) {
+                                            $badge = '<span class="badge badge-sm badge-warning">Pending</span>';
+                                        } elseif ($rxo->estatus == 'P' && $rxo->pcchrgcod) {
+                                            $badge = '<span class="badge badge-sm badge-secondary">Charged</span>';
+                                        } elseif ($rxo->estatus == 'S' && $rxo->pcchrgcod) {
+                                            $badge = '<span class="badge badge-sm badge-success">Issued</span>';
+                                        }
+                                    @endphp
+                                    <td class="text-xs text-center w-min">{!! $badge !!}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="12">EMPTY</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="col-span-12 xl:col-span-4">
@@ -471,6 +478,63 @@
 </div>
 @push('scripts')
     <script>
+
+
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("table");
+            switching = true;
+            // Set the sorting direction to ascending:
+            dir = "asc";
+            /* Make a loop that will continue until
+            no switching has been done: */
+            while (switching) {
+                // Start by saying: no switching is done:
+                switching = false;
+                rows = table.rows;
+                /* Loop through all table rows (except the
+                first, which contains table headers): */
+                for (i = 1; i < (rows.length - 1); i++) {
+                    // Start by saying there should be no switching:
+                    shouldSwitch = false;
+                    /* Get the two elements you want to compare,
+                    one from current row and one from the next: */
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    /* Check if the two rows should switch place,
+                    based on the direction, asc or desc: */
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            // If so, mark as a switch and break the loop:
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    /* If a switch has been marked, make the switch
+                    and mark that a switch has been done: */
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    // Each time a switch is done, increase this count by 1:
+                    switchcount++;
+                } else {
+                    /* If no switching has been done AND the direction is "asc",
+                    set the direction to "desc" and run the while loop again. */
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
         $('input:checkbox').change(function() {
             if ($(this).is(':checked')) {
                 $('.' + this.className).prop('checked', true);

@@ -19,33 +19,37 @@ class DailyStockCard extends Component
     public function updatedSelectedDrug()
     {
         $drug = $this->selected_drug;
-        $selected_drug = explode(',', $drug);
-        $this->dmdcomb = $selected_drug[0];
-        $this->dmdctr = $selected_drug[1];
+        $this->reset('dmdcomb', 'dmdctr');
+        if($drug){
+            $selected_drug = explode(',', $drug);
+            $this->dmdcomb = $selected_drug[0];
+            $this->dmdctr = $selected_drug[1];
+        }
     }
 
     public function updatedSelectedFund()
     {
         $fund = $this->selected_fund;
-        $selected_fund = explode(',', $fund);
-        $this->chrgcode = $selected_fund[0];
-        $this->chrgdesc = $selected_fund[1];
+        $this->reset('chrgcode', 'chrgdesc');
+        if($fund){
+            $selected_fund = explode(',', $fund);
+            $this->chrgcode = $selected_fund[0];
+            $this->chrgdesc = $selected_fund[1];
+        }
     }
 
     public function render()
     {
         $locations = PharmLocation::all();
-        $cards = DrugStockCard::select(DB::raw('reference, SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal'), 'drug_concat', 'exp_date', 'stock_date', 'reference', 'chrgcode')
+        $cards = DrugStockCard::select(DB::raw('reference, SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal'), 'drug_concat', 'stock_date', 'reference', 'chrgcode')
             ->where('dmdcomb', $this->dmdcomb)
             ->where('dmdctr', $this->dmdctr)
             ->whereBetween('stock_date', [$this->date_from, $this->date_to])
-            ->where('loc_code', $this->location_id);
-
-        if ($this->selected_fund) {
-            $cards = $cards->where('chrgcode', $this->chrgcode);
-        }
-
-        $cards = $cards->groupBy('dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'stock_date')
+            ->where('loc_code', $this->location_id)
+            ->when($this->chrgcode, function ($query3) {
+                $query3->where('chrgcode', $this->chrgcode);
+            })
+            ->groupBy('dmdcomb', 'dmdctr', 'drug_concat', 'chrgcode', 'stock_date')
             ->orderBy('stock_date', 'ASC')
             ->orderBy('drug_concat', 'ASC')
             ->orderBy('exp_date', 'ASC')

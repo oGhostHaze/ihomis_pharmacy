@@ -90,7 +90,7 @@
                         <td class="border border-black">Receipt</td>
                         <td class="border border-black">Issued</td>
                         <td class="text-sm uppercase border border-black">Balance</td>
-                        <td class="text-sm border border-black">Expiry Date</td>
+                        {{-- <td class="text-sm border border-black">Expiry Date</td> --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -115,7 +115,7 @@
                             <td class="text-sm border">{{ number_format($card->rec) }}</td>
                             <td class="text-sm border">{{ number_format($card->iss) }}</td>
                             <td class="text-sm text-right border">{{ number_format($total) }}</td>
-                            <td class="text-sm border">{{ $card->exp_date }}</td>
+                            {{-- <td class="text-sm border">{{ $card->exp_date }}</td> --}}
                         </tr>
                     @empty
                         <tr>
