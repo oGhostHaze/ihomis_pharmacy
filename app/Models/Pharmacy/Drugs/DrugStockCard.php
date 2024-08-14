@@ -11,7 +11,6 @@ class DrugStockCard extends Model
 {
     use HasFactory;
 
-    protected $connection = 'worker';
     protected $table = 'pharm_drug_stock_cards';
 
     protected $fillable = [

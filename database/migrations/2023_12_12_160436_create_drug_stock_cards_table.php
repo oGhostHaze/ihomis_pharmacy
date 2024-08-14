@@ -13,7 +13,7 @@ class CreateDrugStockCardsTable extends Migration
      */
     public function up()
     {
-        Schema::connection('worker')->create('pharm_drug_stock_cards', function (Blueprint $table) {
+        Schema::create('pharm_drug_stock_cards', function (Blueprint $table) {
             $table->id();
             $table->string('loc_code', 30);
             $table->string('dmdcomb', 30);
@@ -37,6 +37,6 @@ class CreateDrugStockCardsTable extends Migration
      */
     public function down()
     {
-        Schema::connection('worker')->dropIfExists('pharm_drug_stock_cards');
+        Schema::dropIfExists('pharm_drug_stock_cards');
     }
 }
