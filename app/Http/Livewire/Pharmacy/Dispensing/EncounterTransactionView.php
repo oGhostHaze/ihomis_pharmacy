@@ -67,6 +67,7 @@ class EncounterTransactionView extends Component
 
     public $stock_changes = false;
 
+
     public function render()
     {
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
@@ -89,6 +90,15 @@ class EncounterTransactionView extends Component
                                 GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
                                 ORDER BY drug_concat");
 
+
+        $summaries = DB::select("
+            SELECT drug_concat, SUM(pchrgqty) qty_issued, MAX(dodtepost) last_issue
+                FROM hrxo
+            JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
+                WHERE enccode = '" . $enccode . "' AND estatus = 'S'
+            GROUP BY drug_concat
+        ");
+
         $departments = DB::select("SELECT * FROM hdept WHERE deptstat = 'A'");
 
         $this->dispatchBrowserEvent('issued');
@@ -99,6 +109,7 @@ class EncounterTransactionView extends Component
             'stocks',
             'encounter',
             'departments',
+            'summaries',
         ));
     }
 
@@ -125,16 +136,7 @@ class EncounterTransactionView extends Component
                                 ORDER BY patroom.hprdate DESC
                                 "))->first();
 
-        // dd($this->encounter);
-        // $this->mss = PatientMss::where('enccode', $enccode)->first();
-        // $this->patient = Patient::find($this->encounter->hpercode);
-        // $this->active_prescription = collect(DB::select('SELECT data.id, data.qty, data.remarks, data.empid, data.dmdcomb, data.dmdctr, drug.drug_concat, data.updated_at
-        //                                     FROM webapp.prescription as presc
-        //                                     INNER JOIN webapp.prescription_data as data ON presc.id = data.presc_id
-        //                                     INNER JOIN hospital.hdmhdr as drug ON presc.dmdcomb = data.dmdcomb AND presc.dmdctr = data.dmdctr
-        //                                     WHERE presc.enccode = ? AND data.stat = ?
-        //                                 '), [$enccode, 'A'])->all();
-        // dd($this->active_prescription);
+
         $this->active_prescription = Prescription::where('enccode', $enccode)->with('data_active')->has('data_active')->get();
         $this->active_prescription_all = Prescription::where('enccode', $enccode)->with('data')->get();
         $past_log = null;
@@ -588,7 +590,7 @@ class EncounterTransactionView extends Component
                     ->update(['stat' => 'I']);
             }
 
-            $this->resetExcept('generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss');
+            $this->resetExcept('generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss', 'summaries');
             // $this->emit('refresh');
             $this->alert('success', 'Item added.');
             return redirect(route('dispensing.view.enctr', $this->enccode));
@@ -794,7 +796,7 @@ class EncounterTransactionView extends Component
                 ->where('id', $rx_id)
                 ->update(['stat' => 'I']);
 
-            $this->resetExcept('generic', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname');
+            $this->resetExcept('generic', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'summaries');
             $this->emit('refresh');
             $this->alert('success', 'Item added.');
         } else {

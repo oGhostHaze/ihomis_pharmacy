@@ -26,6 +26,7 @@
                 <div class="flex justify-between mb-3">
                     <div class="flex space-x-3">
                         <label for="prescription_lists" class="btn btn-sm">Prescription</label>
+                        <label for="summary" class="btn btn-sm">Summary</label>
                         <a href="{{ route('dispensing.rxo.return.sum', $hpercode) }}" target="_blank"
                             class="btn btn-sm btn-outline">Issued with Return</a>
                     </div>
@@ -475,6 +476,36 @@
             </table>
         </div>
     </div>
+
+    <input type="checkbox" id="summary" class="modal-toggle" />
+    <div class="modal" wire:ignore>
+        <div class="w-11/12 max-w-5xl modal-box">
+            <label for="summary" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
+            <h3 class="text-lg font-bold">Summary of Issued Drugs and Meds</h3>
+            <table class="w-full rounded-lg shadow-md table-compact" id="table">
+                <thead class="sticky top-0 bg-gray-200 border-b">
+                    <tr>
+                        <td class="text-xs">Item Description</td>
+                        <td class="text-xs">Qty Issued</td>
+                        <td class="text-xs">Time of last issuance</td>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
+                    @forelse($summaries as $sum)
+                        <tr class="hover">
+                            <td class="text-xs">{{ $sum->drug_concat }}</td>
+                            <td class="text-xs">{{ $sum->qty_issued }}</td>
+                            <td class="text-xs">{{ $sum->last_issue }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 @push('scripts')
     <script>
@@ -535,7 +566,7 @@
             }
         }
 
-        $('input:checkbox').change(function() {
+        $('input[name="docointkey"]').change(function() {
             if ($(this).is(':checked')) {
                 $('.' + this.className).prop('checked', true);
                 var myArray = []
