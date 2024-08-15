@@ -22,10 +22,10 @@ class CreateDrugStockCardsTable extends Migration
             $table->string('drug_concat');
             $table->date('exp_date');
             $table->date('stock_date');
-            $table->string('reference')->nullable();
-            $table->decimal('rec')->nullable();
-            $table->decimal('iss')->nullable();
-            $table->decimal('bal')->nullable();
+            $table->decimal('reference', 18, 2)->nullable();
+            $table->decimal('rec', 18, 2)->nullable();
+            $table->decimal('iss', 18, 2)->nullable();
+            $table->decimal('bal', 18, 2)->nullable();
             $table->timestamps();
         });
     }

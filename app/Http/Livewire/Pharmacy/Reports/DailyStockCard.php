@@ -2,17 +2,21 @@
 
 namespace App\Http\Livewire\Pharmacy\Reports;
 
+use Carbon\Carbon;
+use Livewire\Component;
+use App\Models\UserSession;
 use App\Models\Pharmacy\Drug;
+use Illuminate\Support\Facades\DB;
+use App\Models\References\ChargeCode;
+use App\Models\Pharmacy\PharmLocation;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockCard;
-use App\Models\Pharmacy\PharmLocation;
-use App\Models\References\ChargeCode;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Livewire\Component;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class DailyStockCard extends Component
 {
+    use LivewireAlert;
+
     public $date_from, $date_to, $location_id, $drugs, $dmdcomb, $dmdctr, $fund_sources, $selected_drug, $selected_fund, $chrgcode, $chrgdesc;
 
 
@@ -41,7 +45,7 @@ class DailyStockCard extends Component
     public function render()
     {
         $locations = PharmLocation::all();
-        $cards = DrugStockCard::select(DB::raw('SUM(reference), SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal'), 'drug_concat', 'stock_date', 'chrgcode')
+        $cards = DrugStockCard::select(DB::raw('SUM(reference) as reference, SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal'), 'drug_concat', 'stock_date', 'chrgcode')
             ->where('dmdcomb', $this->dmdcomb)
             ->where('dmdctr', $this->dmdctr)
             ->whereBetween('stock_date', [$this->date_from, $this->date_to])
@@ -79,5 +83,68 @@ class DailyStockCard extends Component
             ->where('chrgstat', 'A')
             ->whereIn('chrgcode', app('chargetable'))
             ->get();
+    }
+
+    public function initCard()
+    {
+
+        // $locations = PharmLocation::all();
+        // foreach($locations as $location){
+        //     $location->under_maintenance = true;
+        //     $location->save();
+        // }
+
+
+        // $sessions = UserSession::where('user_id', '<>', '1')->get();
+        // foreach ($sessions as $session) {
+        //     $session->delete();
+        // }
+        $date_before = Carbon::parse(now())->subDay()->format('Y-m-d');
+        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code')
+                ->where('stock_bal', '>', 0)
+                ->orWhere(function($query) use ($date_before){
+                    $query->where('stock_bal', '>', 0)
+                    ->where('updated_at', '>', $date_before);
+                })->get();
+
+        foreach ($stocks as $stock) {
+            if($stock->stock_bal > 0){
+                DrugStockCard::create([
+                    'chrgcode' => $stock->chrgcode,
+                    'loc_code' => $stock->loc_code,
+                    'dmdcomb' => $stock->dmdcomb,
+                    'dmdctr' => $stock->dmdctr,
+                    'drug_concat' => $stock->drug_concat(),
+                    'exp_date' => $stock->exp_date,
+                    'stock_date' => date('Y-m-d'),
+                    'reference' => $stock->stock_bal,
+                    'bal' => $stock->stock_bal,
+                ]);
+            }
+
+
+            $card = DrugStockCard::whereNull('reference')
+                ->whereNull('rec')
+                ->where('chrgcode', $stock->chrgcode)
+                ->where('loc_code', $stock->loc_code)
+                ->where('dmdcomb', $stock->dmdcomb)
+                ->where('dmdctr', $stock->dmdctr)
+                ->where('drug_concat', $stock->drug_concat())
+                ->where('exp_date', $stock->exp_date)
+                ->first();
+
+            if ($card) {
+                $card->reference = $stock->stock_bal + $card->iss + $card->rec;
+                $card->bal = $stock->stock_bal;
+                $card->save();
+            }
+        }
+
+        // foreach($locations as $location){
+        //     $location->under_maintenance = false;
+        //     $location->save();
+        // }
+
+        $this->alert('success', 'Stock card reference value captured');
     }
 }

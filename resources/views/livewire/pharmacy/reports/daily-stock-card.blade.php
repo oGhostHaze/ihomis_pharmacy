@@ -27,9 +27,14 @@
                             class="las la-lg la-file-excel"></i> Export</button>
                 </div>
                 <div class="ml-2">
-                    <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
-                        Print</button>
+                    <button onclick="printMe()" class="btn btn-sm btn-primary">Print</button>
                 </div>
+                @can('admin')
+                <div class="ml-2">
+                    <button wire:click="initCard()" class="btn btn-sm btn-warning"><i class="las la-lg la-print"></i>
+                        Rerun</button>
+                </div>
+                @endcan
             </div>
             <div class="flex justify-end">
                 <div class="ml-2 form-control">

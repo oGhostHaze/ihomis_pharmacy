@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Pharmacy\Drugs\DrugStock;
-use App\Models\Pharmacy\Drugs\DrugStockCard;
-use App\Models\Pharmacy\PharmLocation;
+use Carbon\Carbon;
 use App\Models\UserSession;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pharmacy\PharmLocation;
+use App\Models\Pharmacy\Drugs\DrugStock;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
 
 class InitializeStockCard extends Command
 {
@@ -54,20 +55,28 @@ class InitializeStockCard extends Command
             $session->delete();
         }
 
-        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code')->where('stock_bal', '>', 0)->get();
+        $date_before = Carbon::parse(now())->subDay()->format('Y-m-d');
+        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code')
+                ->where('stock_bal', '>', 0)
+                ->orWhere(function($query) use ($date_before){
+                    $query->where('stock_bal', '>', 0)
+                    ->where('updated_at', '>', $date_before);
+                })->get();
 
         foreach ($stocks as $stock) {
-            DrugStockCard::firstOrCreate([
-                'chrgcode' => $stock->chrgcode,
-                'loc_code' => $stock->loc_code,
-                'dmdcomb' => $stock->dmdcomb,
-                'dmdctr' => $stock->dmdctr,
-                'drug_concat' => $stock->drug_concat(),
-                'exp_date' => $stock->exp_date,
-                'stock_date' => date('Y-m-d'),
-                'reference' => $stock->stock_bal,
-                'bal' => $stock->stock_bal,
-            ]);
+            if($stock->stock_bal > 0){
+                DrugStockCard::create([
+                    'chrgcode' => $stock->chrgcode,
+                    'loc_code' => $stock->loc_code,
+                    'dmdcomb' => $stock->dmdcomb,
+                    'dmdctr' => $stock->dmdctr,
+                    'drug_concat' => $stock->drug_concat(),
+                    'exp_date' => $stock->exp_date,
+                    'stock_date' => date('Y-m-d'),
+                    'reference' => $stock->stock_bal,
+                    'bal' => $stock->stock_bal,
+                ]);
+            }
 
 
             $card = DrugStockCard::whereNull('reference')
