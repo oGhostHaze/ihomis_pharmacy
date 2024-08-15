@@ -2,16 +2,17 @@
 
 namespace App\Http\Livewire\Pharmacy\Deliveries;
 
+use Carbon\Carbon;
+use Livewire\Component;
 use App\Jobs\LogDrugDelivery;
-use App\Models\Pharmacy\DeliveryDetail;
-use App\Models\Pharmacy\DeliveryItems;
 use App\Models\Pharmacy\Drug;
 use App\Models\Pharmacy\DrugPrice;
+use App\Models\Pharmacy\DeliveryItems;
+use App\Models\Pharmacy\DeliveryDetail;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
-use Carbon\Carbon;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
-use Livewire\Component;
 
 class DeliveryView extends Component
 {
@@ -271,7 +272,7 @@ class DeliveryView extends Component
 
             $log->save();
             $add_to->save();
-            LogDrugDelivery::dispatch($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now());
+            $this->handleLog($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now());
             $updated = true;
 
             $item->status = 'delivered';
@@ -285,5 +286,27 @@ class DeliveryView extends Component
         } else {
             return $this->alert('error', 'Error! There are no drug or medicine that can be added to stock inventory.');
         }
+    }
+
+    public function handleLog($pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date)
+    {
+        $date = Carbon::parse($date)->format('Y-m-d');
+
+        $card = DrugStockCard::firstOrNew([
+            'chrgcode' => $chrgcode,
+            'loc_code' => $pharm_location_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'exp_date' => $exp_date,
+            'stock_date' => $date,
+            'drug_concat' => $drug_concat,
+        ]);
+
+        $card->rec += $qty;
+        $card->bal += $qty;
+
+        $card->save();
+
+        return;
     }
 }

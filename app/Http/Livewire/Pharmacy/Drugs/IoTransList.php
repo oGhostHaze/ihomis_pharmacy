@@ -216,7 +216,7 @@ class IoTransList extends Component
                         'dmdprdte' => $stock->dmdprdte,
                     ]);
                     $stock->save();
-                    LogIoTransIssue::dispatch($location_id, $trans_item->dmdcomb, $trans_item->dmdctr, $trans_item->chrgcode, date('Y-m-d'), $stock->retail_price, $stock->dmdprdte, now(), $trans_item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0);
+                    $this->handleLog($location_id, $trans_item->dmdcomb, $trans_item->dmdctr, $trans_item->chrgcode, date('Y-m-d'), $stock->retail_price, $stock->dmdprdte, now(), $trans_item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0);
                 }
             }
             $this->selected_request->issued_qty = $issued_qty;
@@ -232,6 +232,37 @@ class IoTransList extends Component
         } else {
             $this->alert('error', 'Failed to issue medicine. Selected fund source insufficient stock!');
         }
+    }
+
+    public function handleLog($warehouse_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $retail_price, $dmdprdte, $trans_time, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost)
+    {
+        $log = DrugStockLog::firstOrNew([
+            'loc_code' => $warehouse_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'chrgcode' => $chrgcode,
+            'unit_cost' => $unit_cost,
+            'unit_price' => $retail_price,
+            'consumption_id' => $active_consumption,
+        ]);
+        $log->transferred += $qty;
+        $log->save();
+
+        $card = DrugStockCard::firstOrNew([
+            'chrgcode' => $chrgcode,
+            'loc_code' => $warehouse_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'exp_date' => $exp_date,
+            'stock_date' => $trans_date,
+            'drug_concat' => $drug_concat,
+        ]);
+        $card->iss += $qty;
+        $card->bal -= $qty;
+
+        $card->save();
+
+        return;
     }
 
     public function view_trans($trans_no)

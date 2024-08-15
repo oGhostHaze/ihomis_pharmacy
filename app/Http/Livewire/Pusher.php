@@ -47,7 +47,6 @@ class Pusher extends Component
     {
         $io_tx = InOutTransaction::latest()->first();
         $warehouse = PharmLocation::find('1');
-        // IoTransEvent::dispatch($warehouse);
         $warehouse->notify(new IoTranNotification($io_tx, session('user_id')));
         $this->alert('success', 'Dispatched');
     }

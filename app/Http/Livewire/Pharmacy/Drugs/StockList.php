@@ -6,6 +6,7 @@ use App\Jobs\LogDrugTransaction;
 use App\Models\Pharmacy\Drug;
 use App\Models\Pharmacy\DrugPrice;
 use App\Models\Pharmacy\Drugs\DrugStock;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
@@ -191,11 +192,44 @@ class StockList extends Component
         $stock->dmdprdte = $dmdprdte;
 
         $stock->save();
-        LogDrugTransaction::dispatch(session('pharm_location_id'), $stock->dmdcomb, $stock->dmdctr, $stock->chrgcode, date('Y-m-d'), $dmdprdte, $unit_cost, $retail_price, $this->qty, $stock->id, $stock->exp_date, $drug->drug_concat(), date('Y-m-d'), session('active_consumption'));
+        $this->handleLog(session('pharm_location_id'), $stock->dmdcomb, $stock->dmdctr, $stock->chrgcode, date('Y-m-d'), $dmdprdte, $unit_cost, $retail_price, $this->qty, $stock->id, $stock->exp_date, $drug->drug_concat(), date('Y-m-d'), session('active_consumption'));
+
 
         $this->resetExcept('location_id', 'drugs', 'locations', 'charge_codes');
         $this->alert('success', 'Item beginning balance has been saved!');
         return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
+    }
+
+    public function handleLog($pharm_location_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $dmdprdte, $unit_cost, $retail_price, $qty, $stock_id, $exp_date, $drug_concat, $date, $active_consumption = null)
+    {
+        $date = Carbon::parse($trans_date)->startOfMonth()->format('Y-m-d');
+
+        $log = DrugStockLog::firstOrNew([
+            'loc_code' =>  $pharm_location_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'chrgcode' => $chrgcode,
+            'unit_cost' => $unit_cost,
+            'unit_price' => $retail_price,
+            'consumption_id' => $active_consumption,
+        ]);
+        $log->beg_bal += $qty;
+
+        $log->save();
+
+        $card = DrugStockCard::firstOrNew([
+            'chrgcode' => $chrgcode,
+            'loc_code' => $pharm_location_id,
+            'dmdcomb' => $dmdcomb,
+            'dmdctr' => $dmdctr,
+            'exp_date' => $exp_date,
+            'stock_date' => $date,
+            'drug_concat' => $drug_concat,
+        ]);
+        $card->reference += $qty;
+        $card->bal += $qty;
+
+        $card->save();
     }
 
     public function update_item_new(DrugStock $stock)
