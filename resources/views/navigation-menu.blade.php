@@ -84,6 +84,8 @@
                         class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
                         @can('view-stocks')
                             <li><a href="{{ route('dmd.stk') }}">Stocks</a></li>
+                        @endcan
+                        @can('inventory-viewer')
                             <li><a href="{{ route('dmd.stk.sum') }}">Stocks Summary</a></li>
                         @endcan
                         @can('manage-reorder-levels')
