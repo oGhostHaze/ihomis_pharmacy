@@ -93,6 +93,9 @@ class ManualConsumptionGenerator extends Component
         if($select_consumption){
             $this->report_id = $select_consumption->id;
             $this->active_report = $select_consumption->consumption_to ? $select_consumption : NULL;
+            $this->ended = $select_consumption->consumption_from ? true : false;
+        }else{
+
         }
     }
 

@@ -35,10 +35,10 @@ class DrugsIssuedAllLocation extends Component
                                     ORDER BY hdmhdr.drug_concat");
 
         $er_issued = DB::select("SELECT hdmhdr.drug_concat, SUM(pchrgqty) total_issue,  CASE henctr.toecode
-                                                                                                    WHEN 'ER' THEN 'Emergency Room'
-                                                                                                    WHEN 'ERADM' THEN 'Admitted'
-                                                                                                END
-                                                                                                encounter, serv3.tsdesc tsdesc
+                                                                                                WHEN 'ER' THEN 'Emergency Room'
+                                                                                                WHEN 'ERADM' THEN 'Admitted'
+                                                                                            END
+                                                                                            encounter, serv3.tsdesc tsdesc
                             FROM henctr
                                 LEFT JOIN herlog ON henctr.enccode = herlog.enccode
                                 INNER JOIN hrxo ON henctr.enccode = hrxo.enccode

@@ -35,13 +35,7 @@
             </div>
         </div> --}}
         <div class="flex justify-end my-2">
-            @if(!$report_id)
-                @if($ended)
-                    <div class="ml-2 mr-auto">
-                        <button class="btn btn-sm btn-info tooltip tooltip-right" data-tip="Captures beginning balance as of current datetime" wire:loading.attr='disabled' wire:click='get_begbal'>Begin New Report</button>
-                    </div>
-                @endif
-            @else
+            @if($report_id)
                 @if($ended)
                     <div class="ml-2 mr-auto">
                         <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ending_balance'>Generate</button>
