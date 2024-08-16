@@ -50,7 +50,7 @@ class DrugsIssued extends Component
 
         $filter_charge = explode(',', $this->filter_charge);
 
-        $drugs_issued = DB::select("SELECT rxi.enccode, rxi.qty, rxi.hpercode, rxi.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename
+        $drugs_issued = DB::select("SELECT rxi.enccode, rxi.qty, rxi.hpercode, rxo.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename
         FROM hrxoissue rxi
         INNER JOIN hrxo rxo ON rxi.docointkey = rxo.docointkey
         INNER JOIN hperson as pat ON rxi.hpercode = pat.hpercode
