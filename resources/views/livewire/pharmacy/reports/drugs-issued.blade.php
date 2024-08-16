@@ -95,34 +95,6 @@
                 </thead>
                 <tbody>
                     @forelse ($drugs_issued as $rxi)
-                        {{-- <tr classs="border border-black">
-                            <td class="text-sm text-right border">{{ $loop->iteration }}</td>
-                            <td class="text-sm border">
-                                <div class="flex flex-col">
-                                    <div class="text-sm font-bold">{{ $rxi->dm->generic->gendesc }}</div>
-                                    <div class="ml-10 text-xs text-slate-800">
-                                        {{ $rxi->dm->dmdnost }}{{ $rxi->dm->strength->stredesc ?? '' }}
-                                        {{ $rxi->dm->form->formdesc ?? '' }}</div>
-                                </div>
-                            </td>
-                            <td class="text-sm text-right border">{{ number_format($rxi->qty) }}</td>
-                            <td class="text-sm border">{{ $rxi->issued_date() }}</td>
-                            <td class="text-sm border">{{ $rxi->hpercode }}</td>
-                            <td class="text-sm border">{{ $rxi->pcchrgcod }}</td>
-                            <td class="text-sm border">{{ $rxi->patient->fullname() }}</td>
-                            <td class="text-sm border">
-                                @if ($rxi->adm_pat_room)
-                                    <div class="flex-col">
-                                        <div>{{ $rxi->adm_pat_room->ward->wardname }}</div>
-                                        <div class="text-sm">{{ $rxi->adm_pat_room->room->rmname }}</div>
-                                    </div>
-                                @else
-                                    {{ $rxi->encounter->enctr_type() }}
-                                @endif
-                            </td>
-                            <td class="text-sm border">{{ $rxi->issuer ? $rxi->issuer->fullname() : $rxi->user->name }}
-                            </td>
-                        </tr> --}}
                         @php
                             $concat = implode(',', explode('_,', $rxi->drug_concat));
                         @endphp

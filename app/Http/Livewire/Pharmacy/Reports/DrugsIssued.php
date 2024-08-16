@@ -62,8 +62,8 @@ class DrugsIssued extends Component
         WHERE issuedfrom = ?
         AND rxo.loc_code = ?
         AND issuedte BETWEEN ? AND ?
+        AND rxo.pcchrgcod IS NOT NULL
         ORDER BY hdr.drug_concat ASC, rxi.issuedte DESC", [$filter_charge[0], $this->location_id, $date_from, $date_to]);
-
         $locations = PharmLocation::all();
 
         return view('livewire.pharmacy.reports.drugs-issued', [
