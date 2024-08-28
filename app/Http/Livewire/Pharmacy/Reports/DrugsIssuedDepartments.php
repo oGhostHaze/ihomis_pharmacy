@@ -18,8 +18,8 @@ class DrugsIssuedDepartments extends Component
 
     public function render()
     {
-        $date_from = Carbon::parse($this->date_from)->format('Y-m-d H:i:s');
-        $date_to = Carbon::parse($this->date_to)->format('Y-m-d H:i:s');
+        $date_from = Carbon::parse($this->date_from)->startofDay()->format('Y-m-d H:i:s');
+        $date_to = Carbon::parse($this->date_to)->endOfDay()->format('Y-m-d H:i:s');
 
         if (!$this->deptcode) {
             $this->deptcode = '%%';
@@ -42,7 +42,7 @@ class DrugsIssuedDepartments extends Component
                                     WHERE rxo.issuedte BETWEEN '" . $date_from . "' AND '" . $date_to . "'
                                     AND dept.deptcode LIKE '" . $this->deptcode . "'
                                     AND rxo.chrgcode LIKE '" . $this->filter_charge . "'
-                                    AND hrxo.loc_code = '" . session('pharm_location_id') . "'
+                                    AND hrxo.loc_code = '" . $this->location_id . "'
                                     GROUP BY dept.deptname, drug.drug_concat, charge.chrgdesc
                                     ORDER BY dept.deptname ASC, drug.drug_concat ASC
                                     ");

@@ -25,7 +25,7 @@ class PendingOrders extends Component
 
     public function render()
     {
-        $date_from = Carbon::parse($this->date_from)->startOfDay()->format('Y-m-d H:i:s');
+        $date_from = Carbon::parse($this->date_from)->subDay()->startOfDay()->format('Y-m-d H:i:s');
         $date_to = Carbon::parse($this->date_from)->endOfDay()->format('Y-m-d H:i:s');
 
         $drugs_ordered = collect(DB::select("

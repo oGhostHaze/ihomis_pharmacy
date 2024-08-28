@@ -32,6 +32,16 @@
                     <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
                         Print</button>
                 </div>
+                @can('filter-stocks-location')
+                    <div class="mt-auto ml-2 form-control">
+                        <select class="text-sm select select-bordered select-sm" wire:model="location_id"
+                            name="location_id">
+                            @foreach ($locations as $loc)
+                                <option value="{{ $loc->id }}">{{ $loc->description }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endcan
                 <div class="ml-2">
                     <div class="form-control">
                         <label class="input-group">

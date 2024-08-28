@@ -322,13 +322,18 @@ class IoTransList extends Component
 
     public function deny_request($remarks)
     {
-        $this->selected_request->remarks_cancel = $remarks;
-        $this->selected_request->trans_stat = 'Denied';
-        $this->selected_request->issued_by = session('user_id');
-        $this->selected_request->save();
+        if($this->selected_request->trans_stat == 'Requested')
+        {
+            $this->selected_request->remarks_cancel = $remarks;
+            $this->selected_request->trans_stat = 'Denied';
+            $this->selected_request->issued_by = session('user_id');
+            $this->selected_request->save();
 
-        $this->reset('selected_request', 'available_drugs', 'issueModal');
+            $this->reset('selected_request', 'available_drugs', 'issueModal');
 
-        $this->alert('warning', 'Request denied!');
+            $this->alert('warning', 'Request denied!');
+        }else{
+            $this->alert('error', 'Request has already been processed. Rolling back changes.');
+        }
     }
 }

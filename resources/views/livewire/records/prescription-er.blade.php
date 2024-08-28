@@ -76,51 +76,52 @@
                             wire:click="view_enctr('{{ $rx->enccode }}')" class="cursor-pointer hover">
                             <td>
                                 <div class="flex-col">
-                                    <div>{{ $rx->active_er->erdate_format1() }}</div>
-                                    <div>{{ $rx->active_er->ertime_format1() }}</div>
+                                    <div>{{ Carbon\Carbon::parse($rx->erdate)->format('Y/m/d') }}</div>
+                                    <div>{{ Carbon\Carbon::parse($rx->erdate)->format('g:i A') }}</div>
                                 </div>
                             </td>
                             <td class="whitespace-nowrap">
                                 <div class="flex-col">
-                                    <div>{{ $rx->active_er->patient->fullname() }}</div>
+                                    <div>
+                                        {{ $rx->patlast . ', ' . $rx->patfirst . ' ' . $rx->patsuffix . ' ' . $rx->patmiddle }}
+                                    </div>
                                     <div class="text-sm"><span
-                                            class="badge badge-ghost badge-sm">{{ $rx->active_er->hpercode }}</span>
+                                            class="badge badge-ghost badge-sm">{{ $rx->hpercode }}</span>
                                     </div>
                                 </div>
                             </td>
                             <td class="whitespace-nowrap">
                                 <div class="flex-col">
-                                    <div>{{ $rx->active_er->provider->emp->fullname() }}</div>
-                                    <div>{{ $rx->active_er->service_type->tsdesc }}</div>
+                                    <div>
+                                        {{ $rx->empprefix . ' ' . $rx->lastname . ', ' . $rx->firstname . ' ' . $rx->middlename }}
+                                    </div>
+                                    <div>{{ $rx->tsdesc }}</div>
                                 </div>
                             </td>
                             <td>
                                 @php
-                                    $basic = $rx->active_basic->count();
-                                    $g24 = $rx->active_g24->count();
-                                    $or = $rx->active_or->count();
+                                    $basic = $rx->basic;
+                                    $g24 = $rx->g24;
+                                    $or = $rx->or;
                                 @endphp
                                 <ul class="text-sm rounded-md menu menu-horizontal bg-base-200">
                                     @if ($basic)
                                         <li>
-                                            <div class="tooltip" data-tip="BASIC"><i
-                                                    class="las la-2g la-prescription"></i>
+                                            <div class="tooltip" data-tip="BASIC"><i class="las la-2g la-prescription"></i>
                                                 <div class="badge badge-accent badge-xs">{{ $basic }}</div>
                                             </div>
                                         </li>
                                     @endif
                                     @if ($g24)
                                         <li>
-                                            <div class="tooltip" data-tip="Good For 24 Hrs"><i
-                                                    class="las la-2g la-hourglass-start"></i>
+                                            <div class="tooltip" data-tip="Good For 24 Hrs"><i class="las la-2g la-hourglass-start"></i>
                                                 <div class="badge badge-error badge-xs">{{ $g24 }}</div>
                                             </div>
                                         </li>
                                     @endif
                                     @if ($or)
                                         <li>
-                                            <div class="tooltip" data-tip="For Operating Use"><i
-                                                    class="las la-2g la-syringe"></i>
+                                            <div class="tooltip" data-tip="For Operating Use"><i class="las la-2g la-syringe"></i>
                                                 <div class="badge badge-secondary badge-xs">{{ $or }}</div>
                                             </div>
                                         </li>

@@ -314,7 +314,6 @@ class StockList extends Component
             $old_log->save();
         }
 
-        $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
         $log = DrugStockLog::firstOrNew([
             'loc_code' =>  session('pharm_location_id'),
             'dmdcomb' => $stock->dmdcomb,
