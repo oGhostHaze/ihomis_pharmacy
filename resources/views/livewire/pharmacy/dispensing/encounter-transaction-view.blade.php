@@ -19,7 +19,7 @@
         <div class="col-span-12 xl:col-span-8">
             <div class="flex flex-col max-h-screen p-1 overflow-scroll">
                 @if ($errors->first())
-                    <div class="shadow-lg max-w-fit alert alert-error">
+                    <div class="mb-3 shadow-lg max-w-fit alert alert-error">
                         <i class="mr-2 las la-lg la-exclamation-triangle"></i> {{ $errors->first() }}
                     </div>
                 @endif
@@ -145,9 +145,12 @@
                         <thead>
                             <tr class="border border-black">
                                 <td class="text-center w-min"></td>
-                                <td class="whitespace-nowrap w-min" onclick="sortTable(1)">Charge Slip <i class="las la-sort"></i></td>
-                                <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Date of Order <i class="las la-sort"></i></td>
-                                <td class="w-max whitespace-nowrap" onclick="sortTable(3)">Description <i class="las la-sort"></i></td>
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(1)">Charge Slip <i
+                                        class="las la-sort"></i></td>
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Date of Order <i
+                                        class="las la-sort"></i></td>
+                                <td class="w-max whitespace-nowrap" onclick="sortTable(3)">Description <i
+                                        class="las la-sort"></i></td>
                                 <td class="w-20 text-right">
                                     <div class="tooltip" data-tip="Quantity Ordered">Q.O.</div>
                                 </td>
@@ -509,8 +512,6 @@
 </div>
 @push('scripts')
     <script>
-
-
         function sortTable(n) {
             var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
             table = document.getElementById("table");
@@ -778,9 +779,6 @@
                                 </label>
                             </div>
                         </div>
-                    `
-                    @if ($toecode == 'WALKN')
-                        +`
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Department</div>
                             <div class="col-span-4">
@@ -792,8 +790,7 @@
                                 </select>
                             </div>
                         </div>
-                        `
-                    @endif ,
+                        `,
                     showCancelButton: true,
                     confirmButtonText: `Confirm`,
                     didOpen: () => {
@@ -807,9 +804,7 @@
                         const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                         const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                         const phic = Swal.getHtmlContainer().querySelector('#phic')
-                        @if ($toecode == 'WALKN')
-                            const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
-                        @endif
+                        const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
                     }
                 }).then((result) => {
                     /* Read more about isConfirmed, isDenied below */
@@ -822,9 +817,7 @@
                         @this.set('phic', phic.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
-                        @if ($toecode == 'WALKN')
-                            @this.set('deptcode', deptcode.value);
-                        @endif
+                        @this.set('deptcode', deptcode.value);
                         Livewire.emit('issue_order')
                     }
                 })
@@ -1003,16 +996,30 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
+                            <div class="col-span-4 font-bold">Department</div>
+                            <div class="col-span-4">
+                                <select id="deptcode1" class="w-full select select-bordered select-sm">
+                                    <option value="" selected>N/A</option>
+                                    @foreach ($departments as $department)
+                                    <option value="{{ $department->deptcode }}">{{ $department->deptname }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
                     `,
                     showCancelButton: true,
                     confirmButtonText: `Confirm`,
                     didOpen: () => {
                         const na = Swal.getHtmlContainer().querySelector('#na')
+                        const deptcode1 = Swal.getHtmlContainer().querySelector('#deptcode1')
                     }
+
                 }).then((result) => {
                     /* Read more about isConfirmed, isDenied below */
                     if (result.isConfirmed) {
                         @this.set('bnb', na.checked);
+                        @this.set('deptcode', deptcode1.value);
                         Livewire.emit('issue_order')
                     }
                 })

@@ -76,7 +76,7 @@
                 @forelse ($stocks as $stk)
                     @php
                         $issued = collect(
-                            DB::connection('worker')->select(
+                            DB::select(
                                 "SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
                             WHERE card.dmdcomb = '" .
                                     $stk->dmdcomb .

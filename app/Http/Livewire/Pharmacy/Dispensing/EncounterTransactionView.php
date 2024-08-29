@@ -220,6 +220,8 @@ class EncounterTransactionView extends Component
 
     public function issue_order()
     {
+        $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
         $cnt = 0;
 
