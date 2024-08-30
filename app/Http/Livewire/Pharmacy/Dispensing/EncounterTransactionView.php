@@ -280,7 +280,9 @@ class EncounterTransactionView extends Component
             } else {
                 $this->type = 'opdpay';
             }
-            $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+            if ($this->toecode != 'ER') {
+                $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+            }
         }
         // dd($this->type);
         $temp_type = $this->type;
