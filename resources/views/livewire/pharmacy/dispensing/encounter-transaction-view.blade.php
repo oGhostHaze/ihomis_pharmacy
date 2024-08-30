@@ -996,30 +996,17 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
-                            <div class="col-span-4 font-bold">Department</div>
-                            <div class="col-span-4">
-                                <select id="deptcode1" class="w-full select select-bordered select-sm">
-                                    <option value="" selected>N/A</option>
-                                    @foreach ($departments as $department)
-                                    <option value="{{ $department->deptcode }}">{{ $department->deptname }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
                     `,
                     showCancelButton: true,
                     confirmButtonText: `Confirm`,
                     didOpen: () => {
                         const na = Swal.getHtmlContainer().querySelector('#na')
-                        const deptcode1 = Swal.getHtmlContainer().querySelector('#deptcode1')
                     }
 
                 }).then((result) => {
                     /* Read more about isConfirmed, isDenied below */
                     if (result.isConfirmed) {
                         @this.set('bnb', na.checked);
-                        @this.set('deptcode', deptcode1.value);
                         Livewire.emit('issue_order')
                     }
                 })

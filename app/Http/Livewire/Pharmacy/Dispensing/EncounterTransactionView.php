@@ -220,7 +220,6 @@ class EncounterTransactionView extends Component
 
     public function issue_order()
     {
-        $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
 
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
         $cnt = 0;
@@ -281,6 +280,7 @@ class EncounterTransactionView extends Component
             } else {
                 $this->type = 'opdpay';
             }
+            $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
         }
         // dd($this->type);
         $temp_type = $this->type;
