@@ -149,7 +149,7 @@
                 <div class="flex justify-between mt-3">
                     <div>
                         <button class="btn btn-error" onclick="deny_request()"
-                            wire:loading.attr="disabled">Deny</button>
+                            wire:loading.attr="disabled">Decline</button>
                     </div>
                     <div>
                         <button class="btn btn-primary" onclick="issue_request()"
