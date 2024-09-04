@@ -49,6 +49,7 @@ class DrugStockIssue extends Model
         'ris',
         'phic',
         'opdpay',
+        'doh_free',
         'dmdprdte',
     ];
 

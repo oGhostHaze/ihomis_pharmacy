@@ -778,6 +778,12 @@
                                     <span class="label-text">PHIC</span>
                                 </label>
                             </div>
+                            <div class="col-span-2">
+                                <input class="toggle toggle-success" type="radio" id="doh_free" name="radio">
+                                <label class="cursor-pointer" for="doh_free">
+                                    <span class="label-text">DOH-Free</span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Department</div>
@@ -804,6 +810,7 @@
                         const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                         const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                         const phic = Swal.getHtmlContainer().querySelector('#phic')
+                        const doh_free = Swal.getHtmlContainer().querySelector('#doh_free')
                         const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
                     }
                 }).then((result) => {
@@ -814,9 +821,10 @@
                         @this.set('wholesale', wholesale.checked);
                         @this.set('konsulta', konsulta.checked);
                         @this.set('pcso', pcso.checked);
-                        @this.set('phic', phic.checked);
+                        @this.set('doh_free', doh_free.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
+                        @this.set('deptcode', deptcode.value);
                         @this.set('deptcode', deptcode.value);
                         Livewire.emit('issue_order')
                     }

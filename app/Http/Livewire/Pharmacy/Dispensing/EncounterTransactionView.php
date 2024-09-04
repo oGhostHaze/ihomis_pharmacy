@@ -37,7 +37,7 @@ class EncounterTransactionView extends Component
 
     public $order_qty, $unit_price, $return_qty, $docointkey;
     public $item_id;
-    public $ems, $maip, $wholesale, $caf, $type, $konsulta, $pcso, $phic, $pay, $service, $bnb = false;
+    public $ems, $maip, $wholesale, $caf, $type, $konsulta, $pcso, $phic, $pay, $service, $doh_free, $bnb = false;
 
     public $is_ris = false;
     public $remarks;
@@ -277,6 +277,8 @@ class EncounterTransactionView extends Component
                 $this->type = 'phic';
             } else if ($this->konsulta) {
                 $this->type = 'konsulta';
+            } else if ($this->doh_free) {
+                $this->type = 'doh_free';
             } else {
                 $this->type = 'opdpay';
             }
@@ -458,6 +460,7 @@ class EncounterTransactionView extends Component
             'konsulta' => $tag == 'konsulta' ? $trans_qty : false,
             'pcso' => $tag == 'pcso' ? $trans_qty : false,
             'phic' => $tag == 'phic' ? $trans_qty : false,
+            'doh_free' => $tag == 'doh_free' ? $trans_qty : false,
 
             'dmdprdte' => $dmdprdte,
         ]);
@@ -489,6 +492,7 @@ class EncounterTransactionView extends Component
         $log->pcso += $issued_drug->pcso;
         $log->phic += $issued_drug->phic;
         $log->opdpay += $issued_drug->opdpay;
+        $log->doh_free += $issued_drug->doh_free;
 
         $log->save();
 
@@ -569,6 +573,8 @@ class EncounterTransactionView extends Component
                 $this->type = 'phic';
             } else if ($this->konsulta) {
                 $this->type = 'konsulta';
+            } else if ($this->doh_free) {
+                $this->type = 'doh_free';
             } else {
                 $this->type = 'opdpay';
             }

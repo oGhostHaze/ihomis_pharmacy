@@ -53,6 +53,7 @@ class DrugManualLogItem extends Model
         'phic',
         'pcso',
         'opdpay',
+        'doh_free',
 
         // 'sc_pwd', //nullable()->default(0);
         // 'medicare', //nullable()->default(0);
