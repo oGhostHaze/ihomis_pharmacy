@@ -286,7 +286,6 @@ class EncounterTransactionView extends Component
                 $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
             }
         }
-        // dd($this->type);
         $temp_type = $this->type;
 
         foreach ($rxos as $rxo) {
