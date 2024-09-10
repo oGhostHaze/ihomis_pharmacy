@@ -53,7 +53,8 @@ class DeliveryView extends Component
         $this->validate([
             'dmdcomb' => 'required',
             'unit_price' => ['required', 'numeric', 'min:0'],
-            'qty' => 'required', 'expiry_date' => 'required'
+            'qty' => 'required',
+            'expiry_date' => 'required'
         ]);
 
         $unit_cost = $this->unit_price;

@@ -824,8 +824,8 @@
                         @this.set('doh_free', doh_free.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
+                        @this.set('phic', phic.checked);
                         @this.set('deptcode', deptcode.value);
-                        @this.set('phic', phic.value);
                         Livewire.emit('issue_order')
                     }
                 })
