@@ -804,7 +804,6 @@
                         const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                         const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                         const phic = Swal.getHtmlContainer().querySelector('#phic')
-                        const doh_free = Swal.getHtmlContainer().querySelector('#doh_free')
                         const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
                     }
                 }).then((result) => {
@@ -815,7 +814,6 @@
                         @this.set('wholesale', wholesale.checked);
                         @this.set('konsulta', konsulta.checked);
                         @this.set('pcso', pcso.checked);
-                        @this.set('doh_free', doh_free.checked);
                         @this.set('caf', caf.checked);
                         @this.set('is_ris', is_ris.checked);
                         @this.set('phic', phic.checked);
