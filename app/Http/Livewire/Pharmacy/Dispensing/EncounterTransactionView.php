@@ -400,31 +400,31 @@ class EncounterTransactionView extends Component
             }
         }
 
-        DrugOrderIssue::updateOrCreate([
-            'docointkey' => $docointkey,
-            'enccode' => $enccode,
-            'hpercode' => $hpercode,
-            'dmdcomb' => $dmdcomb,
-            'dmdctr' => $dmdctr,
-        ], [
-            'issuedte' => $date,
-            'issuetme' => $date,
-            'qty' => $pchrgqty,
-            'issuedby' => $employeeid,
-            'status' => 'A', //A
-            'rxolock' => 'N', //N
-            'updsw' => 'N', //N
-            'confdl' => 'N', //N
-            'entryby' => $employeeid,
-            'locacode' => 'PHARM', //PHARM
-            'dmdprdte' => $dmdprdte,
-            'issuedfrom' => $orderfrom,
-            'pcchrgcod' => $pcchrgcod,
-            'chrgcode' => $orderfrom,
-            'pchrgup' => $pchrgup,
-            'issuetype' => 'c', //c
-            'ris' =>  $ris ? true : false,
-        ]);
+        // DrugOrderIssue::updateOrCreate([
+        //     'docointkey' => $docointkey,
+        //     'enccode' => $enccode,
+        //     'hpercode' => $hpercode,
+        //     'dmdcomb' => $dmdcomb,
+        //     'dmdctr' => $dmdctr,
+        // ], [
+        //     'issuedte' => $date,
+        //     'issuetme' => $date,
+        //     'qty' => $pchrgqty,
+        //     'issuedby' => $employeeid,
+        //     'status' => 'A', //A
+        //     'rxolock' => 'N', //N
+        //     'updsw' => 'N', //N
+        //     'confdl' => 'N', //N
+        //     'entryby' => $employeeid,
+        //     'locacode' => 'PHARM', //PHARM
+        //     'dmdprdte' => $dmdprdte,
+        //     'issuedfrom' => $orderfrom,
+        //     'pcchrgcod' => $pcchrgcod,
+        //     'chrgcode' => $orderfrom,
+        //     'pchrgup' => $pchrgup,
+        //     'issuetype' => 'c', //c
+        //     'ris' =>  $ris ? true : false,
+        // ]);
     }
 
     public function log_stock_issue($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption = null, $unit_cost)
