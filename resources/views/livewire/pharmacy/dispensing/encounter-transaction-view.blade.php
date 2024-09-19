@@ -778,12 +778,6 @@
                                     <span class="label-text">PHIC</span>
                                 </label>
                             </div>
-                            <div class="col-span-2">
-                                <input class="toggle toggle-success" type="radio" id="doh_free" name="radio">
-                                <label class="cursor-pointer" for="doh_free">
-                                    <span class="label-text">DOH-Free</span>
-                                </label>
-                            </div>
                         </div>
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Department</div>
