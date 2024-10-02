@@ -90,12 +90,11 @@ class ManualConsumptionGenerator extends Component
         $this->date_from = date('Y-m', strtotime(now()));
         $this->location_id = session('pharm_location_id');
         $select_consumption = DrugManualLogHeader::where('loc_code', auth()->user()->pharm_location_id)->latest()->first();
-        if($select_consumption){
+        if ($select_consumption) {
             $this->report_id = $select_consumption->id;
             $this->active_report = $select_consumption->consumption_to ? $select_consumption : NULL;
             $this->ended = $select_consumption->consumption_from ? true : false;
-        }else{
-
+        } else {
         }
     }
 
@@ -111,10 +110,10 @@ class ManualConsumptionGenerator extends Component
         ]);
 
         $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte', 'retail_price')
-        ->with('current_price')
-        ->where('loc_code', auth()->user()->pharm_location_id)
-        ->where('stock_bal', '>', 0)
-        ->get();
+            ->with('current_price')
+            ->where('loc_code', auth()->user()->pharm_location_id)
+            ->where('stock_bal', '>', 0)
+            ->get();
 
         foreach ($stocks as $stock) {
             DrugManualLogItem::create([
@@ -138,12 +137,12 @@ class ManualConsumptionGenerator extends Component
     {
         $active_consumption = DrugManualLogHeader::find($this->report_id);
         if (!$active_consumption->consumption_to) {
-                $active_consumption->consumption_to = now();
-                $active_consumption->status = 'I';
-                $active_consumption->closed_by = session('user_id');
-                $active_consumption->save();
+            $active_consumption->consumption_to = now();
+            $active_consumption->status = 'I';
+            $active_consumption->closed_by = session('user_id');
+            $active_consumption->save();
 
-                $this->alert('success', 'Drug Consumption Logger has been successfully stopped on ' . now());
+            $this->alert('success', 'Drug Consumption Logger has been successfully stopped on ' . now());
         } else {
             $this->alert('warning', 'Logger currently inactive');
         }
@@ -161,13 +160,13 @@ class ManualConsumptionGenerator extends Component
             FROM hrxo
                 JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
                 JOIN hdmhdrprice pri ON hrxo.dmdprdte = pri.dmdprdte
-            WHERE dodtepost BETWEEN '".$from_date."' AND '".$to_date."'
-                AND loc_code = '".$location_id."'
+            WHERE dodtepost BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND loc_code = '" . $location_id . "'
                 AND hrxo.estatus = 'S'
             GROUP BY drug_concat, pri.acquisition_cost, pri.dmselprice, tx_type, hrxo.dmdcomb, hrxo.dmdctr, hrxo.orderfrom, hrxo.loc_code
         ");
 
-        foreach($issueances as $item){
+        foreach ($issueances as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->loc_code,
                 'dmdcomb' => $item->dmdcomb,
@@ -208,12 +207,12 @@ class ManualConsumptionGenerator extends Component
             SELECT hrxo.loc_code, hrxo.dmdcomb, hrxo.dmdctr, hrxo.chrgcode chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
             FROM hrxoreturn hrxo
                 JOIN hdmhdrprice pri ON hrxo.dmdprdte = pri.dmdprdte
-            WHERE returndate BETWEEN '".$from_date."' AND '".$to_date."'
-                AND loc_code = '".$location_id."'
+            WHERE returndate BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND loc_code = '" . $location_id . "'
             GROUP BY pri.acquisition_cost, pri.dmselprice, hrxo.dmdcomb, hrxo.dmdctr, hrxo.chrgcode, hrxo.loc_code
         ");
 
-        foreach($returns as $item){
+        foreach ($returns as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->loc_code,
                 'dmdcomb' => $item->dmdcomb,
@@ -243,13 +242,13 @@ class ManualConsumptionGenerator extends Component
             FROM pharm_io_trans_items pit
                 JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
-            WHERE [to] = '".$location_id."'
+            WHERE [to] = '" . $location_id . "'
                 AND status = 'Received'
-                AND pit.updated_at BETWEEN '".$from_date."' AND '".$to_date."'
+                AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
             GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, [to]
         ");
 
-        foreach($incoming as $item){
+        foreach ($incoming as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->to,
                 'dmdcomb' => $item->dmdcomb,
@@ -267,14 +266,14 @@ class ManualConsumptionGenerator extends Component
             FROM pharm_io_trans_items pit
                 JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
-            WHERE [from] = '".$location_id."'
+            WHERE [from] = '" . $location_id . "'
                 AND status = 'Received'
-                AND pit.updated_at BETWEEN '".$from_date."' AND '".$to_date."'
+                AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
             GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, [to]
         ");
 
 
-        foreach($outgoing as $item){
+        foreach ($outgoing as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->to,
                 'dmdcomb' => $item->dmdcomb,
@@ -302,12 +301,12 @@ class ManualConsumptionGenerator extends Component
             SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
             FROM pharm_delivery_items di
                 JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
-            WHERE di.updated_at BETWEEN '".$from_date."' AND '".$to_date."'
-                AND di.pharm_location_id = '".$location_id."'
+            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND di.pharm_location_id = '" . $location_id . "'
             GROUP BY pri.acquisition_cost, pri.dmselprice, di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
         ");
 
-        foreach($returns as $item){
+        foreach ($returns as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->pharm_location_id,
                 'dmdcomb' => $item->dmdcomb,
@@ -335,12 +334,12 @@ class ManualConsumptionGenerator extends Component
             SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
             FROM pharm_delivery_items di
                 JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
-            WHERE di.updated_at BETWEEN '".$from_date."' AND '".$to_date."'
-                AND di.pharm_location_id = '".$location_id."'
+            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND di.pharm_location_id = '" . $location_id . "'
             GROUP BY pri.acquisition_cost, pri.dmselprice, di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
         ");
 
-        foreach($returns as $item){
+        foreach ($returns as $item) {
             DrugManualLogItem::create([
                 'loc_code' => $item->pharm_location_id,
                 'dmdcomb' => $item->dmdcomb,

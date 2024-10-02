@@ -124,10 +124,10 @@ class Dashboard extends Component
 
                 $date = Carbon::parse(now())->format('Y-m-d');
                 $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte', 'retail_price')
-                ->with('current_price')
-                ->where('loc_code', $pharm_location_id)
-                ->where('stock_bal', '>', 0)
-                ->get();
+                    ->with('current_price')
+                    ->where('loc_code', $pharm_location_id)
+                    ->where('stock_bal', '>', 0)
+                    ->get();
                 foreach ($stocks as $stock) {
                     $log = DrugStockLog::create([
                         'loc_code' => $stock->loc_code,
@@ -171,7 +171,7 @@ class Dashboard extends Component
                 $active_consumption->closed_by = session('user_id');
                 $active_consumption->save();
 
-                $active_consumption_manual = DrugManualLogHeader::find(session('active_consumption_manual'));
+                $active_consumption_manual = DrugManualLogHeader::find(session('active_consumption'));
                 $active_consumption_manual->consumption_to = now();
                 $active_consumption_manual->status = 'I';
                 $active_consumption_manual->closed_by = session('user_id');

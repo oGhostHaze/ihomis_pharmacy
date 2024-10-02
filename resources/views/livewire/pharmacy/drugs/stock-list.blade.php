@@ -92,6 +92,8 @@
                                     <button class="text-xs btn bg-warning btn-xs"
                                         onclick="update_item({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgcode }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}', '{{ $stk->dmduprice }}', '{{ $stk->has_compounding }}', '{{ $stk->compounding_fee }}', '{{ $stk->lot_no }}')"
                                         wire:loading.attr="disabled">Update</button>
+                                @endcan
+                                @can('adjust-stock-qty')
                                     <button class="text-xs btn bg-info btn-xs"
                                         onclick="adjust_qty({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgdesc }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}')"
                                         wire:loading.attr="disabled">Adjust
@@ -378,7 +380,8 @@
                     .every(function() {
                         let column = this;
                         var warehouse = false;
-                        if (column[0] != 7 && column[0] != 6 && column[0] != 5 && column[0] != 4 && column[0] != 3 && column[
+                        if (column[0] != 7 && column[0] != 6 && column[0] != 5 && column[0] != 4 && column[
+                                0] != 3 && column[
                                 0] != 1) {
                             // Create select element
                             let select = document.createElement('select');
