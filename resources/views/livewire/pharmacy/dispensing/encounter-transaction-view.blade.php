@@ -305,8 +305,8 @@
                                 <td class="break-words">
                                     <div>
                                         @if (str_contains($stock->chrgdesc, 'Consignment'))
-                                            <span
-                                                class="text-white badge badge-sm bg-pink">{{ $stock->chrgdesc }}</span>
+                                            <span class="text-white badge badge-sm bg-pink"
+                                                style="background: #db2777;">{{ $stock->chrgdesc }}</span>
                                         @else
                                             <span class="text-xs text-slate-600">{{ $stock->chrgdesc }}</span>
                                         @endif
