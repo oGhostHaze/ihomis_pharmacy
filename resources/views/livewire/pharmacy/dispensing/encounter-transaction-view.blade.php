@@ -304,7 +304,12 @@
                                     onclick="alert('Patient already billed! You cannot add any more item in this encounter.')" @endif>
                                 <td class="break-words">
                                     <div>
-                                        <span class="text-xs text-slate-600">{{ $stock->chrgdesc }}</span>
+                                        @if (str_contains($stock->chrgdesc, 'Consignment'))
+                                            <span
+                                                class="text-white badge badge-sm bg-pink">{{ $stock->chrgdesc }}</span>
+                                        @else
+                                            <span class="text-xs text-slate-600">{{ $stock->chrgdesc }}</span>
+                                        @endif
 
                                         @if (Carbon\Carbon::parse($stock->exp_date)->diffInDays(now(), false) >= 1 && $stock->stock_bal > 0)
                                             <span class="badge badge-sm badge-danger">^
