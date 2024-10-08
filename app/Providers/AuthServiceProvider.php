@@ -28,8 +28,24 @@ class AuthServiceProvider extends ServiceProvider
 
         App::singleton('chargetable', function () {
             return array(
-                'DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS',
-                'DRUMAD', 'DRUMAE', 'DRUMAF', 'DRUMAG', 'DRUMAH', 'DRUMAI', 'DRUMAJ', 'DRUMAK'
+                'DRUMA',
+                'DRUMB',
+                'DRUMC',
+                'DRUME',
+                'DRUMK',
+                'DRUMAA',
+                'DRUMAB',
+                'DRUMR',
+                'DRUMS',
+                'DRUMAD',
+                'DRUMAE',
+                'DRUMAF',
+                'DRUMAG',
+                'DRUMAH',
+                'DRUMAI',
+                'DRUMAJ',
+                'DRUMAK',
+                'DRUMAL'
             );
         });
 
