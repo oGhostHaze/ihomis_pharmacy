@@ -39,7 +39,7 @@
                     <th>Location</th>
                     <th>Role</th>
                     <th class="text-center">Active</th>
-                    <th></th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,11 +62,12 @@
                             @endif
                         </td>
                         <td>
-                            <div class="flex justify-end gap-1">
-                                <div><button class="btn btn-sm btn-info"
-                                        onclick="update_role('{{ $user->id }}', '{{ $user->getRoleNames()->first() }}')"><i
-                                            class="las la-user-shield la-lg"></i></button></div>
-                            </div>
+                            <button class="btn btn-sm btn-info"
+                                onclick="editRole('{{ $user->id }}', '{{ $user->getRoleNames()->first() }}')">
+                                <i class="las la-user-shield la-lg"></i></button>
+                            {{-- <button class="btn btn-sm btn-info"
+                                onclick="update_role('{{ $user->id }}', '{{ $user->getRoleNames()->first() }}')"><i
+                                    class="las la-user-shield la-lg"></i></button> --}}
                         </td>
                     </tr>
                 @empty
@@ -82,7 +83,7 @@
 
 @push('scripts')
     <script>
-        function update_role(user_id, current_role) {
+        function editRole(user_id, current_role) {
             Swal.fire({
                 html: `
                     <span class="text-xl font-bold"> Update User Role </span>

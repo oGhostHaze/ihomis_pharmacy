@@ -24,19 +24,37 @@
             <div class="flex justify-between space-x-2">
                 <div class="ml-2">
                     <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
-                            class="las la-lg la-file-excel"></i> Export</button>
+                            class="las la-lg la-file-excel"></i></button>
                 </div>
                 <div class="ml-2">
-                    <button onclick="printMe()" class="btn btn-sm btn-primary">Print</button>
+                    <button onclick="printMe()" class="btn btn-sm btn-primary"><i
+                            class="las la-lg la-print"></i></button>
                 </div>
                 @can('admin')
-                <div class="ml-2">
-                    <button wire:click="initCard()" class="btn btn-sm btn-warning"><i class="las la-lg la-print"></i>
-                        Rerun</button>
-                </div>
+                    <div class="ml-2">
+                        <button wire:click="initCard()" class="btn btn-sm btn-warning"><i class="las la-lg la-sync"></i>
+                        </button>
+                    </div>
                 @endcan
             </div>
             <div class="flex justify-end">
+                @can('filter-stocks-location')
+                    <form action="{{ route('reports.stkcrd') }}" method="GET" class="flex">
+                        <div class="mt-auto ml-2 form-control">
+                            <select
+                                class="w-full max-w-sm text-sm rounded-none select select-bordered select-sm select-success"
+                                wire:model.defer="location_id" name="location_id">
+                                @foreach ($locations as $loc)
+                                    <option value="{{ $loc->id }}">{{ $loc->description }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mt-auto">
+                            <button class="rounded-none btn btn-sm btn-secondary" type="submit"><i
+                                    class="las la-search"></i></button>
+                        </div>
+                    </form>
+                @endcan
                 <div class="ml-2 form-control">
                     <label class="input-group">
                         <span class="whitespace-nowrap">Fund Source</span>

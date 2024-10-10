@@ -24,7 +24,7 @@ class DailyStockCard extends Component
     {
         $drug = $this->selected_drug;
         $this->reset('dmdcomb', 'dmdctr');
-        if($drug){
+        if ($drug) {
             $selected_drug = explode(',', $drug);
             $this->dmdcomb = $selected_drug[0];
             $this->dmdctr = $selected_drug[1];
@@ -35,7 +35,7 @@ class DailyStockCard extends Component
     {
         $fund = $this->selected_fund;
         $this->reset('chrgcode', 'chrgdesc');
-        if($fund){
+        if ($fund) {
             $selected_fund = explode(',', $fund);
             $this->chrgcode = $selected_fund[0];
             $this->chrgdesc = $selected_fund[1];
@@ -67,7 +67,11 @@ class DailyStockCard extends Component
 
     public function mount()
     {
-        $this->location_id = session('pharm_location_id');
+        if (isset($_GET['location_id'])) {
+            $this->location_id = $_GET['location_id'];
+        } else {
+            $this->location_id = session('pharm_location_id');
+        }
         $this->date_from = Carbon::parse(now())->subDays(2)->format('Y-m-d');
         $this->date_to = Carbon::parse(now())->format('Y-m-d');
 
@@ -101,14 +105,14 @@ class DailyStockCard extends Component
         // }
         $date_before = Carbon::parse(now())->subDay()->format('Y-m-d');
         $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code')
-                ->where('stock_bal', '>', 0)
-                ->orWhere(function($query) use ($date_before){
-                    $query->where('stock_bal', '>', 0)
+            ->where('stock_bal', '>', 0)
+            ->orWhere(function ($query) use ($date_before) {
+                $query->where('stock_bal', '>', 0)
                     ->where('updated_at', '>', $date_before);
-                })->get();
+            })->get();
 
         foreach ($stocks as $stock) {
-            if($stock->stock_bal > 0){
+            if ($stock->stock_bal > 0) {
                 DrugStockCard::create([
                     'chrgcode' => $stock->chrgcode,
                     'loc_code' => $stock->loc_code,

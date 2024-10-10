@@ -3959,6 +3959,9 @@ html {
 .max-w-screen-xl {
   max-width: 1280px !important;
 }
+.max-w-sm {
+  max-width: 24rem !important;
+}
 .max-w-xl {
   max-width: 36rem !important;
 }
@@ -4199,6 +4202,9 @@ html {
 .rounded-md {
   border-radius: 0.375rem !important;
 }
+.rounded-none {
+  border-radius: 0px !important;
+}
 .rounded-xl {
   border-radius: 0.75rem !important;
 }
@@ -4240,6 +4246,9 @@ html {
 .border-l-4 {
   border-left-width: 4px !important;
 }
+.border-r {
+  border-right-width: 1px !important;
+}
 .border-t {
   border-top-width: 1px !important;
 }
@@ -4261,6 +4270,10 @@ html {
 .border-gray-300 {
   --tw-border-opacity: 1 !important;
   border-color: rgb(209 213 219 / var(--tw-border-opacity)) !important;
+}
+.border-gray-400 {
+  --tw-border-opacity: 1 !important;
+  border-color: rgb(156 163 175 / var(--tw-border-opacity)) !important;
 }
 .border-indigo-400 {
   --tw-border-opacity: 1 !important;
@@ -4620,6 +4633,9 @@ html {
 }
 .leading-tight {
   line-height: 1.25 !important;
+}
+.tracking-wider {
+  letter-spacing: 0.05em !important;
 }
 .tracking-widest {
   letter-spacing: 0.1em !important;

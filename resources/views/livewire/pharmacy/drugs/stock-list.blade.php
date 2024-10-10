@@ -393,7 +393,7 @@
                             select.addEventListener('change', function() {
                                 column
                                     .search(select.value, {
-                                        exact: true
+                                        exact: false
                                     })
                                     .draw();
                             });
