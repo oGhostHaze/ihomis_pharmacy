@@ -3940,6 +3940,9 @@ html {
 .min-w-0 {
   min-width: 0px !important;
 }
+.min-w-full {
+  min-width: 100% !important;
+}
 .max-w-5xl {
   max-width: 64rem !important;
 }

@@ -174,6 +174,9 @@
                             {{ __('Consumption Department') }}
                         </x-jet-dropdown-link>
                         @if (session('pharm_location_id') == 1)
+                            <x-jet-dropdown-link href="{{ route('reports.consumption.warehouse') }}">
+                                {{ __('Consumption Warehouse') }}
+                            </x-jet-dropdown-link>
                             <div class="border-t border-gray-100"></div>
                             <x-jet-dropdown-link href="{{ route('reports.issuance.consol.loc') }}">
                                 {{ __('Consolidated Drug Issuances') }}

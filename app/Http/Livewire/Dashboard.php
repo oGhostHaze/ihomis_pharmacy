@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\DrugManualLogHeader;
 use App\Models\DrugManualLogItem;
+use App\Models\DrugManualLogWarehouse;
 use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
@@ -129,27 +130,41 @@ class Dashboard extends Component
                     ->where('stock_bal', '>', 0)
                     ->get();
                 foreach ($stocks as $stock) {
-                    $log = DrugStockLog::create([
-                        'loc_code' => $stock->loc_code,
-                        'dmdcomb' => $stock->dmdcomb,
-                        'dmdctr' => $stock->dmdctr,
-                        'chrgcode' => $stock->chrgcode,
-                        'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
-                        'unit_price' => $stock->retail_price,
-                        'beg_bal' => $stock->stock_bal,
-                        'consumption_id' => $active_consumption->id,
-                    ]);
 
-                    DrugManualLogItem::create([
-                        'loc_code' => $stock->loc_code,
-                        'dmdcomb' => $stock->dmdcomb,
-                        'dmdctr' => $stock->dmdctr,
-                        'chrgcode' => $stock->chrgcode,
-                        'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
-                        'unit_price' => $stock->retail_price,
-                        'beg_bal' => $stock->stock_bal,
-                        'detail_id' => $active_manual_consumption->id,
-                    ]);
+                    if ($this->location_id == '1') {
+                        DrugManualLogWarehouse::create([
+                            'loc_code' => $stock->loc_code,
+                            'dmdcomb' => $stock->dmdcomb,
+                            'dmdctr' => $stock->dmdctr,
+                            'chrgcode' => $stock->chrgcode,
+                            'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
+                            'unit_price' => $stock->retail_price,
+                            'beg_bal' => $stock->stock_bal,
+                            'consumption_id' => $active_manual_consumption->id,
+                        ]);
+                    } else {
+                        $log = DrugStockLog::create([
+                            'loc_code' => $stock->loc_code,
+                            'dmdcomb' => $stock->dmdcomb,
+                            'dmdctr' => $stock->dmdctr,
+                            'chrgcode' => $stock->chrgcode,
+                            'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
+                            'unit_price' => $stock->retail_price,
+                            'beg_bal' => $stock->stock_bal,
+                            'consumption_id' => $active_consumption->id,
+                        ]);
+
+                        DrugManualLogItem::create([
+                            'loc_code' => $stock->loc_code,
+                            'dmdcomb' => $stock->dmdcomb,
+                            'dmdctr' => $stock->dmdctr,
+                            'chrgcode' => $stock->chrgcode,
+                            'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
+                            'unit_price' => $stock->retail_price,
+                            'beg_bal' => $stock->stock_bal,
+                            'detail_id' => $active_manual_consumption->id,
+                        ]);
+                    }
                 }
 
                 session(['active_consumption' => $active_consumption->id]);

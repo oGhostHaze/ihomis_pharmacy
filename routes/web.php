@@ -46,6 +46,7 @@ use App\Http\Livewire\Pharmacy\Drugs\WardRisTrans;
 use App\Http\Livewire\Pharmacy\Logs\ConsumptionLogReport;
 use App\Http\Livewire\Pharmacy\References\PndfGenerics;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionSummary;
+use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Reports\DailyStockCard;
 use App\Http\Livewire\Pharmacy\Reports\DeliverySummary;
 use App\Http\Livewire\Pharmacy\Reports\DrugsIssuedAllLocation;
@@ -71,7 +72,9 @@ use App\Http\Livewire\References\ListRisWards;
 
 
 Route::middleware([
-    'auth:sanctum', config('jetstream.auth_session'), 'verified'
+    'auth:sanctum',
+    config('jetstream.auth_session'),
+    'verified'
 ])->group(function () {
 
     Route::get('/', Dashboard::class);
@@ -143,6 +146,7 @@ Route::middleware([
         Route::get('/issuance/chargeslips', DrugsChargeSlips::class)->name('issuance.charges');
         Route::get('/consumption', ConssumptionReport::class)->name('consumption');
         Route::get('/consumption/manual', ManualConsumptionGenerator::class)->name('consumption.manual');
+        Route::get('/consumption/warehouse', ConsumptionWarehouseReport::class)->name('consumption.warehouse');
         Route::get('/iotrans/issued', IoTransIssuedReport::class)->name('iotrans.issued');
         Route::get('/iotrans/received', IoTransReceivedReport::class)->name('iotrans.received');
         Route::get('/consumption/wards', DrugsIssuedWards::class)->name('consumption.wards');

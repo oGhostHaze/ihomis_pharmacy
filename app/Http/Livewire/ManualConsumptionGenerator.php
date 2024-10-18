@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\DrugManualLogHeader;
 use App\Models\DrugManualLogItem;
+use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
@@ -137,6 +138,12 @@ class ManualConsumptionGenerator extends Component
     {
         $active_consumption = DrugManualLogHeader::find($this->report_id);
         if (!$active_consumption->consumption_to) {
+            $active_consumption->consumption_to = now();
+            $active_consumption->status = 'I';
+            $active_consumption->closed_by = session('user_id');
+            $active_consumption->save();
+
+            $active_consumption = ConsumptionLogDetail::find(session('active_consumption'));
             $active_consumption->consumption_to = now();
             $active_consumption->status = 'I';
             $active_consumption->closed_by = session('user_id');
