@@ -34,6 +34,7 @@ class IoTransList extends Component
     public $selected_request, $chrgcode, $issue_qty = 0;
     public $issued_qty = 0;
     public $received_qty = 0;
+    public $search;
     public $available_drugs, $issueModal = false;
 
 
@@ -44,6 +45,9 @@ class IoTransList extends Component
             ->where(function ($query) {
                 $query->where('loc_code', session('pharm_location_id'))
                     ->orWhere('request_from', session('pharm_location_id'));
+            })
+            ->whereHas('drug', function ($query) {
+                $query->where('drug_concat', 'LIKE', '%' . $this->search . '%');
             });
 
         $locations = PharmLocation::where('id', '<>', session('pharm_location_id'))->get();
