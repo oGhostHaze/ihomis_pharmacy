@@ -207,7 +207,7 @@
                             {{ __('Ward Consumption') }}
                         </x-jet-dropdown-link>
                         <div class="border-t border-gray-100"></div>
-                        <x-jet-dropdown-link href="{{ route('reports.iotrans.issued') }}">
+                        <x-jet-dropdown-link href="{{ route('reports.repoirts.io_trans-iss') }}">
                             {{ __('IO Trans Issued') }}
                         </x-jet-dropdown-link>
                         <div class="border-t border-gray-100"></div>
