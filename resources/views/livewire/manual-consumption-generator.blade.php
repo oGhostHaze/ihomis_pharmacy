@@ -35,14 +35,16 @@
             </div>
         </div> --}}
         <div class="flex justify-end my-2">
-            @if($report_id)
-                @if($ended)
+            @if ($report_id)
+                @if ($ended)
                     <div class="ml-2 mr-auto">
-                        <button class="btn btn-sm btn-primary" wire:loading.attr='disabled' wire:click='generate_ending_balance'>Generate</button>
+                        <button class="btn btn-sm btn-primary" wire:loading.attr='disabled'
+                            wire:click='generate_ending_balance'>Generate</button>
                     </div>
                 @else
                     <div class="ml-2 mr-auto">
-                        <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End Logger</button>
+                        <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End
+                            Logger</button>
                     </div>
                 @endif
             @endif
@@ -89,7 +91,8 @@
         <div class="flex my-2">
             <progress class="mt-2 mr-2 w-28 progress" wire:loading.inline></progress>
         </div>
-        <div id="print" class="w-full overflow-auto" wire:loading.class='hidden' wire:target='generate_ending_balance'>
+        <div id="print" class="w-full overflow-auto" wire:loading.class='hidden'
+            wire:target='generate_ending_balance'>
             <table class="w-full text-xs bg-white shadow-md" id="table">
                 <thead class="sticky top-0 font-bold bg-gray-200">
                     <tr class="text-center uppercase">
@@ -165,6 +168,7 @@
                         @endphp
                         @php
                             $concat = implode(',', explode('_,', $rxi->drug_concat));
+                            $concat = implode(' ', explode('-', $concat));
                         @endphp
                         <tr classs="border border-black hover" itemcode="{{ $rxi->dmdcomb . ', ' . $rxi->dmdctr }}">
                             <td class="text-xs border border-black whitespace-nowrap">

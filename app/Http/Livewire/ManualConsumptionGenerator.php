@@ -8,6 +8,8 @@ use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
+use App\Models\User;
+use App\Models\UserSession;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
@@ -21,7 +23,7 @@ class ManualConsumptionGenerator extends Component
     public $date_from, $date_to;
     public $location_id;
     public $report_id;
-    public $ended = false;
+    public $ended = NULL;
     public $active_report;
 
     public function updatedReportId()
@@ -94,7 +96,7 @@ class ManualConsumptionGenerator extends Component
         if ($select_consumption) {
             $this->report_id = $select_consumption->id;
             $this->active_report = $select_consumption->consumption_to ? $select_consumption : NULL;
-            $this->ended = $select_consumption->consumption_from ? true : false;
+            $this->ended = $select_consumption->consumption_to ? true : NULL;
         } else {
         }
     }
@@ -102,34 +104,58 @@ class ManualConsumptionGenerator extends Component
     public function get_begbal()
     {
         $pharm_location_id = session('pharm_location_id');
+        $logs = ConsumptionLogDetail::where('loc_code', $pharm_location_id)->where('id', '<', $this->report_id)->latest()->first();
+        $log_items = DB::select("SELECT pdsl.dmdcomb, pdsl.dmdctr,
+                                    pdsl.loc_code,
+                                    SUM(pdsl.purchased) as purchased,
+                                    SUM(pdsl.received) as received_iotrans,
+                                    SUM(pdsl.transferred) as transferred_iotrans,
+                                    SUM(pdsl.beg_bal) as beg_bal,
+                                    SUM(pdsl.ems) as ems,
+                                    SUM(pdsl.maip) as maip,
+                                    SUM(pdsl.wholesale) as wholesale,
+                                    SUM(pdsl.opdpay) as opdpay,
+                                    SUM(pdsl.pay) as pay,
+                                    SUM(pdsl.service) as service,
+                                    SUM(pdsl.konsulta) as konsulta,
+                                    SUM(pdsl.pcso) as pcso,
+                                    SUM(pdsl.phic) as phic,
+                                    SUM(pdsl.caf) as caf,
+                                    SUM(pdsl.issue_qty) as issue_qty,
+                                    SUM(pdsl.return_qty) as return_qty,
+                                    MAX(pdsl.unit_cost) as acquisition_cost,
+                                    pdsl.unit_price as dmselprice,
+                                    pdsl.chrgcode as chrgcode,
+                                    drug.drug_concat
+                                FROM [pharm_drug_stock_logs] as [pdsl]
+                                INNER JOIN hdmhdr as drug ON pdsl.dmdcomb = drug.dmdcomb AND pdsl.dmdctr = drug.dmdctr
+                                INNER JOIN pharm_locations as loc ON pdsl.loc_code = loc.id
+                                WHERE consumption_id = '" . $logs->id . "'
+                                GROUP BY pdsl.dmdcomb, pdsl.dmdctr,
+                                pdsl.chrgcode,
+                                pdsl.loc_code,
+                                pdsl.unit_price,
+                                drug.drug_concat
+                                ORDER BY drug.drug_concat ASC");
 
-        $active_consumption = DrugManualLogHeader::create([
-            'consumption_from' => now(),
-            'status' => 'A',
-            'entry_by' => session('user_id'),
-            'loc_code' => $pharm_location_id,
-        ]);
+        foreach ($log_items as $log) {
+            $beg_bal = $log->beg_bal;
+            $purchased = $log->purchased;
+            $issued = $log->issue_qty;
 
-        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte', 'retail_price')
-            ->with('current_price')
-            ->where('loc_code', auth()->user()->pharm_location_id)
-            ->where('stock_bal', '>', 0)
-            ->get();
-
-        foreach ($stocks as $stock) {
-            DrugManualLogItem::create([
-                'loc_code' => $stock->loc_code,
-                'dmdcomb' => $stock->dmdcomb,
-                'dmdctr' => $stock->dmdctr,
-                'chrgcode' => $stock->chrgcode,
-                'unit_cost' => $stock->current_price ? $stock->current_price->acquisition_cost : 0,
-                'unit_price' => $stock->retail_price,
-                'beg_bal' => $stock->stock_bal,
-                'consumption_id' => $active_consumption->id,
+            $ending_balance = $beg_bal + $purchased + $log->received_iotrans + $log->return_qty - ($issued + $log->transferred_iotrans);
+            DrugManualLogItem::updateOrCreate([
+                'loc_code' => $log->loc_code,
+                'dmdcomb' => $log->dmdcomb,
+                'dmdctr' => $log->dmdctr,
+                'chrgcode' => $log->chrgcode,
+                'unit_cost' => $log->acquisition_cost,
+                'unit_price' => $log->dmselprice,
+                'consumption_id' => $this->report_id,
+            ], [
+                'beg_bal' => $ending_balance > 1 ? $ending_balance : 0
             ]);
         }
-
-        $this->report_id = $active_consumption->id;
 
         $this->alert('success', 'Drug Consumption Logger has been initialized successfully on ' . now());
     }
@@ -149,6 +175,17 @@ class ManualConsumptionGenerator extends Component
             $active_consumption->closed_by = session('user_id');
             $active_consumption->save();
 
+            session(['active_consumption' => null]);
+            $pharm_location_id = session('pharm_location_id');
+            //
+            $users = User::where('pharm_location_id', $pharm_location_id)->get();
+            foreach ($users as $user) {
+                $sessions = UserSession::where('user_id', '<>', '1')->where('user_id', $user->id)->get();
+                foreach ($sessions as $session) {
+                    $session->delete();
+                }
+            }
+
             $this->alert('success', 'Drug Consumption Logger has been successfully stopped on ' . now());
         } else {
             $this->alert('warning', 'Logger currently inactive');
@@ -161,6 +198,10 @@ class ManualConsumptionGenerator extends Component
         $from_date = $active_consumption->consumption_from;
         $to_date = $active_consumption->consumption_to;
         $location_id = auth()->user()->pharm_location_id;
+
+        DrugManualLogItem::where('consumption_id', $active_consumption->id)->delete();
+
+        $this->get_begbal();
 
         $issueances = DB::select("
             SELECT hrxo.loc_code, hrxo.dmdcomb, hrxo.dmdctr, hrxo.orderfrom chrgcode, drug_concat, COUNT(*) LineItem, SUM(pchrgqty) qty_issued, pri.acquisition_cost unit_cost, pri.dmselprice retail_price, tx_type

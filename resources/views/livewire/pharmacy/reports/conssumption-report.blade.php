@@ -138,7 +138,8 @@
                         @php
                             $concat = implode(',', explode('_,', $rxi->drug_concat));
                         @endphp
-                        <tr classs="border border-black hover" itemcode="{{ $rxi->dmdcomb . ', ' . $rxi->dmdctr }}">
+                        <tr classs="border border-black hover"
+                            itemcode="{{ $rxi->dmdcomb . ', ' . $rxi->dmdctr . ', ' . $rxi->chrgcode }}">
                             <td class="text-xs border border-black whitespace-nowrap">
                                 {{ $concat }}
                             </td>

@@ -54,12 +54,14 @@ class ConssumptionReport extends Component
                                         SUM(pdsl.return_qty) as return_qty,
                                         MAX(pdsl.unit_cost) as acquisition_cost,
                                         pdsl.unit_price as dmselprice,
+                                        pdsl.chrgcode as chrgcode,
                                         drug.drug_concat
                                     FROM [pharm_drug_stock_logs] as [pdsl]
                                     INNER JOIN hdmhdr as drug ON pdsl.dmdcomb = drug.dmdcomb AND pdsl.dmdctr = drug.dmdctr
                                     INNER JOIN pharm_locations as loc ON pdsl.loc_code = loc.id
                                     WHERE [chrgcode] = '" . $filter_charge[0] . "' and loc_code = '" . session('pharm_location_id') . "' and consumption_id = '" . $this->report_id . "'
                                     GROUP BY pdsl.dmdcomb, pdsl.dmdctr,
+                                    pdsl.chrgcode,
                                     pdsl.loc_code,
                                     pdsl.unit_price,
                                     drug.drug_concat
