@@ -42,10 +42,10 @@
                             wire:click='generate_ending_balance'>Generate</button>
                     </div>
                 @else
-                    <div class="ml-2 mr-auto">
+                    {{-- <div class="ml-2 mr-auto">
                         <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End
                             Logger</button>
-                    </div>
+                    </div> --}}
                 @endif
             @endif
             <div class="ml-2">
