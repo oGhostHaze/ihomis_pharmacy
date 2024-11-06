@@ -88,7 +88,34 @@ class ConsumptionWarehouseReport extends Component
         $to_date = $active_consumption->consumption_to;
         $location_id = auth()->user()->pharm_location_id;
 
-        $sat = DB::select("SELECT loc.ward_name, trans.dmdcomb, trans.dmdctr, SUM(trans.issued_qty) issued_qty, SUM(trans.return_qty) return_qty, trans.chrgcode, pri.dmduprice, pri.dmselprice FROM pharm_ward_ris_requests trans
+        $sat = DB::select("SELECT trans.dmdcomb, trans.dmdctr, SUM(trans.qty) qty, trans.charge_code, pri.dmduprice, pri.dmselprice
+                            FROM pharm_delivery_items trans
+                            JOIN hdmhdrprice pri
+                                ON trans.dmdprdte = pri.dmdprdte
+                            WHERE
+                                trans.updated_at BETWEEN ? AND ?
+                                AND trans.status IN('delivered')
+                            GROUP BY trans.dmdcomb, trans.dmdctr, trans.charge_code, pri.dmduprice, pri.dmselprice", [
+            $from_date,
+            $to_date
+        ]);
+
+        foreach ($sat as $row) {
+            $log = DrugManualLogWarehouse::firstOrCreate([
+                'consumption_id' => $active_consumption->id,
+                'loc_code' => $location_id,
+                'dmdcomb' => $row->dmdcomb,
+                'dmdctr' => $row->dmdctr,
+                'chrgcode' => $row->charge_code,
+                'unit_cost' => $row->dmduprice,
+                'unit_price' => $row->dmselprice,
+            ]);
+            $log->total_purchases += $row->qty;
+            $log->save();
+        }
+
+        $sat = DB::select("SELECT loc.ward_name, trans.dmdcomb, trans.dmdctr, SUM(trans.issued_qty) issued_qty, SUM(trans.return_qty) return_qty, trans.chrgcode, pri.dmduprice, pri.dmselprice
+                            FROM pharm_ward_ris_requests trans
                             JOIN pharm_ris_wards loc
                                 ON loc.id = trans.loc_code
                             JOIN hdmhdrprice pri
