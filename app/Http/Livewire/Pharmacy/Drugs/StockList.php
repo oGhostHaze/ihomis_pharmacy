@@ -8,6 +8,8 @@ use App\Models\Pharmacy\DrugPrice;
 use App\Models\Pharmacy\Drugs\DrugStock;
 use App\Models\Pharmacy\Drugs\DrugStockCard;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
+use App\Models\Pharmacy\Drugs\PullOut;
+use App\Models\Pharmacy\Drugs\PullOutItem;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
 use App\Models\StockAdjustment;
@@ -23,7 +25,7 @@ class StockList extends Component
     use LivewireAlert;
     use WithPagination;
 
-    protected $listeners = ['add_item', 'refresh' => '$refresh', 'add_item_new', 'update_item_new', 'adjust_qty'];
+    protected $listeners = ['add_item', 'refresh' => '$refresh', 'add_item_new', 'update_item_new', 'adjust_qty', 'pull_out'];
 
     public $search;
     public $location_id;
@@ -359,5 +361,51 @@ class StockList extends Component
 
         $this->alert('success', 'Success!');
         return redirect(route('dmd.stk', ['location_id' => $this->location_id]));
+    }
+
+    public function pull_out($stock_id, $qty)
+    {
+        $pullout_date = Carbon::now()->format('Y-m-d');
+        $detail = PullOut::firstOrCreate([
+            'pullout_date' => $pullout_date,
+            'pharm_location_id' => $this->location_id,
+        ]);
+
+        $stock = DrugStock::find($stock_id);
+        PullOutItem::create([
+            'detail_id' => $detail->id,
+            'stock_id' => $stock->id,
+            'pullout_qty' => $qty,
+        ]);
+
+        $card = DrugStockCard::firstOrNew([
+            'loc_code' => $this->location_id,
+            'dmdcomb' => $stock->dmdcomb,
+            'dmdctr' => $stock->dmdctr,
+            'chrgcode' => $stock->chrgcode,
+            'exp_date' => $stock->exp_date,
+            'stock_date' => $pullout_date,
+            'drug_concat' => $stock->drug_concat(),
+        ]);
+        $card->pullout_qty += $qty;
+        $card->save();
+
+        $log = DrugStockLog::firstOrNew([
+            'loc_code' => $this->location_id,
+            'dmdcomb' => $stock->dmdcomb,
+            'dmdctr' => $stock->dmdctr,
+            'chrgcode' => $stock->chrgcode,
+            'unit_cost' => $stock->current_price->acquisition_cost,
+            'unit_price' => $stock->retail_price,
+            'consumption_id' => session('active_consumption'),
+        ]);
+        $log->pullout_qty += $qty;
+        $log->save();
+
+        $stock->stock_bal -= $qty;
+        $stock->save();
+
+
+        $this->alert('success', 'Item pulled out successfully');
     }
 }

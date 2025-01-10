@@ -25,6 +25,7 @@ class DrugStockCard extends Model
         'rec',
         'iss',
         'bal',
+        'pullout_qty',
     ];
 
     public function stock()

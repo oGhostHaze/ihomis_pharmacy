@@ -54,6 +54,7 @@ class DrugManualLogItem extends Model
         'pcso',
         'opdpay',
         'doh_free',
+        'pullout_qty',
 
         // 'sc_pwd', //nullable()->default(0);
         // 'medicare', //nullable()->default(0);

@@ -121,6 +121,7 @@ class ManualConsumptionGenerator extends Component
                                     SUM(pdsl.pcso) as pcso,
                                     SUM(pdsl.phic) as phic,
                                     SUM(pdsl.caf) as caf,
+                                    SUM(pdsl.pullout_qty) as pullout_qty,
                                     SUM(pdsl.issue_qty) as issue_qty,
                                     SUM(pdsl.return_qty) as return_qty,
                                     MAX(pdsl.unit_cost) as acquisition_cost,
@@ -143,7 +144,7 @@ class ManualConsumptionGenerator extends Component
             $purchased = $log->purchased;
             $issued = $log->issue_qty;
 
-            $ending_balance = $beg_bal + $purchased + $log->received_iotrans + $log->return_qty - ($issued + $log->transferred_iotrans);
+            $ending_balance = $beg_bal + $purchased + $log->received_iotrans + $log->return_qty - ($issued + $log->transferred_iotrans + $log->pullout_qty);
             DrugManualLogItem::updateOrCreate([
                 'loc_code' => $log->loc_code,
                 'dmdcomb' => $log->dmdcomb,
@@ -369,6 +370,7 @@ class ManualConsumptionGenerator extends Component
         }
 
         $this->alert('success', 'Deliveries recorded successfully ' . now());
+        $this->generate_pullout();
     }
 
     public function generate_ep()
@@ -402,5 +404,39 @@ class ManualConsumptionGenerator extends Component
         }
 
         $this->alert('success', 'Deliveries recorded successfully ' . now());
+    }
+
+    public function generate_pullout()
+    {
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, p.aquisition_cost unit_cost, s.retail_price
+            FROM pharm_pullout_items i
+            JOIN pharm_pullouts p ON i.detail_id = p.id
+            JOIN pharm_drug_stocks s ON i.stock_id = s.id
+            JOIN hdhdrprice p ON s.dmdprdte = p.dmdprdte
+            WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND d.pharm_location_id = '" . $location_id . "'
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'pullout_qty' => $item->pullout_qty,
+            ]);
+        }
+
+        $this->alert('success', 'Pullouts recorded successfully ' . now());
     }
 }

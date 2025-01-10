@@ -51,6 +51,7 @@ class ConssumptionReport extends Component
                                         SUM(pdsl.phic) as phic,
                                         SUM(pdsl.caf) as caf,
                                         SUM(pdsl.issue_qty) as issue_qty,
+                                        SUM(pdsl.pullout_qty) as pullout_qty,
                                         SUM(pdsl.return_qty) as return_qty,
                                         MAX(pdsl.unit_cost) as acquisition_cost,
                                         pdsl.unit_price as dmselprice,

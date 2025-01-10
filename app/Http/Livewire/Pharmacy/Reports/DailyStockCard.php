@@ -45,7 +45,7 @@ class DailyStockCard extends Component
     public function render()
     {
         $locations = PharmLocation::all();
-        $cards = DrugStockCard::select(DB::raw('SUM(reference) as reference, SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal'), 'drug_concat', 'stock_date', 'chrgcode')
+        $cards = DrugStockCard::select(DB::raw('SUM(reference) as reference, SUM(rec) as rec, SUM(iss) as iss, SUM(bal) as bal, SUM(pullout_qty) as pullout_qty'), 'drug_concat', 'stock_date', 'chrgcode')
             ->where('dmdcomb', $this->dmdcomb)
             ->where('dmdctr', $this->dmdctr)
             ->whereBetween('stock_date', [$this->date_from, $this->date_to])

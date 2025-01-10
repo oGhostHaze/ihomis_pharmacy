@@ -2204,6 +2204,13 @@ html {
   outline: 2px solid hsla(var(--bc) / 0.2);
   outline-offset: 2px;
 }
+.input-error {
+  --tw-border-opacity: 1;
+  border-color: hsl(var(--er) / var(--tw-border-opacity));
+}
+.input-error:focus {
+  outline: 2px solid hsl(var(--er));
+}
 .input-disabled,
   .input[disabled] {
   cursor: not-allowed;
@@ -3940,9 +3947,6 @@ html {
 .min-w-0 {
   min-width: 0px !important;
 }
-.min-w-full {
-  min-width: 100% !important;
-}
 .max-w-5xl {
   max-width: 64rem !important;
 }
@@ -4304,6 +4308,10 @@ html {
 .bg-blue-500 {
   --tw-bg-opacity: 1 !important;
   background-color: rgb(59 130 246 / var(--tw-bg-opacity)) !important;
+}
+.bg-error {
+  --tw-bg-opacity: 1 !important;
+  background-color: hsl(var(--er) / var(--tw-bg-opacity)) !important;
 }
 .bg-gray-100 {
   --tw-bg-opacity: 1 !important;

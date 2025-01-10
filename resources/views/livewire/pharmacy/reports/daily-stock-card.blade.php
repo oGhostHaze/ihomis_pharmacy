@@ -112,6 +112,7 @@
                         <td class="text-sm border border-black">Beginning Balance</td>
                         <td class="border border-black">Receipt</td>
                         <td class="border border-black">Issued</td>
+                        <td class="border border-black">Pullout</td>
                         <td class="text-sm uppercase border border-black">Balance</td>
                         {{-- <td class="text-sm border border-black">Expiry Date</td> --}}
                     </tr>
@@ -122,8 +123,9 @@
                             $ref = $card->reference;
                             $receipt = $card->rec;
                             $issued = $card->iss;
+                            $pullout_qty = $card->pullout_qty;
                             $balance = $card->bal;
-                            $total = $ref + $receipt - $issued;
+                            $total = $ref + $receipt - ($issued + $pullout_qty);
                         @endphp
                         <tr classs="border border-black">
                             <td class="text-sm border">
@@ -137,6 +139,7 @@
                             <td class="text-sm text-right border">{{ number_format($card->reference) }}</td>
                             <td class="text-sm border">{{ number_format($card->rec) }}</td>
                             <td class="text-sm border">{{ number_format($card->iss) }}</td>
+                            <td class="text-sm border">{{ number_format($card->pullout_qty) }}</td>
                             <td class="text-sm text-right border">{{ number_format($total) }}</td>
                             {{-- <td class="text-sm border">{{ $card->exp_date }}</td> --}}
                         </tr>

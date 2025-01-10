@@ -99,6 +99,11 @@
                                         wire:loading.attr="disabled">Adjust
                                         QTY</button>
                                 @endcan
+                                @can('pull-out-items')
+                                    <button class="text-xs btn bg-error btn-xs"
+                                        onclick="pull_out({{ $stk->id }}, `{{ $stk->drug_concat() }}`, '{{ $stk->chrgdesc }}', '{{ $stk->exp_date }}', '{{ $stk->stock_bal }}')"
+                                        wire:loading.attr="disabled">Pull-out</button>
+                                @endcan
                             </div>
                         </td>
                     </tr>
@@ -369,6 +374,32 @@
                 if (result.isConfirmed) {
 
                     Livewire.emit('adjust_qty', stk_id, adjusted_qty.value);
+                }
+            });
+        }
+
+        function pull_out(stk_id, stk_drug_name, stk_chrgcode, stk_expiry_date, stk_balance) {
+            Swal.fire({
+                html: `
+                <span class="text-xl font-bold"> Pull-out Item ` + stk_drug_name + `<small>(` + stk_expiry_date + `)</small></span><br>
+                <small>(` + stk_chrgcode + `)</small>
+                <div class="w-full px-2 form-control">
+                    <label class="label" for="pull_out_qty">
+                        <span class="label-text">QTY</span>
+                    </label>
+                    <input id="pull_out_qty" type="number" value="1" class="w-full input input-bordered" />
+                </div>`,
+                showCancelButton: true,
+                confirmButtonText: `Save`,
+                didOpen: () => {
+                    const pull_out_qty = Swal.getHtmlContainer().querySelector('#pull_out_qty');
+                    pull_out_qty.value = stk_balance;
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+
+                    Livewire.emit('pull_out', stk_id, pull_out_qty.value);
                 }
             });
         }

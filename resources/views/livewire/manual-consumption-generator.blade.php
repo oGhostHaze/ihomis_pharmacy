@@ -128,6 +128,7 @@
                         <td class="text-xs border border-black" rowspan="2">PCSO</td>
                         <td class="text-xs border border-black" rowspan="2">PHIC</td>
                         <td class="text-xs border border-black" rowspan="2">Kon. <br> Pkg.</td>
+                        <td class="text-xs border border-black" rowspan="2">Pullout</td>
                         <td class="text-xs border border-black" rowspan="2">Issued <br> Total</td>
                         <td class="text-xs border border-black" rowspan="2">Selling <br> Price</td>
                         <td class="text-xs border border-black" rowspan="2">Total <br> Sales</td>
@@ -164,7 +165,7 @@
                                 $purchased +
                                 $rxi->received_iotrans +
                                 $rxi->return_qty -
-                                ($issued + $rxi->transferred_iotrans);
+                                ($issued + $rxi->transferred_iotrans + $rxi->pullout_qty);
                         @endphp
                         @php
                             $concat = implode(',', explode('_,', $rxi->drug_concat));
@@ -221,6 +222,9 @@
                                 {{ number_format($rxi->konsulta) }}
                             </td>
                             <td class="text-xs text-right border border-black whitespace-nowrap">
+                                {{ number_format($rxi->pullout_qty) }}
+                            </td>
+                            <td class="text-xs text-right border border-black whitespace-nowrap">
                                 {{ number_format($rxi->issue_qty) }}
                             </td>
                             <td class="text-xs text-right bg-gray-100 border border-black whitespace-nowrap">
@@ -241,7 +245,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="28" class="font-bold text-center uppercase bg-red-400 border border-black">
+                            <td colspan="29" class="font-bold text-center uppercase bg-red-400 border border-black">
                                 No
                                 record found!</td>
                         </tr>
