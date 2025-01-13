@@ -180,10 +180,10 @@ class ConsumptionWarehouseReport extends Component
                     $log->opd_iss += $row->issued_qty;
                     break;
                 case 'Cancer Unit':
-                    $log->opd_iss += $row->issued_qty;
+                    $log->cu_iss += $row->issued_qty;
                     break;
                 case 'Operating Room':
-                    $log->opd_iss += $row->issued_qty;
+                    $log->or_iss += $row->issued_qty;
                     break;
                 case 'E-cart':
                     $log->others_iss += $row->issued_qty;
