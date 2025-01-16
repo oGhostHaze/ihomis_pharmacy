@@ -17,7 +17,6 @@ class TotalDrugsIssued extends Component
     public $filter_charge = 'DRUME,Drugs and Medicines (Regular)';
     public $date_from, $date_to, $location_id, $drugs, $selected_drug, $dmdcomb, $dmdctr;
 
-
     public function updatedSelectedDrug()
     {
         $drug = $this->selected_drug;
@@ -38,16 +37,30 @@ class TotalDrugsIssued extends Component
 
         $filter_charge = explode(',', $this->filter_charge);
 
-        $drugs_issued = DB::select("SELECT drug.drug_concat, SUM(rxo.pchrgqty) as qty, rxo.exp_date
-                                    FROM hospital.dbo.hrxo rxo
-                                    INNER JOIN hospital.dbo.hdmhdr drug ON rxo.dmdcomb = drug.dmdcomb AND rxo.dmdctr = drug.dmdctr
-                                    WHERE rxo.dodtepost BETWEEN ? AND ?
-                                    AND rxo.orderfrom LIKE ?
-                                    AND rxo.loc_code = ?
-                                    AND rxo.estatus = 'S'
-                                    GROUP BY drug.drug_concat, rxo.exp_date
-                                    ORDER BY drug.drug_concat ASC
-                                    ", [$date_from, $date_to, $filter_charge[0] ?? '%%', $this->location_id]);
+        if ($this->location_id == 'All') {
+
+            $drugs_issued = DB::select("SELECT drug.drug_concat, SUM(rxo.pchrgqty) as qty, rxo.exp_date
+                                        FROM hospital.dbo.hrxo rxo
+                                        INNER JOIN hospital.dbo.hdmhdr drug ON rxo.dmdcomb = drug.dmdcomb AND rxo.dmdctr = drug.dmdctr
+                                        WHERE rxo.dodtepost BETWEEN ? AND ?
+                                        AND rxo.orderfrom LIKE ?
+                                        AND rxo.estatus = 'S'
+                                        GROUP BY drug.drug_concat, rxo.exp_date
+                                        ORDER BY drug.drug_concat ASC
+                                        ", [$date_from, $date_to, $filter_charge[0] ?? '%%']);
+        } else {
+
+            $drugs_issued = DB::select("SELECT drug.drug_concat, SUM(rxo.pchrgqty) as qty, rxo.exp_date
+                                        FROM hospital.dbo.hrxo rxo
+                                        INNER JOIN hospital.dbo.hdmhdr drug ON rxo.dmdcomb = drug.dmdcomb AND rxo.dmdctr = drug.dmdctr
+                                        WHERE rxo.dodtepost BETWEEN ? AND ?
+                                        AND rxo.orderfrom LIKE ?
+                                        AND rxo.loc_code = ?
+                                        AND rxo.estatus = 'S'
+                                        GROUP BY drug.drug_concat, rxo.exp_date
+                                        ORDER BY drug.drug_concat ASC
+                                        ", [$date_from, $date_to, $filter_charge[0] ?? '%%', $this->location_id]);
+        }
 
         $locations = PharmLocation::all();
 

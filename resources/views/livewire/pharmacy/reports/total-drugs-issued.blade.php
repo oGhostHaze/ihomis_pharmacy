@@ -34,6 +34,7 @@
                     <label class="input-group">
                         <span>Location</span>
                         <select class="text-sm select select-bordered select-sm" wire:model="location_id">
+                            <option value="All">All</option>
                             @foreach ($locations as $loc)
                                 <option value="{{ $loc->id }}">{{ $loc->description }}</option>
                             @endforeach
@@ -94,7 +95,7 @@
                             <td class="text-sm border">
                                 <div class="flex flex-col">
                                     <div><span class="font-bold">{{ $concat[0] }} {{ $concat[1] }}</span>
-                                        <small> exp: {{ $rxi->exp_date }} </small>
+                                        <small> exp: {{ $rxi->exp_date }}</small>
                                     </div>
                                 </div>
                             </td>
