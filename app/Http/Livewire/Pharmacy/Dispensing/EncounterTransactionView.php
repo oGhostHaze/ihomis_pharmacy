@@ -623,11 +623,11 @@ class EncounterTransactionView extends Component
     public function return_issued(DrugOrder $item)
     {
         $this->validate([
-            'return_qty' => ['required', 'numeric', 'min:1', 'max:' . $this->order_qty],
+            'return_qty' => ['required', 'numeric', 'min:1', 'max:' . $item->qtyissued],
             'unit_price' => 'required',
             'docointkey' => 'required',
         ]);
-        $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
+        // $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
 
         //RECORD RETURN ITEM TO hrxoreturn table
 
