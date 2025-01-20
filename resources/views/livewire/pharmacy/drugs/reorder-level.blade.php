@@ -75,28 +75,7 @@
             <tbody>
                 @forelse ($stocks as $stk)
                     @php
-                        $issued = collect(
-                            DB::select(
-                                "SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
-                            WHERE card.dmdcomb = '" .
-                                    $stk->dmdcomb .
-                                    "'
-                            AND card.dmdctr = '" .
-                                    $stk->dmdctr .
-                                    "'
-                            AND card.loc_code = '" .
-                                    $location_id .
-                                    "'
-                            AND card.iss > 0
-                            AND card.stock_date BETWEEN '" .
-                                    $prev_week_start .
-                                    "' AND '" .
-                                    $prev_week_end .
-                                    "'",
-                            ),
-                        )->first();
-
-                        $max_level = $issued->average ? $issued->average * 2 : 0;
+                        $max_level = $stk->average ? $stk->average * 2 : 0;
                         $order_qty =
                             $max_level > $stk->stock_bal
                                 ? number_format($max_level - $stk->stock_bal)
@@ -126,8 +105,8 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="text-end">{{ $issued->average ? number_format($issued->average, 2) : '' }}</td>
-                        <td class="text-end">{{ $issued->average ? number_format($max_level) : '' }}
+                        <td class="text-end">{{ $stk->average ? number_format($stk->average, 2) : '' }}</td>
+                        <td class="text-end">{{ $stk->average ? number_format($max_level) : '' }}
                         </td>
                         <td class="text-end">
                             {{ $order_qty }}

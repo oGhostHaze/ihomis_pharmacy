@@ -30,6 +30,12 @@ class ReorderLevel extends Component
                             (SELECT reorder_point
                                 FROM pharm_drug_stock_reorder_levels as level
                                 WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
+                                (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
+                            WHERE card.dmdcomb = pds.dmdcomb
+                            AND card.dmdctr = pds.dmdctr
+                            AND card.loc_code = pds.loc_code
+                            AND card.iss > 0
+                            AND card.stock_date BETWEEN '" . $this->prev_week_start . "' AND '" . now() . "') as average,
                                 pds.dmdcomb, pds.dmdctr
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
@@ -88,7 +94,6 @@ class ReorderLevel extends Component
                     ");
 
         $reference_no = Carbon::now()->format('y-m-') . (sprintf("%04d", InOutTransaction::count() + 1));
-
         foreach ($stocks as $stk) {
             $issued = collect(
                 DB::select(
