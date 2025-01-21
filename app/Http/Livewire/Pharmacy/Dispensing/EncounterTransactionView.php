@@ -601,7 +601,7 @@ class EncounterTransactionView extends Component
             $this->resetExcept('generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss', 'summaries');
             // $this->emit('refresh');
             $this->alert('success', 'Item added.');
-            return redirect(route('dispensing.view.enctr', $this->enccode));
+            // return redirect(route('dispensing.view.enctr', $this->enccode));
         } else {
             $this->alert('error', 'Insufficient stock!');
         }
@@ -609,10 +609,10 @@ class EncounterTransactionView extends Component
 
     public function delete_item()
     {
-        $has_delete = true;
-        foreach ($this->selected_items as $docointkey) {
-            DB::delete("DELETE FROM hrxo WHERE docointkey = " . $docointkey . " AND (estatus = 'U' OR pcchrgcod IS NULL)");
-        }
+        $selectedItems = implode(',', array_map(function ($item) {
+            return $item;
+        }, $this->selected_items));
+        DB::delete("DELETE FROM hrxo WHERE docointkey IN(" . $selectedItems . ") AND (estatus = 'U' OR pcchrgcod IS NULL)");
 
         $this->reset('selected_items');
 
