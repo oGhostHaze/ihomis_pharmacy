@@ -32,11 +32,7 @@ class DrugsIssuedDepartments extends Component
         $drugs_issued = DB::select("SELECT dept.deptname, drug.drug_concat, charge.chrgdesc, SUM(rxo.qty) as qty
                                     FROM hospital.dbo.hrxoissue rxo
                                     INNER JOIN hospital.dbo.hrxo ON rxo.docointkey = hrxo.docointkey
-                                    INNER JOIN hospital.dbo.hpatroom pat_room ON rxo.enccode = pat_room.enccode
-                                    INNER JOIN webapp.dbo.prescription_data_issued rx_i ON rxo.docointkey = rx_i.docointkey
-                                    INNER JOIN webapp.dbo.prescription_data rx_d ON rx_i.presc_data_id = rx_d.id
-                                    INNER JOIN hospital.dbo.hpersonal dr ON rx_d.entry_by = dr.employeeid
-                                    INNER JOIN hospital.dbo.hdept dept ON dr.deptcode = dept.deptcode
+                                    INNER JOIN hospital.dbo.hdept dept ON rxo.deptcode = dept.deptcode
                                     INNER JOIN hospital.dbo.hdmhdr drug ON rxo.dmdcomb = drug.dmdcomb AND rxo.dmdctr = drug.dmdctr
                                     INNER JOIN hospital.dbo.hcharge charge ON rxo.chrgcode = charge.chrgcode
                                     WHERE rxo.issuedte BETWEEN '" . $date_from . "' AND '" . $date_to . "'
