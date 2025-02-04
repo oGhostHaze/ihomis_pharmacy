@@ -40,7 +40,7 @@ class DrugsIssuedWards extends Component
                                     WHERE rxo.issuedte BETWEEN '" . $date_from . "' AND '" . $date_to . "'
                                     AND ward.wardcode LIKE '" . $this->wardcode . "'
                                     AND rxo.chrgcode LIKE '" . $this->filter_charge . "'
-                                    AND hrxo.loc_code = '" . session('pharm_location_id') . "'
+                                    AND hrxo.loc_code = '" . $this->location_id . "'
                                     GROUP BY ward.wardname, drug.drug_concat, charge.chrgdesc
                                     ORDER BY ward.wardname ASC, drug.drug_concat ASC
                                     ");
@@ -52,6 +52,9 @@ class DrugsIssuedWards extends Component
 
     public function mount()
     {
+        if (isset($_GET['location_id'])) {
+            $this->location_id = $_GET['location_id'];
+        }
         $this->locations = PharmLocation::all();
         $this->wards = Ward::all();
         $this->location_id = session('pharm_location_id');
