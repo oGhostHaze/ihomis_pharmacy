@@ -109,6 +109,7 @@ class PatientsList extends Component
         $check_walkn = EncounterLog::where('encstat', 'W')
             ->where('toecode', 'WALKN')
             ->where('hpercode', $this->hpercode)
+            ->has('rxo')
             ->latest('encdate')
             ->first();
 
