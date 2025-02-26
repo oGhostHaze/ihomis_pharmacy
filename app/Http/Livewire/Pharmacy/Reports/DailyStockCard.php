@@ -54,7 +54,7 @@ class DailyStockCard extends Component
                 $query3->where('chrgcode', $this->chrgcode);
             })
             ->groupBy('dmdcomb', 'dmdctr', 'drug_concat', 'chrgcode', 'stock_date')
-            ->orderBy('stock_date', 'ASC')
+            ->orderBy('stock_date', 'DESC')
             ->orderBy('drug_concat', 'ASC')
             ->with('charge')
             ->get();
