@@ -58,6 +58,7 @@ class ManualConsumptionGenerator extends Component
                                         SUM(pdsl.opdpay) as opdpay,
                                         SUM(pdsl.pay) as pay,
                                         SUM(pdsl.service) as service,
+                                        SUM(pdsl.pullout_qty) as pullout_qty,
                                         SUM(pdsl.konsulta) as konsulta,
                                         SUM(pdsl.pcso) as pcso,
                                         SUM(pdsl.phic) as phic,
