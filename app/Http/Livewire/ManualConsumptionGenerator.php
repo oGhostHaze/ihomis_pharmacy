@@ -415,11 +415,11 @@ class ManualConsumptionGenerator extends Component
         $location_id = auth()->user()->pharm_location_id;
 
         $returns = DB::select("
-            SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, p.aquisition_cost unit_cost, s.retail_price
+            SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, price.aquisition_cost unit_cost, s.retail_price
             FROM pharm_pull_out_items i
             JOIN pharm_pull_outs p ON i.detail_id = p.id
             JOIN pharm_drug_stocks s ON i.stock_id = s.id
-            JOIN hdmhdrprice p ON s.dmdprdte = p.dmdprdte
+            JOIN hdmhdrprice price ON s.dmdprdte = price.dmdprdte
             WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
                 AND d.pharm_location_id = '" . $location_id . "'
         ");
