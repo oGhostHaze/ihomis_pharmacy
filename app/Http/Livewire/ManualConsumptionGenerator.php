@@ -415,7 +415,7 @@ class ManualConsumptionGenerator extends Component
         $location_id = auth()->user()->pharm_location_id;
 
         $returns = DB::select("
-            SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, price.aquisition_cost unit_cost, s.retail_price
+            SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, price.acquisition_cost unit_cost, s.retail_price
             FROM pharm_pull_out_items i
             JOIN pharm_pull_outs p ON i.detail_id = p.id
             JOIN pharm_drug_stocks s ON i.stock_id = s.id
