@@ -419,7 +419,7 @@ class ManualConsumptionGenerator extends Component
             FROM pharm_pull_out_items i
             JOIN pharm_pull_outs p ON i.detail_id = p.id
             JOIN pharm_drug_stocks s ON i.stock_id = s.id
-            JOIN hdhdrprice p ON s.dmdprdte = p.dmdprdte
+            JOIN hdmhdrprice p ON s.dmdprdte = p.dmdprdte
             WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
                 AND d.pharm_location_id = '" . $location_id . "'
         ");
