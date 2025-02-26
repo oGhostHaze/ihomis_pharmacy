@@ -102,7 +102,7 @@
                         <td class="text-xs border border-black" colspan="3">Total Avail. For Sale</td>
                         <td class="text-xs border border-black" colspan="2">IO TRANS</td>
                         <td class="text-xs border border-black" colspan="1"></td>
-                        <td class="text-xs border border-black" colspan="15">Issuances</td>
+                        <td class="text-xs border border-black" colspan="16">Issuances</td>
                         <td class="text-xs border border-black" colspan="2">Ending Bal.</td>
                     </tr>
                     <tr class="text-center">
