@@ -415,8 +415,8 @@ class ManualConsumptionGenerator extends Component
 
         $returns = DB::select("
             SELECT i.pullout_qty, d.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, p.aquisition_cost unit_cost, s.retail_price
-            FROM pharm_pullout_items i
-            JOIN pharm_pullouts p ON i.detail_id = p.id
+            FROM pharm_pull_out_items i
+            JOIN pharm_pull_outs p ON i.detail_id = p.id
             JOIN pharm_drug_stocks s ON i.stock_id = s.id
             JOIN hdhdrprice p ON s.dmdprdte = p.dmdprdte
             WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'

@@ -31,24 +31,27 @@
                             class="btn btn-sm btn-outline">Issued with Return</a>
                     </div>
                     @if ($billstat != '02' and $billstat != '03')
-                        <div class="flex ml-auto">
-                            <div class="flex flex-col text-center">
-                                <button id="delBtn" class="ml-2 btn btn-sm btn-error" onclick="delete_item()"
-                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">
-                                    Delete Item/s </button>
-                                <span class="text-xs text-info-content">Ctrl + x</span>
+                        @if (session('active_consumption'))
+                            <div class="flex ml-auto">
+                                <div class="flex flex-col text-center">
+                                    <button id="delBtn" class="ml-2 btn btn-sm btn-error" onclick="delete_item()"
+                                        wire:loading.attr="disabled" wire:loading.class="btn-secondary">
+                                        Delete Item/s </button>
+                                    <span class="text-xs text-info-content">Ctrl + x</span>
+                                </div>
+                                <div class="flex flex-col text-center">
+                                    <button id="chrgBtn" class="ml-2 btn btn-sm btn-warning" onclick="charge_items()"
+                                        wire:loading.attr="disabled" wire:loading.class="btn-secondary">Charge
+                                        Slip</button>
+                                    <span class="text-xs text-info-content">Ctrl + C</span>
+                                </div>
+                                <div class="flex flex-col text-center">
+                                    <button id="issBtn" class="ml-2 btn btn-sm btn-primary" onclick="issue_order()"
+                                        wire:loading.attr="disabled" wire:loading.class="btn-secondary">Issue</button>
+                                    <span class="text-xs text-info-content">Ctrl + I</span>
+                                </div>
                             </div>
-                            <div class="flex flex-col text-center">
-                                <button id="chrgBtn" class="ml-2 btn btn-sm btn-warning" onclick="charge_items()"
-                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">Charge Slip</button>
-                                <span class="text-xs text-info-content">Ctrl + C</span>
-                            </div>
-                            <div class="flex flex-col text-center">
-                                <button id="issBtn" class="ml-2 btn btn-sm btn-primary" onclick="issue_order()"
-                                    wire:loading.attr="disabled" wire:loading.class="btn-secondary">Issue</button>
-                                <span class="text-xs text-info-content">Ctrl + I</span>
-                            </div>
-                        </div>
+                        @endif
                     @endif
                 </div>
                 <table class="w-full table-compact table-xs">
