@@ -255,7 +255,7 @@ class EncounterTransactionView extends Component
             }
 
             if ($this->toecode != 'ER') {
-                $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+                //   $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
             }
         }
     }
