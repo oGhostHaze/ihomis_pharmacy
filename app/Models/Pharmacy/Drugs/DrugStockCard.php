@@ -2,10 +2,11 @@
 
 namespace App\Models\Pharmacy\Drugs;
 
-use App\Models\Pharmacy\Drugs\DrugStock;
+use App\Models\Pharmacy\DrugPrice;
 use App\Models\References\ChargeCode;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Pharmacy\Drugs\DrugStock;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class DrugStockCard extends Model
 {
@@ -27,6 +28,12 @@ class DrugStockCard extends Model
         'bal',
         'pullout_qty',
     ];
+
+
+    public function cur_price()
+    {
+        return $this->belongsTo(DrugPrice::class, 'dmdprdte', 'dmdprdte');
+    }
 
     public function stock()
     {

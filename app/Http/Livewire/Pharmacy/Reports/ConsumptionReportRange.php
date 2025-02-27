@@ -106,65 +106,34 @@ class ConsumptionReportRange extends Component
     public function get_begbal()
     {
         $pharm_location_id = session('pharm_location_id');
-        $logs = ConsumptionLogDetail::where('loc_code', $pharm_location_id)->where('id', '<', $this->report_id)->latest()->first();
 
-        $cards = DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, loc_code, chrgcode'))
-            ->whereBetween('stock_date', [$this->date_from, $this->date_to])
+        $active_manual_consumption = DrugManualLogHeader::create([
+            'consumption_from' => $this->date_from,
+            'consumption_to' => $this->date_to,
+            'status' => 'A',
+            'entry_by' => session('user_id'),
+            'loc_code' => $pharm_location_id,
+        ]);
+
+        $card = DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, chrgcode'))
+            ->whereBetween('stock_date', [$this->date_from, Carbon::parse($this->date_from)->endOfDay()])
             ->where('loc_code', $this->location_id)
             ->groupBy('dmdcomb', 'dmdctr', 'chrgcode', 'stock_date', 'dmdprdte')
             ->get();
-        dd($cards);
 
-        $log_items = DB::select("SELECT pdsl.dmdcomb, pdsl.dmdctr,
-                                    pdsl.loc_code,
-                                    SUM(pdsl.purchased) as purchased,
-                                    SUM(pdsl.received) as received_iotrans,
-                                    SUM(pdsl.transferred) as transferred_iotrans,
-                                    SUM(pdsl.beg_bal) as beg_bal,
-                                    SUM(pdsl.ems) as ems,
-                                    SUM(pdsl.maip) as maip,
-                                    SUM(pdsl.wholesale) as wholesale,
-                                    SUM(pdsl.opdpay) as opdpay,
-                                    SUM(pdsl.pay) as pay,
-                                    SUM(pdsl.service) as service,
-                                    SUM(pdsl.konsulta) as konsulta,
-                                    SUM(pdsl.pcso) as pcso,
-                                    SUM(pdsl.phic) as phic,
-                                    SUM(pdsl.caf) as caf,
-                                    SUM(pdsl.pullout_qty) as pullout_qty,
-                                    SUM(pdsl.issue_qty) as issue_qty,
-                                    SUM(pdsl.return_qty) as return_qty,
-                                    MAX(pdsl.unit_cost) as acquisition_cost,
-                                    pdsl.unit_price as dmselprice,
-                                    pdsl.chrgcode as chrgcode,
-                                    drug.drug_concat
-                                FROM [pharm_drug_stock_logs] as [pdsl]
-                                INNER JOIN hdmhdr as drug ON pdsl.dmdcomb = drug.dmdcomb AND pdsl.dmdctr = drug.dmdctr
-                                INNER JOIN pharm_locations as loc ON pdsl.loc_code = loc.id
-                                WHERE consumption_id = '" . $logs->id . "'
-                                GROUP BY pdsl.dmdcomb, pdsl.dmdctr,
-                                pdsl.chrgcode,
-                                pdsl.loc_code,
-                                pdsl.unit_price,
-                                drug.drug_concat
-                                ORDER BY drug.drug_concat ASC");
-
-        foreach ($log_items as $log) {
+        foreach ($card as $log) {
             $beg_bal = $log->beg_bal;
-            $purchased = $log->purchased;
-            $issued = $log->issue_qty;
 
-            $ending_balance = $beg_bal + $purchased + $log->received_iotrans + $log->return_qty - ($issued + $log->transferred_iotrans + $log->pullout_qty);
             DrugManualLogItem::updateOrCreate([
-                'loc_code' => $log->loc_code,
+                'loc_code' => $this->location_id,
                 'dmdcomb' => $log->dmdcomb,
                 'dmdctr' => $log->dmdctr,
                 'chrgcode' => $log->chrgcode,
-                'unit_cost' => $log->acquisition_cost,
-                'unit_price' => $log->dmselprice,
-                'consumption_id' => $this->report_id,
+                'unit_cost' => $log->cur_price->acquisition_cost,
+                'unit_price' => $log->cur_price->dmselprice,
+                'consumption_id' => $active_manual_consumption->id,
             ], [
-                'beg_bal' => $ending_balance > 1 ? $ending_balance : 0
+                'beg_bal' => $beg_bal > 1 ? $beg_bal : 0
             ]);
         }
 
