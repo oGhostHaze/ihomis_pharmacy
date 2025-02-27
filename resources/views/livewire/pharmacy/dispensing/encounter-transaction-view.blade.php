@@ -1117,7 +1117,6 @@
         @endif
 
         function select_rx_item_inactive(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
-
             var search = drug.split(",");
             @this.set('rx_id', rx_id)
             @this.set('generic', search[0])
@@ -1128,28 +1127,30 @@
             // $("#generic").trigger('keyup');
 
             Swal.fire({
-                    html: `
-                <div class="text-xl font-bold"> Deactivate ` + drug + `</div>
-                <div class="flex w-full space-x-3">
-                    <input type="text" class="input-text" id="adttl_remarks" />
-                </div>
-            `,
-                    showCancelButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const adttl_remarks = Swal.getHtmlContainer().querySelector('#adttl_remarks')
-                    }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @thi.set('adttl_remarks', $addtl_remarks.value)
-                        Livewire.emit('deactivate_rx', rx_id);
-                    }
-                });
-            }
+                html: `
+        <div class="text-xl font-bold"> Deactivate ` + drug + `</div>
+        <div class="flex w-full space-x-3">
+            <input type="text" class="w-full input-border input-text input" id="adttl_remarks" />
+        </div>
+        `,
+                showCancelButton: true,
+                confirmButtonText: `Confirm`,
+                didOpen: () => {
+                    const adttl_remarks = Swal.getHtmlContainer().querySelector('#adttl_remarks')
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    const remarks = document.getElementById('adttl_remarks').value;
+                    @this.set('adttl_remarks', remarks)
+                    Livewire.emit('deactivate_rx', rx_id);
+                }
+            });
+        }
 
-            function return_issued(docointkey, drug, up, or_qty) {
-                Swal.fire({
-                    html: `
+        function return_issued(docointkey, drug, up, or_qty) {
+            Swal.fire({
+                html: `
                         <div class="text-xl font-bold">` + drug + `</div>
 
                         <div class="w-full px-2 mb-3 form-control">
@@ -1180,45 +1181,47 @@
                             <input id="total" type="number" step="0.01" class="w-full input input-bordered disabled bg-slate-200" readonly tabindex='-1' />
                         </div>
                             `,
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const order_qty = Swal.getHtmlContainer().querySelector('#order_qty');
-                        const return_qty = Swal.getHtmlContainer().querySelector('#return_qty');
-                        const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
-                        const total = Swal.getHtmlContainer().querySelector('#total');
-                        order_qty.value = or_qty;
-                        unit_price.value = up;
-                        return_qty.focus();
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: `Confirm`,
+                didOpen: () => {
+                    const order_qty = Swal.getHtmlContainer().querySelector('#order_qty');
+                    const return_qty = Swal.getHtmlContainer().querySelector('#return_qty');
+                    const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
+                    const total = Swal.getHtmlContainer().querySelector('#total');
+                    order_qty.value = or_qty;
+                    unit_price.value = up;
+                    return_qty.focus();
 
-                        return_qty.addEventListener('input', () => {
-                            total.value = parseFloat(return_qty.value) * parseFloat(unit_price
-                                .value);
-                        })
+                    return_qty.addEventListener('input', () => {
+                        total.value = parseFloat(return_qty.value) * parseFloat(
+                            unit_price
+                            .value);
+                    })
 
-                        unit_price.addEventListener('input', () => {
-                            total.value = parseFloat(return_qty.value) * parseFloat(unit_price
-                                .value);
-                        })
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('unit_price', unit_price.value);
-                        @this.set('order_qty', or_qty);
-                        @this.set('docointkey', docointkey);
-                        @this.set('return_qty', return_qty.value);
+                    unit_price.addEventListener('input', () => {
+                        total.value = parseFloat(return_qty.value) * parseFloat(
+                            unit_price
+                            .value);
+                    })
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    @this.set('unit_price', unit_price.value);
+                    @this.set('order_qty', or_qty);
+                    @this.set('docointkey', docointkey);
+                    @this.set('return_qty', return_qty.value);
 
-                        Livewire.emit('return_issued', docointkey);
-                    }
-                });
-            }
+                    Livewire.emit('return_issued', docointkey);
+                }
+            });
+        }
 
-            function update_qty(docointkey, or_qty, up, tot, drug) {
-                Swal.fire({
-                    input: 'number',
-                    html: `
+        function update_qty(docointkey, or_qty, up, tot, drug) {
+            Swal.fire({
+                input: 'number',
+                html: `
                     <div class="text-xl font-bold">` + drug + `</div>
                     <div class="flex w-full space-x-3">
                         <div class="w-full mb-3 form-control">
@@ -1244,55 +1247,59 @@
                         </div>
                     </div>
                 `,
-                    showCancelButton: true,
-                    showCloseButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const up_order_qty = Swal.getHtmlContainer().querySelector('#up_order_qty')
-                        const up_unit_price = Swal.getHtmlContainer().querySelector('#up_unit_price')
-                        const total = Swal.getHtmlContainer().querySelector('#up_total')
+                showCancelButton: true,
+                showCloseButton: true,
+                confirmButtonText: `Confirm`,
+                didOpen: () => {
+                    const up_order_qty = Swal.getHtmlContainer().querySelector('#up_order_qty')
+                    const up_unit_price = Swal.getHtmlContainer().querySelector(
+                        '#up_unit_price')
+                    const total = Swal.getHtmlContainer().querySelector('#up_total')
 
-                        up_order_qty.focus();
-                        up_unit_price.value = up;
-                        total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price.value)
+                    up_order_qty.focus();
+                    up_unit_price.value = up;
+                    total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price
+                        .value)
 
-                        up_order_qty.addEventListener('input', () => {
-                            total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price
-                                .value)
-                        })
+                    up_order_qty.addEventListener('input', () => {
+                        total.value = parseFloat(up_order_qty.value) * parseFloat(
+                            up_unit_price
+                            .value)
+                    })
 
-                        up_unit_price.addEventListener('input', () => {
-                            total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price
-                                .value)
-                        })
+                    up_unit_price.addEventListener('input', () => {
+                        total.value = parseFloat(up_order_qty.value) * parseFloat(
+                            up_unit_price
+                            .value)
+                    })
 
-                        up_order_qty.addEventListener("keypress", function(event) {
-                            if (event.key === "Enter") {
-                                event.preventDefault();
-                                @this.set('unit_price', up_unit_price.value)
-                                @this.set('order_qty', up_order_qty.value)
+                    up_order_qty.addEventListener("keypress", function(event) {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                            @this.set('unit_price', up_unit_price.value)
+                            @this.set('order_qty', up_order_qty.value)
 
-                                Livewire.emit('update_qty', docointkey)
+                            Livewire.emit('update_qty', docointkey)
 
-                                Swal.close()
+                            Swal.close()
 
-                            }
-                        });
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('unit_price', up_unit_price.value)
-                        @this.set('order_qty', up_order_qty.value)
+                        }
+                    });
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    @this.set('unit_price', up_unit_price.value)
+                    @this.set('order_qty', up_order_qty.value)
 
-                        Livewire.emit('update_qty', docointkey)
-                    }
-                });
-            }
-
-            window.addEventListener('charged', event => {
-                window.open('{{ url('/dispensing/encounter/charge') }}' + '/' +
-                    event.detail.pcchrgcod, '_blank');
+                    Livewire.emit('update_qty', docointkey)
+                }
             });
+        }
+
+        window.addEventListener('charged', event => {
+            window.open('{{ url('/dispensing/encounter/charge') }}' + '/' +
+                event.detail.pcchrgcod, '_blank');
+        });
     </script>
 @endpush
