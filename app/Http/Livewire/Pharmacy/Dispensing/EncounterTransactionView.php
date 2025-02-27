@@ -253,6 +253,10 @@ class EncounterTransactionView extends Component
             } else {
                 $this->type = 'opdpay';
             }
+
+            if ($this->toecode != 'ER') {
+                $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+            }
         }
     }
 
@@ -303,9 +307,6 @@ class EncounterTransactionView extends Component
             // Get transaction type based on patient context
             $this->determineTransactionType();
 
-            if ($this->toecode != 'ER') {
-                $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
-            }
 
             $selected_items = implode(',', $this->selected_items);
 
@@ -315,7 +316,6 @@ class EncounterTransactionView extends Component
                             WHERE docointkey IN (" . $selected_items . ")
                             AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)
                             ORDER BY dodate ASC"))->all();
-
             if (empty($rxos)) {
                 DB::rollBack();
                 $this->alert('error', 'No items ready for issuing.');
