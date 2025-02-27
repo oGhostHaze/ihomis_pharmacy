@@ -96,9 +96,9 @@ class ViewIoTransDate extends Component
             'remarks_request' => $this->remarks,
         ]);
 
-        $location = PharmLocation::find($this->location_id);
-        IoTransNewRequest::dispatch($location, $io_tx);
-        $location->notify(new IoTranNotification($io_tx, session('user_id')));
+        // $location = PharmLocation::find($this->location_id);
+        // IoTransNewRequest::dispatch($location, $io_tx);
+        // $location->notify(new IoTranNotification($io_tx, session('user_id')));
 
         $this->resetExcept('locations', 'date', 'search');
         $this->alert('success', 'Request added!');
@@ -129,9 +129,9 @@ class ViewIoTransDate extends Component
             'remarks_request' => $this->remarks,
         ]);
 
-        $warehouse = PharmLocation::find('1');
-        IoTransNewRequest::dispatch($warehouse, $io_tx);
-        $warehouse->notify(new IoTranNotification($io_tx, session('user_id')));
+        // $warehouse = PharmLocation::find('1');
+        // IoTransNewRequest::dispatch($warehouse, $io_tx);
+        // $warehouse->notify(new IoTranNotification($io_tx, session('user_id')));
 
         $this->resetExcept('locations', 'date', 'search');
         $this->alert('success', 'Request added!');
@@ -139,10 +139,10 @@ class ViewIoTransDate extends Component
 
     public function notify_request()
     {
-        $io_tx = InOutTransaction::latest()->first();
-        $warehouse = PharmLocation::find('1');
-        IoTransNewRequest::dispatch($warehouse);
-        $warehouse->notify(new IoTranNotification($io_tx, session('user_id')));
+        // $io_tx = InOutTransaction::latest()->first();
+        // $warehouse = PharmLocation::find('1');
+        // IoTransNewRequest::dispatch($warehouse);
+        // $warehouse->notify(new IoTranNotification($io_tx, session('user_id')));
         $this->alert('success', 'Dispatched');
     }
 

@@ -48,9 +48,11 @@
                         $minutes = $current->diffInMinutes($tomorrow);
                     @endphp
                     @if ($minutes <= 30)
-                    <div class="h-8 text-sm max-w-fit alert alert-warning alert-sm">
-                        Inventory maintenance will proceed at 12AM. You will be automatically logged out of the system. Please be sure to refrain from dispensing 1 minute prior to maintenance. {{ $minutes }} minutes till maintenance.
-                    </div>
+                        <div class="h-8 text-sm max-w-fit alert alert-warning alert-sm">
+                            Inventory maintenance will proceed at 12AM. You will be automatically logged out of the
+                            system. Please be sure to refrain from dispensing 1 minute prior to maintenance.
+                            {{ $minutes }} minutes till maintenance.
+                        </div>
                     @endif
                 </div>
             </header>
@@ -94,8 +96,8 @@
             return x1 + x2;
         }
 
-        Echo.private(`ioTrans.{{ session('pharm_location_id') }}`)
-            .listen('IoTransNewRequest', (e) => {
+        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+            .listen('park-IoTransNewRequest', (e) => {
                 // console.log(e.requestor);
                 Swal.fire({
                     icon: 'info',
@@ -103,8 +105,8 @@
                 })
             });
 
-        Echo.private(`ioTrans.{{ session('pharm_location_id') }}`)
-            .listen('IoTransRequestUpdated', (e) => {
+        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+            .listen('park-IoTransRequestUpdated', (e) => {
                 // console.log(e.requestor);
                 Swal.fire({
                     icon: 'info',
@@ -112,8 +114,8 @@
                 })
             });
 
-        Echo.private(`encounter-view.{{ session('pharm_location_id') }}`)
-            .listen('DrugOrderEvent', (e) => {
+        Echo.private(`park-encounter-view.{{ session('pharm_location_id') }}`)
+            .listen('park-DrugOrderEvent', (e) => {
                 // console.log(e.requestor);
                 Swal.fire({
                     icon: 'info',

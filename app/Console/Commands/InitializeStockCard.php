@@ -44,7 +44,7 @@ class InitializeStockCard extends Command
     public function handle()
     {
         $locations = PharmLocation::all();
-        foreach($locations as $location){
+        foreach ($locations as $location) {
             $location->under_maintenance = true;
             $location->save();
         }
@@ -56,15 +56,15 @@ class InitializeStockCard extends Command
         }
 
         $date_before = Carbon::parse(now())->subDay()->format('Y-m-d');
-        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code')
-                ->where('stock_bal', '>', 0)
-                ->orWhere(function($query) use ($date_before){
-                    $query->where('stock_bal', '>', 0)
+        $stocks = DrugStock::select('id', 'stock_bal', 'dmdcomb', 'dmdctr', 'exp_date', 'drug_concat', 'chrgcode', 'loc_code', 'dmdprdte')
+            ->where('stock_bal', '>', 0)
+            ->orWhere(function ($query) use ($date_before) {
+                $query->where('stock_bal', '>', 0)
                     ->where('updated_at', '>', $date_before);
-                })->get();
+            })->get();
 
         foreach ($stocks as $stock) {
-            if($stock->stock_bal > 0){
+            if ($stock->stock_bal > 0) {
                 DrugStockCard::create([
                     'chrgcode' => $stock->chrgcode,
                     'loc_code' => $stock->loc_code,
@@ -75,6 +75,7 @@ class InitializeStockCard extends Command
                     'stock_date' => date('Y-m-d'),
                     'reference' => $stock->stock_bal,
                     'bal' => $stock->stock_bal,
+                    'dmdprdte' => $stock->dmdprdte,
                 ]);
             }
 
@@ -96,7 +97,7 @@ class InitializeStockCard extends Command
             }
         }
 
-        foreach($locations as $location){
+        foreach ($locations as $location) {
             $location->under_maintenance = false;
             $location->save();
         }

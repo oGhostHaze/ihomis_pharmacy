@@ -78,9 +78,9 @@ class ViewIotrans extends Component
             'remarks_request' => $this->remarks,
         ]);
 
-        $location = PharmLocation::find($this->to);
-        IoTransNewRequest::dispatch($location, $io_tx);
-        $location->notify(new IoTranNotification($io_tx, session('user_id')));
+        // $location = PharmLocation::find($this->to);
+        // IoTransNewRequest::dispatch($location, $io_tx);
+        // $location->notify(new IoTranNotification($io_tx, session('user_id')));
 
         $this->resetExcept('locations', 'to', 'from', 'reference_no');
         $this->alert('success', 'Request added!');
