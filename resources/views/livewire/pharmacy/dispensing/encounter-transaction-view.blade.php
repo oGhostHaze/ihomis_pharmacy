@@ -1129,7 +1129,7 @@
             Swal.fire({
                 html: `
         <div class="text-xl font-bold"> Deactivate ` + drug + `</div>
-        <div class="flex w-full space-x-3 bg-slate-300 p=6">
+        <div class="flex w-full space-x-3 bg-slate-300 p=6 px-2 mt-2">
             <input type="text" class="w-full input-border bg-slate-300 input-text input" id="adttl_remarks" />
         </div>
         `,
