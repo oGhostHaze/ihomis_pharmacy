@@ -1129,8 +1129,8 @@
             Swal.fire({
                 html: `
         <div class="text-xl font-bold"> Deactivate ` + drug + `</div>
-        <div class="flex w-full space-x-3">
-            <input type="text" class="w-full input-border input-text input" id="adttl_remarks" />
+        <div class="flex w-full space-x-3 bg-slate-300">
+            <input type="text" class="w-full input-border bg-slate-300 input-text input" id="adttl_remarks" />
         </div>
         `,
                 showCancelButton: true,
