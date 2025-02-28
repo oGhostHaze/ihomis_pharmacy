@@ -254,8 +254,8 @@ class EncounterTransactionView extends Component
                 $this->type = 'opdpay';
             }
 
-            if ($this->toecode != 'ER') {
-                //   $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
+            if ($this->toecode != 'ER' and !empty($this->selected_items)) {
+                $this->validate(['deptcode' => 'required'], ['deptcode.required' => 'Please select department.']);
             }
         }
     }
@@ -690,7 +690,6 @@ class EncounterTransactionView extends Component
                 'unit_price' => 'required',
                 'docointkey' => 'required',
             ]);
-
             // Check if return already exists to prevent double-processing
             $existingReturn = DB::select("SELECT COUNT(*) as count FROM hospital.dbo.hrxoreturn
                                         WHERE docointkey = '" . $item->docointkey . "'
@@ -770,7 +769,7 @@ class EncounterTransactionView extends Component
             // Process stock returns - lock issued items to prevent concurrent updates
             $issued_items = DB::select(
                 "SELECT dsi.*, ps.*
-                FROM drug_stock_issues AS dsi WITH (ROWLOCK, XLOCK)
+                FROM pharm_drug_stock_issues AS dsi WITH (ROWLOCK, XLOCK)
                 JOIN pharm_drug_stocks AS ps ON dsi.stock_id = ps.id
                 WHERE dsi.docointkey = '" . $this->docointkey . "'
                 AND dsi.qty > dsi.returned_qty
@@ -805,9 +804,9 @@ class EncounterTransactionView extends Component
 
                 // Update the returned quantity with optimistic locking
                 $updateResult = DB::update(
-                    "UPDATE drug_stock_issues
+                    "UPDATE pharm_drug_stock_issues
                     SET returned_qty = '" . $new_returned_qty . "'
-                    WHERE id = '" . $stock_issued->id . "'
+                    WHERE docointkey = '" . $stock_issued->docointkey . "'
                     AND returned_qty = '" . $stock_issued->returned_qty . "'"
                 );
 
