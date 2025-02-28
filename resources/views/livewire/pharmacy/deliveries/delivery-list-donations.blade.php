@@ -19,17 +19,6 @@
         </div>
         <div class="flex space-x-2">
             <div class="form-control">
-                <label class="input-group">
-                    <span>Supplier</span>
-                    <select class="text-sm select select-bordered select-sm" wire:model="supplier_id">
-                        <option value="">-- Filter Supplier --</option>
-                        @foreach ($suppliers as $supplier)
-                            <option value="{{ $supplier->suppcode }}">{{ $supplier->suppname }}</option>
-                        @endforeach
-                    </select>
-                </label>
-            </div>
-            <div class="form-control">
                 <label class="input-group input-group-sm">
                     <span><i class="las la-search"></i></span>
                     <input type="text" placeholder="Search" class="input input-bordered input-sm"
@@ -44,8 +33,6 @@
                 <tr>
                     <th>#</th>
                     <th>Date</th>
-                    <th>PO #</th>
-                    <th>SI #</th>
                     <th>Supplier</th>
                     <th>Total Items</th>
                     <th>Total Amount</th>
@@ -59,8 +46,6 @@
                         class="cursor-pointer hover">
                         <th>{{ $delivery->id }}</th>
                         <td>{{ $delivery->delivery_date }}</td>
-                        <td>{{ $delivery->po_no }}</td>
-                        <td>{{ $delivery->si_no }}</td>
                         <td>{{ $delivery->supplier ? $delivery->supplier->suppname : '' }}</td>
                         <td>{{ $delivery->items->sum('qty') }}</td>
                         <td>{{ $delivery->items->sum('total_amount') }}</td>
@@ -83,7 +68,7 @@
         function new_delivery() {
             Swal.fire({
                 html: `
-                    <span class="text-xl font-bold"> Add Delivery </span>
+                    <span class="text-xl font-bold"> Add Donation </span>
                     <div class="w-full form-control">
                         <label class="label" for="delivery_date">
                             <span class="label-text">Delivery Date</span>
@@ -91,35 +76,12 @@
                         <input id="delivery_date" type="date" value="{{ date('Y-m-d') }}" class="w-full input input-bordered" />
                     </div>
                     <div class="w-full form-control">
-                        <label class="label" for="po_no">
-                            <span class="label-text">Purchase Order No</span>
-                        </label>
-                        <input id="po_no" type="text" class="w-full input input-bordered" />
-                    </div>
-                    <div class="w-full form-control">
-                        <label class="label" for="si_no">
-                            <span class="label-text">Sales Invoice No</span>
-                        </label>
-                        <input id="si_no" type="text" class="w-full input input-bordered" />
-                    </div>
-                    <div class="w-full form-control">
                         <label class="label" for="suppcode">
                             <span class="label-text">Supplier</span>
                         </label>
-                        <select class="select select-bordered" id="suppcode">
-                            <option disabled selected>Choose supplier</option>
+                        <select class="select select-bordered" id="suppcode" readonly>
                             @foreach ($suppliers as $supplier)
-                                <option value="{{ $supplier->suppcode }}">{{ $supplier->suppname }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="w-full form-control">
-                        <label class="label" for="charge_code">
-                            <span class="label-text">Source of Fund</span>
-                        </label>
-                        <select class="select select-bordered" id="charge_code">
-                            @foreach ($charges as $charge)
-                                <option value="{{ $charge->chrgcode }}">{{ $charge->chrgdesc }}</option>
+                                <option value="{{ $supplier->suppcode }}" selected>{{ $supplier->suppname }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -128,15 +90,12 @@
                             <span class="label-text">Type of Delivery</span>
                         </label>
                         <select class="select select-bordered" id="delivery_type">
-                            <option value="procured" selected>Procured</option>
-                            <option value="received">Received</option>
+                            <option value="donation" selected>Donation</option>
                         </select>
                     </div>`,
                 showCancelButton: true,
                 confirmButtonText: `Save`,
                 didOpen: () => {
-                    const po_no = Swal.getHtmlContainer().querySelector('#po_no');
-                    const si_no = Swal.getHtmlContainer().querySelector('#si_no');
                     const delivery_date = Swal.getHtmlContainer().querySelector('#delivery_date');
                     const suppcode = Swal.getHtmlContainer().querySelector('#suppcode');
                     const charge_code = Swal.getHtmlContainer().querySelector('#charge_code');
@@ -146,8 +105,6 @@
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
-                    @this.set('po_no', po_no.value);
-                    @this.set('si_no', si_no.value);
                     @this.set('delivery_date', delivery_date.value);
                     @this.set('suppcode', suppcode.value);
                     @this.set('charge_code', charge_code.value);

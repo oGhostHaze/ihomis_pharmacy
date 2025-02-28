@@ -32,6 +32,7 @@ use App\Http\Livewire\Pharmacy\Drugs\StockPullOutList;
 use App\Http\Livewire\Pharmacy\Reports\DailyStockCard;
 use App\Http\Livewire\References\Users\UserManagement;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryList;
+use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryView;
 use App\Http\Livewire\Pharmacy\References\ListLocation;
 use App\Http\Livewire\Pharmacy\References\PndfGenerics;
@@ -120,6 +121,7 @@ Route::middleware([
 
     Route::name('delivery.')->prefix('delivery')->group(function () {
         Route::get('/list', DeliveryList::class)->name('list');
+        Route::get('/donations', DeliveryListDonations::class)->name('list');
         Route::get('/emergency-purchase', EmergencyPurchases::class)->name('ep');
         Route::get('/view/{delivery_id}', DeliveryView::class)->name('view');
     });
