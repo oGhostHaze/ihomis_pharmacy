@@ -89,12 +89,10 @@
                         </td>
                         <td>{!! $tran->updated_at() !!}</td>
                         <td>
-                            @if ($tran->remarks_cancel)
-                                {{ $tran->remarks_cancel }}
-                            @else
-                                {{ $tran->remarks_request }}
-                                {{ $tran->remarks_issue }}
-                            @endif
+                            {{ $tran->remarks_issue ? '[iss: ' . $tran->remarks_issue . ']' : '' }}
+                            {{ $tran->remarks_cancel ? '[can: ' . $tran->remarks_cancel . ']' : '' }}
+                            {{ $tran->remarks_request ? '[req: ' . $tran->remarks_request . ']' : '' }}
+                            {{ $tran->remarks_received ? '[rec: ' . $tran->remarks_received . ']' : '' }}
                         </td>
                     </tr>
                 @empty

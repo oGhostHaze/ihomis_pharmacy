@@ -19,7 +19,7 @@
                 <div class="flex flex-col text-center whitespace-nowrap">
                     <div>MMMHMC-A-PHB-QP-005 Form 1 Rev 0 Charge Slip</div>
                     <div>MARIANO MARCOS MEM HOSP. MED CTR</div>
-                    <div>CHARGE SLIP</div>
+                    <div>CHARGE SLIP / TRANSACTION SLIP</div>
                     <div class="font-bold">{{ $pcchrgcod }}</div>
                 </div>
                 <div class="flex flex-col text-left whitespace-nowrap">
@@ -98,10 +98,16 @@
                     {{ $rxo_header->employee ? $rxo_header->employee->fullname() : ($rxo_header->user ? $rxo_header->user->name : $rxo_header->entry_by) }}
                 </div>
                 <div><span>Time: {{ \Carbon\Carbon::create($rxo_header->dodate)->format('h:i A') }}</span></div>
-                <div><span>Verified by Nurse/N.A.: _________________________</span></div>
+                <div><span>Verified by @if (fnmatch('*[ADM]', $toecode))
+                            Nurse/N.A.
+                        @endif: _________________________</span></div>
                 <div><span>Received by Patient/Watcher: ____________________</span></div>
-                <div class="mt-10 text-right justify-content-end"><span class="border-t border-black">Signature Over
+                <div class="mt-10 italic text-right justify-content-end"><span class="border-t border-black">Signature
+                        Over
                         Printed Name</span></div>
+                <div class="mt-2 text-right justify-content-end">
+                    <span><input type="checkbox" class="mt-1" disabled> Counseled</span>
+                </div>
             </div>
         </div>
     </div>
