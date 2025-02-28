@@ -36,19 +36,61 @@ class IoTransList extends Component
     public $received_qty = 0;
     public $search;
     public $available_drugs, $issueModal = false;
+    public $filter_location_id;
 
 
     public function render()
     {
-        $trans = InOutTransaction::with('drug')->with('location')
-            ->with('charge')
-            ->where(function ($query) {
-                $query->where('loc_code', session('pharm_location_id'))
-                    ->orWhere('request_from', session('pharm_location_id'));
+        $pharm_location_id = session('pharm_location_id');
+
+        $trans = InOutTransaction::with(['location', 'drug', 'charge'])
+            ->where(function ($query) use ($pharm_location_id) {
+                // First condition: Either loc_code is user's location or $this->filter_location_id, AND request_from is user's location
+                $query->where(function ($subQuery) use ($pharm_location_id) {
+                    $subQuery->whereIn('loc_code', [$pharm_location_id, $this->filter_location_id])
+                        ->where('request_from', $pharm_location_id);
+                })
+                    // OR second condition: loc_code is user's location AND request_from is either user's location or $this->filter_location_id
+                    ->orWhere(function ($subQuery) use ($pharm_location_id) {
+                        $subQuery->where('loc_code', $pharm_location_id)
+                            ->whereIn('request_from', [$pharm_location_id, $this->filter_location_id]);
+                    });
             })
-            ->whereHas('drug', function ($query) {
-                $query->where('drug_concat', 'LIKE', '%' . $this->search . '%');
-            });
+            // Apply the search filter only if there is a search term
+            ->when($this->search, function ($query, $search) {
+                return $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('trans_no', 'like', "%{$search}%")
+                        ->orWhereHas('drug', function ($drugQuery) use ($search) {
+                            $drugQuery->where('drug_concat', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest();
+
+
+        $trans = InOutTransaction::with(['location', 'drug', 'charge'])
+            ->where(function ($query) use ($pharm_location_id) {
+                // First condition: Either loc_code is user's location or $this->filter_location_id, AND request_from is user's location
+                $query->where(function ($subQuery) use ($pharm_location_id) {
+                    $subQuery->whereIn('loc_code', [$pharm_location_id, $this->filter_location_id])
+                        ->where('request_from', $pharm_location_id);
+                })
+                    // OR second condition: loc_code is user's location AND request_from is either user's location or $this->filter_location_id
+                    ->orWhere(function ($subQuery) use ($pharm_location_id) {
+                        $subQuery->where('loc_code', $pharm_location_id)
+                            ->whereIn('request_from', [$pharm_location_id, $this->filter_location_id]);
+                    });
+            })
+            // Apply the search filter only if there is a search term
+            ->when($this->search, function ($query, $search) {
+                return $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('trans_no', 'like', "%{$search}%")
+                        ->orWhereHas('drug', function ($drugQuery) use ($search) {
+                            $drugQuery->where('drug_concat', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->latest();
 
         $locations = PharmLocation::where('id', '<>', session('pharm_location_id'))->get();
 

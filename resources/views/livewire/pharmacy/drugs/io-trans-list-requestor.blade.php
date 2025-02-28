@@ -21,7 +21,19 @@
                     Last Request</button>
             </div>
         @endcan
-        <div>
+        <div class="flex space-x-2">
+            <div class="ml-2">
+                <div class="form-control">
+                    <label class="input-group">
+                        <span>Location</span>
+                        <select class="text-sm select select-bordered select-sm" wire:model="filter_location_id">
+                            @foreach ($locations as $loc)
+                                <option value="{{ $loc->id }}">{{ $loc->description }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                </div>
+            </div>
             <div class="form-control">
                 <label class="input-group input-group-sm">
                     <span><i class="las la-search"></i></span>

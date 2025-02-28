@@ -27,6 +27,7 @@ class DrugStockCard extends Model
         'iss',
         'bal',
         'pullout_qty',
+        'dmdprdte',
     ];
 
 

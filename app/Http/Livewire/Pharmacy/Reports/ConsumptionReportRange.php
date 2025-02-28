@@ -26,6 +26,7 @@ class ConsumptionReportRange extends Component
     public $report_id;
     public $ended = NULL;
     public $active_report;
+    public $active_consumption = [];
 
     public function updatedReportId()
     {
@@ -35,8 +36,8 @@ class ConsumptionReportRange extends Component
 
     public function render()
     {
-        $date_from = Carbon::parse($this->date_from . '-01')->startOfMonth()->format('Y-m-d');
-        $date_to = Carbon::parse($this->date_from . '-01')->endOfMonth()->format('Y-m-d');
+        // $date_from = Carbon::parse($this->date_from . '-01')->startOfMonth()->format('Y-m-d');
+        // $date_to = Carbon::parse($this->date_from . '-01')->endOfMonth()->format('Y-m-d');
 
         $charge_codes = ChargeCode::where('bentypcod', 'DRUME')
             ->where('chrgstat', 'A')
@@ -92,28 +93,15 @@ class ConsumptionReportRange extends Component
 
     public function mount()
     {
-        $this->date_from = date('Y-m', strtotime(now()));
+        $this->date_from = date('Y-m-d', strtotime(now()));
+        $this->date_to = date('Y-m-d', strtotime(now()));
         $this->location_id = session('pharm_location_id');
-        $select_consumption = DrugManualLogHeader::where('loc_code', auth()->user()->pharm_location_id)->latest()->first();
-        if ($select_consumption) {
-            $this->report_id = $select_consumption->id;
-            $this->active_report = $select_consumption->consumption_to ? $select_consumption : NULL;
-            $this->ended = $select_consumption->consumption_to ? true : NULL;
-        } else {
-        }
     }
 
     public function get_begbal()
     {
         $pharm_location_id = session('pharm_location_id');
-
-        $active_manual_consumption = DrugManualLogHeader::create([
-            'consumption_from' => $this->date_from,
-            'consumption_to' => $this->date_to,
-            'status' => 'A',
-            'entry_by' => session('user_id'),
-            'loc_code' => $pharm_location_id,
-        ]);
+        $active_manual_consumption = $this->active_consumption;
 
         $card = DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, chrgcode'))
             ->whereBetween('stock_date', [$this->date_from, Carbon::parse($this->date_from)->endOfDay()])
@@ -140,41 +128,16 @@ class ConsumptionReportRange extends Component
         $this->alert('success', 'Drug Consumption Logger has been initialized successfully on ' . now());
     }
 
-    public function stop_log()
-    {
-        $active_consumption = DrugManualLogHeader::find($this->report_id);
-        if (!$active_consumption->consumption_to) {
-            $active_consumption->consumption_to = now();
-            $active_consumption->status = 'I';
-            $active_consumption->closed_by = session('user_id');
-            $active_consumption->save();
-
-            $active_consumption = ConsumptionLogDetail::find(session('active_consumption'));
-            $active_consumption->consumption_to = now();
-            $active_consumption->status = 'I';
-            $active_consumption->closed_by = session('user_id');
-            $active_consumption->save();
-
-            session(['active_consumption' => null]);
-            $pharm_location_id = session('pharm_location_id');
-            //
-            $users = User::where('pharm_location_id', $pharm_location_id)->get();
-            foreach ($users as $user) {
-                $sessions = UserSession::where('user_id', '<>', '1')->where('user_id', $user->id)->get();
-                foreach ($sessions as $session) {
-                    $session->delete();
-                }
-            }
-
-            $this->alert('success', 'Drug Consumption Logger has been successfully stopped on ' . now());
-        } else {
-            $this->alert('warning', 'Logger currently inactive');
-        }
-    }
-
     public function generate_ending_balance()
     {
-        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $this->active_consumption = DrugManualLogHeader::create([
+            'consumption_from' => $this->date_from,
+            'consumption_to' => $this->date_to,
+            'status' => 'I',
+            'entry_by' => session('user_id'),
+            'loc_code' => auth()->user()->pharm_location_id,
+        ]);
+        $active_consumption = $this->active_consumption;
         $from_date = $active_consumption->consumption_from;
         $to_date = $active_consumption->consumption_to;
         $location_id = auth()->user()->pharm_location_id;

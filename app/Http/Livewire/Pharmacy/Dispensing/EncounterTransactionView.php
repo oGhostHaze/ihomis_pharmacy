@@ -73,13 +73,24 @@ class EncounterTransactionView extends Component
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
 
         // Keeping these as raw queries for performance
-        $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
-                            FROM hospital.dbo.hrxo
-                            INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
-                            INNER JOIN hcharge ON orderfrom = chrgcode
-                            LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
-                            WHERE hrxo.enccode = '" . $enccode . "'
-                            ORDER BY dodate DESC");
+        if ($this->toecode == 'WALKN') {
+            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
+                                FROM henctr enctr
+                                INNER JOIN hospital.dbo.hrxo ON enctr.enccode = hrxo.enccode
+                                INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
+                                INNER JOIN hcharge ON orderfrom = chrgcode
+                                LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
+                                WHERE hrxo.hpercode = '" . $this->hpercode . "' AND enctr.toecode = 'WALKN'
+                                ORDER BY dodate DESC");
+        } else {
+            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
+                                FROM hospital.dbo.hrxo
+                                INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
+                                INNER JOIN hcharge ON orderfrom = chrgcode
+                                LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
+                                WHERE hrxo.enccode = '" . $enccode . "'
+                                ORDER BY dodate DESC");
+        }
 
         // Keep as raw query for performance
         $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date
@@ -89,6 +100,7 @@ class EncounterTransactionView extends Component
                                 WHERE loc_code = '" . $this->location_id . "'
                                 AND drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
                                 AND stock_bal > 0
+                                AND exp_date > GETDATE()
                                 GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
                                 ORDER BY drug_concat");
 
@@ -988,10 +1000,9 @@ class EncounterTransactionView extends Component
         if (!$data) {
             return $this->alert('error', 'Prescription not found.');
         }
-        $data->adttl_remarks = $this->adttl_remarks;
+        $data->remark = $data->remark . ' [Rph rem: ' . $this->adttl_remarks . ']';
         $data->stat = 'I';
         $data->save();
-
         $this->alert('success', 'Prescription updated!');
     }
 

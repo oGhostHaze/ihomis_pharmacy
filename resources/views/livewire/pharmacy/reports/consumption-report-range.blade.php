@@ -21,26 +21,10 @@
 <div class="max-w-screen">
     <div class="flex flex-col w-full px-2 py-5">
         <div class="flex justify-end my-2">
-            <div class="ml-2 mr-auto">
+            <div class="ml-2">
                 <button class="btn btn-sm btn-primary" wire:loading.attr='disabled'
                     wire:click='generate_ending_balance'>Generate</button>
             </div>
-
-            {{-- <div class="ml-2 mr-auto">
-                        <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End
-                            Logger</button>
-                    </div> --}}
-
-
-            <div class="ml-2">
-                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
-                        class="las la-lg la-file-excel"></i> Export</button>
-            </div>
-            <div class="ml-2">
-                <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
-                    Print</button>
-            </div>
-
             <div class="ml-2">
                 <div class="form-control">
                     <label class="input-group">
@@ -57,6 +41,33 @@
                         <input type="date" class="w-full input input-sm input-bordered" wire:model.lazy="date_to" />
                     </label>
                 </div>
+            </div>
+            <div class="ml-2 mr-auto">
+                <div class="form-control">
+                    <label class="input-group">
+                        <span>Reports</span>
+                        <select class="select select-bordered select-sm" wire:model="report_id">
+                            <option></option>
+                            @foreach ($cons as $con)
+                                <option value="{{ $con->id }}">
+                                    {{ $loop->iteration }}
+                                    [{{ date('Y-m-d g:i A', strtotime($con->consumption_from)) }}] -
+                                    [{{ $con->consumption_to ? date('Y-m-d g:i A', strtotime($con->consumption_to)) : 'Ongoing' }}]
+                                </option>
+                            @endforeach
+                        </select>
+                    </label>
+                </div>
+            </div>
+
+
+            <div class="ml-2">
+                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
+                        class="las la-lg la-file-excel"></i> Export</button>
+            </div>
+            <div class="ml-2">
+                <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
+                    Print</button>
             </div>
             <div class="ml-2">
                 <div class="form-control">
