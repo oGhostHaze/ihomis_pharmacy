@@ -20,7 +20,7 @@ class DeliveryList extends Component
 
     public $po_no, $si_no, $pharm_location_id, $user_id, $delivery_date, $suppcode, $delivery_type, $charge_code;
 
-    public $search;
+    public $search, $supplier_id;
 
     public function updatingSearch()
     {
@@ -30,7 +30,16 @@ class DeliveryList extends Component
     public function render()
     {
 
-        $deliveries = DeliveryDetail::with('supplier')->with('items')->with('charge')->latest()->paginate(15);
+        $deliveries = DeliveryDetail::with(['supplier', 'items', 'charge'])
+            ->when($this->supplier_id, function ($query, $supplier_id) {
+                $query->where('suppcode', $supplier_id);
+            })->when($this->search, function ($query, $search) {
+                $query->where('po_no', 'LIKE', '%' . $search . '%')
+                    ->orWhere('si_no', 'LIKE', '%' . $search . '%');
+            })
+            ->latest()
+            ->paginate(15);
+
         $suppliers = Supplier::all();
         $charges = ChargeCode::where('bentypcod', 'DRUME')
             ->where('chrgstat', 'A')

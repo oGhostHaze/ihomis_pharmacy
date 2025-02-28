@@ -17,7 +17,18 @@
             <button class="btn btn-sm btn-primary" onclick="new_delivery()" wire:loading.attr="disabled">Add
                 Delivery</button>
         </div>
-        <div>
+        <div class="flex space-x-2">
+            <div class="form-control">
+                <label class="input-group">
+                    <span>Supplier</span>
+                    <select class="text-sm select select-bordered select-sm" wire:model="supplier_id">
+                        <option value="">-- Filter Supplier --</option>
+                        @foreach ($suppliers as $supplier)
+                            <option value="{{ $supplier->suppcode }}">{{ $supplier->suppname }}</option>
+                        @endforeach
+                    </select>
+                </label>
+            </div>
             <div class="form-control">
                 <label class="input-group input-group-sm">
                     <span><i class="las la-search"></i></span>
