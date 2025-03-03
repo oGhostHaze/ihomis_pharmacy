@@ -278,6 +278,7 @@ class IoTransList extends Component
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $this->selected_request->trans_no
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;
@@ -299,6 +300,7 @@ class IoTransList extends Component
 
     public function cancel_issued($iotrans_id)
     {
+        $trans = InOutTransaction::find($iotrans_id);
         $items = InOutTransactionItem::where('iotrans_id', $iotrans_id)->where('status', 'Pending')->get();
         foreach ($items as $item) {
             $stock = DrugStock::find($item->stock_id);
@@ -330,13 +332,13 @@ class IoTransList extends Component
                 'stock_date' => $date,
                 'drug_concat' => $stock->drug_concat(),
                 'dmdprdte' => $stock->dmdprdte,
+                'io_trans_ref_no' => $trans->transno,
             ]);
             $card->rec += $item->qty;
             $card->bal += $item->qty;
 
             $card->save();
         }
-        $trans = InOutTransaction::find($iotrans_id);
         $trans->trans_stat = 'Cancelled';
         $trans->save();
 

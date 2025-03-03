@@ -143,7 +143,7 @@ class ViewIotrans extends Component
 
                 $stock->save();
                 $item->save();
-                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, now(), $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $stock->dmdprdte);
+                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, now(), $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $stock->dmdprdte, $txn->trans_no);
             }
         }
 
@@ -154,7 +154,8 @@ class ViewIotrans extends Component
         $this->resetExcept('locations', 'to', 'from', 'reference_no');
     }
 
-    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte)
+
+    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte, $ref_no)
     {
         $log = DrugStockLog::firstOrNew([
             'loc_code' => $to,
@@ -177,13 +178,12 @@ class ViewIotrans extends Component
             'stock_date' => $date_logged,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $ref_no,
         ]);
         $card->rec += $qty;
         $card->bal += $qty;
 
         $card->save();
-
-        return;
     }
 
     public function select_request(InOutTransaction $txn)
@@ -305,6 +305,7 @@ class ViewIotrans extends Component
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $this->selected_request->trans_no
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;

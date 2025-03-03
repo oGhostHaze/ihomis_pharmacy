@@ -108,10 +108,9 @@ class ConsumptionReportRange extends Component
             ->where('loc_code', $this->location_id)
             ->whereNotNull('dmdprdte')
             ->groupBy('dmdcomb', 'dmdctr', 'chrgcode', 'stock_date', 'dmdprdte')
-            ->get();
-
+            ->paginate(10);
         foreach ($card as $log) {
-            $beg_bal = $log->beg_bal;
+            $beg_bal = $log->begbal;
 
             DrugManualLogItem::updateOrCreate([
                 'loc_code' => $this->location_id,
@@ -139,6 +138,7 @@ class ConsumptionReportRange extends Component
         ], [
             'entry_by' => session('user_id'),
         ]);
+        $this->report_id = $this->active_consumption->id;
         $active_consumption = $this->active_consumption;
         $from_date = $active_consumption->consumption_from;
         $to_date = $active_consumption->consumption_to;

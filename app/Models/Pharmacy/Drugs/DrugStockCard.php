@@ -28,6 +28,7 @@ class DrugStockCard extends Model
         'bal',
         'pullout_qty',
         'dmdprdte',
+        'io_trans_ref_no',
     ];
 
 

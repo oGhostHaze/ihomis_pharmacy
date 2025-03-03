@@ -178,29 +178,30 @@ class IoTransListRequestor extends Component
 
     public function cancel_tx(InOutTransaction $txn)
     {
-        $trans_id = $txn->id;
+        // $trans_id = $txn->id;
 
-        $issued_items = InOutTransactionItem::where('iotrans_id', $trans_id)
-            ->where('status', 'Pending')
-            ->latest('exp_date')
-            ->get();
+        // $issued_items = InOutTransactionItem::where('iotrans_id', $trans_id)
+        //     ->where('status', 'Pending')
+        //     ->latest('exp_date')
+        //     ->get();
 
-        if ($issued_items) {
-            foreach ($issued_items as $item) {
-                $from_stock = $item->from_stock;
-                $from_stock->stock_bal += $item->qty;
-                $from_stock->save();
+        // if ($issued_items) {
+        //     foreach ($issued_items as $item) {
+        //         $from_stock = $item->from_stock;
+        //         $from_stock->stock_bal += $item->qty;
+        //         $from_stock->save();
 
-                $item->status = 'Cancelled';
-                $item->save();
-            }
-        }
+        //         $item->status = 'Cancelled';
+        //         $item->save();
+        //     }
+        // }
 
-        $txn->issued_qty = 0;
-        $txn->trans_stat = 'Cancelled';
-        $txn->save();
+        // $txn->issued_qty = 0;
+        // $txn->trans_stat = 'Cancelled';
+        // $txn->save();
 
-        $this->alert('success', 'Transaction cancelled. All issued items has been returned to the warehouse!');
+        // $this->alert('success', 'Transaction cancelled. All issued items has been returned to the warehouse!');
+        $this->alert('info', 'Cannot proceed with your action. Please inform the issuer to cancel from their side.');
         $this->resetExcept('locations');
     }
 
@@ -233,7 +234,7 @@ class IoTransListRequestor extends Component
 
                 $stock->save();
                 $item->save();
-                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $item->dmdprdte);
+                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $item->dmdprdte, $txn->trans_no);
             }
         }
 
@@ -243,7 +244,7 @@ class IoTransListRequestor extends Component
         $this->alert('success', 'Transaction successful. All items received!');
     }
 
-    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte)
+    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte, $ref_no)
     {
         $log = DrugStockLog::firstOrNew([
             'loc_code' => $to,
@@ -266,6 +267,7 @@ class IoTransListRequestor extends Component
             'stock_date' => $date_logged,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $ref_no,
         ]);
         $card->rec += $qty;
         $card->bal += $qty;
@@ -378,6 +380,7 @@ class IoTransListRequestor extends Component
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $this->selected_request->trans_no
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;
