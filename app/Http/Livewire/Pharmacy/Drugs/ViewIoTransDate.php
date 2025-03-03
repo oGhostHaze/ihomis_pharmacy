@@ -169,29 +169,30 @@ class ViewIoTransDate extends Component
 
     public function cancel_tx(InOutTransaction $txn)
     {
-        $trans_id = $txn->id;
+        // $trans_id = $txn->id;
 
-        $issued_items = InOutTransactionItem::where('iotrans_id', $trans_id)
-            ->where('status', 'Pending')
-            ->latest('exp_date')
-            ->get();
+        // $issued_items = InOutTransactionItem::where('iotrans_id', $trans_id)
+        //     ->where('status', 'Pending')
+        //     ->latest('exp_date')
+        //     ->get();
 
-        if ($issued_items) {
-            foreach ($issued_items as $item) {
-                $from_stock = $item->from_stock;
-                $from_stock->stock_bal += $item->qty;
-                $from_stock->save();
+        // if ($issued_items) {
+        //     foreach ($issued_items as $item) {
+        //         $from_stock = $item->from_stock;
+        //         $from_stock->stock_bal += $item->qty;
+        //         $from_stock->save();
 
-                $item->status = 'Cancelled';
-                $item->save();
-            }
-        }
+        //         $item->status = 'Cancelled';
+        //         $item->save();
+        //     }
+        // }
 
-        $txn->issued_qty = 0;
-        $txn->trans_stat = 'Cancelled';
-        $txn->save();
+        // $txn->issued_qty = 0;
+        // $txn->trans_stat = 'Cancelled';
+        // $txn->save();
 
-        $this->alert('success', 'Transaction cancelled. All issued items has been returned to the warehouse!');
+        // $this->alert('success', 'Transaction cancelled. All issued items has been returned to the warehouse!');
+        $this->alert('info', 'Cannot proceed with your action. Please inform the issuer to cancel from their side.');
         $this->resetExcept('locations', 'date', 'search');
     }
 

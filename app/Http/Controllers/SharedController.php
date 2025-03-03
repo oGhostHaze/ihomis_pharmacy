@@ -83,6 +83,7 @@ class SharedController extends Controller
             'exp_date' => $exp_date,
             'stock_date' => $date,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
         $card->reference += $qty;
         $card->bal += $qty;
