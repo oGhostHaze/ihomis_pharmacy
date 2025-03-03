@@ -79,7 +79,6 @@ class InitializeStockCard extends Command
                 ]);
             }
 
-
             $card = DrugStockCard::whereNull('reference')
                 ->whereNull('rec')
                 ->where('chrgcode', $stock->chrgcode)
