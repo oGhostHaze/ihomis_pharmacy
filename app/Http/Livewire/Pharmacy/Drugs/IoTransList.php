@@ -277,6 +277,7 @@ class IoTransList extends Component
             'exp_date' => $exp_date,
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;
@@ -328,6 +329,7 @@ class IoTransList extends Component
                 'exp_date' => $item->exp_date,
                 'stock_date' => $date,
                 'drug_concat' => $stock->drug_concat(),
+                'dmdprdte' => $stock->dmdprdte,
             ]);
             $card->rec += $item->qty;
             $card->bal += $item->qty;

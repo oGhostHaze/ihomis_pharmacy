@@ -69,6 +69,7 @@ class ViewWardRisRef extends Component
                 'exp_date' => $drug->exp_date,
                 'stock_date' => date('Y-m-d'),
                 'drug_concat' => $drug->drug_concat(),
+                'dmdprdte' => $drug->dmdprdte,
             ]);
             $card->rec += $item->issued_qty;
             $card->save();

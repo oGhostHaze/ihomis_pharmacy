@@ -106,6 +106,7 @@ class ConsumptionReportRange extends Component
         $card = DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, chrgcode'))
             ->whereBetween('stock_date', [$this->date_from, Carbon::parse($this->date_from)->endOfDay()])
             ->where('loc_code', $this->location_id)
+            ->whereNotNull('dmdprdte')
             ->groupBy('dmdcomb', 'dmdctr', 'chrgcode', 'stock_date', 'dmdprdte')
             ->get();
 
@@ -130,12 +131,13 @@ class ConsumptionReportRange extends Component
 
     public function generate_ending_balance()
     {
-        $this->active_consumption = DrugManualLogHeader::create([
-            'consumption_from' => $this->date_from,
-            'consumption_to' => $this->date_to,
+        $this->active_consumption = DrugManualLogHeader::updateOrCreate([
+            'consumption_from' => Carbon::parse($this->date_from)->startOfDay(),
+            'consumption_to' => Carbon::parse($this->date_to)->endOfDay(),
             'status' => 'I',
-            'entry_by' => session('user_id'),
             'loc_code' => auth()->user()->pharm_location_id,
+        ], [
+            'entry_by' => session('user_id'),
         ]);
         $active_consumption = $this->active_consumption;
         $from_date = $active_consumption->consumption_from;

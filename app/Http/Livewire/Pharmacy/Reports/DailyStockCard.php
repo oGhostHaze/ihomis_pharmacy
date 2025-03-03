@@ -120,6 +120,7 @@ class DailyStockCard extends Component
                     'stock_date' => date('Y-m-d'),
                     'reference' => $stock->stock_bal,
                     'bal' => $stock->stock_bal,
+                    'dmdprdte' => $stock->dmdprdte,
                 ]);
             }
 

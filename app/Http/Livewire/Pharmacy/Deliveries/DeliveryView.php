@@ -273,7 +273,7 @@ class DeliveryView extends Component
 
             $log->save();
             $add_to->save();
-            $this->handleLog($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now());
+            $this->handleLog($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now(), $add_to->dmdprdte);
             $updated = true;
 
             $item->status = 'delivered';
@@ -289,7 +289,7 @@ class DeliveryView extends Component
         }
     }
 
-    public function handleLog($pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date)
+    public function handleLog($pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date, $dmdprdte)
     {
         $date = Carbon::parse($date)->format('Y-m-d');
 
@@ -301,6 +301,7 @@ class DeliveryView extends Component
             'exp_date' => $exp_date,
             'stock_date' => $date,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
 
         $card->rec += $qty;

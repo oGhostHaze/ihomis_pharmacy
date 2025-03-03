@@ -143,7 +143,7 @@ class ViewIotrans extends Component
 
                 $stock->save();
                 $item->save();
-                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, now(), $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0);
+                $this->handleLog_transReceive($item->to, $item->dmdcomb, $item->dmdctr, $item->chrgcode, date('Y-m-d'), $item->retail_price, now(), $item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $stock->dmdprdte);
             }
         }
 
@@ -154,7 +154,7 @@ class ViewIotrans extends Component
         $this->resetExcept('locations', 'to', 'from', 'reference_no');
     }
 
-    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost)
+    public function handleLog_transReceive($to, $dmdcomb, $dmdctr, $chrgcode, $date_logged, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte)
     {
         $log = DrugStockLog::firstOrNew([
             'loc_code' => $to,
@@ -176,6 +176,7 @@ class ViewIotrans extends Component
             'exp_date' => $exp_date,
             'stock_date' => $date_logged,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
         $card->rec += $qty;
         $card->bal += $qty;
@@ -263,7 +264,7 @@ class ViewIotrans extends Component
                         'dmdprdte' => $stock->dmdprdte,
                     ]);
                     $stock->save();
-                    $this->handleLog_transIssue($location_id, $trans_item->dmdcomb, $trans_item->dmdctr, $trans_item->chrgcode, date('Y-m-d'), $stock->retail_price, $trans_item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0);
+                    $this->handleLog_transIssue($location_id, $trans_item->dmdcomb, $trans_item->dmdctr, $trans_item->chrgcode, date('Y-m-d'), $stock->retail_price, $trans_item->qty, $stock->exp_date, $stock->drug_concat(), session('active_consumption'), $stock->current_price ? $stock->current_price->acquisition_cost : 0, $stock->dmdprdte);
                 }
             }
             $this->selected_request->issued_qty = $issued_qty;
@@ -281,7 +282,7 @@ class ViewIotrans extends Component
         }
     }
 
-    public function handleLog_transIssue($warehouse_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost)
+    public function handleLog_transIssue($warehouse_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $retail_price, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost, $dmdprdte)
     {
         $log = DrugStockLog::firstOrNew([
             'loc_code' => $warehouse_id,
@@ -303,6 +304,7 @@ class ViewIotrans extends Component
             'exp_date' => $exp_date,
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;

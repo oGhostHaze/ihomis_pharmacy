@@ -621,6 +621,7 @@ class EncounterTransactionView extends Component
             'exp_date' => $exp_date,
             'stock_date' => $stock_date,
             'drug_concat' => $concat,
+            'dmdprdte' => $dmdprdte,
         ]);
 
         $card->iss += $trans_qty;

@@ -227,6 +227,7 @@ class StockList extends Component
             'exp_date' => $exp_date,
             'stock_date' => $date,
             'drug_concat' => $drug_concat,
+            'dmdprdte' => $dmdprdte,
         ]);
         $card->reference += $qty;
         $card->bal += $qty;
@@ -386,6 +387,7 @@ class StockList extends Component
             'exp_date' => $stock->exp_date,
             'stock_date' => $pullout_date,
             'drug_concat' => $stock->drug_concat(),
+            'dmdprdte' => $stock->dmdprdte,
         ]);
         $card->pullout_qty += $qty;
         $card->save();
