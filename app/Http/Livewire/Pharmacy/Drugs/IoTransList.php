@@ -249,7 +249,6 @@ class IoTransList extends Component
             IoTransRequestUpdated::dispatch($this->selected_request, 'A requested drugs/medicine has been issued from the warehouse.');
             $this->issueModal = false;
             $this->alert('success', 'Request issued successfully!');
-            return redirect(request()->header('Referer'));
         } else {
             $this->alert('error', 'Failed to issue medicine. Selected fund source insufficient stock!');
         }
