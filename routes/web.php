@@ -121,7 +121,7 @@ Route::middleware([
 
     Route::name('delivery.')->prefix('delivery')->group(function () {
         Route::get('/list', DeliveryList::class)->name('list');
-        Route::get('/donations', DeliveryListDonations::class)->name('list');
+        Route::get('/donations', DeliveryListDonations::class)->name('donations');
         Route::get('/emergency-purchase', EmergencyPurchases::class)->name('ep');
         Route::get('/view/{delivery_id}', DeliveryView::class)->name('view');
     });

@@ -118,6 +118,9 @@
                             @can('view-deliveries')
                                 <li><a href="{{ route('delivery.list') }}">Deliveries</a></li>
                             @endcan
+                            @can('view-deliveries')
+                                <li><a href="{{ route('delivery.donations') }}">Donations</a></li>
+                            @endcan
                             @can('view-eps')
                                 <li><a href="{{ route('delivery.ep') }}">Emergency Purchase</a></li>
                             @endcan
