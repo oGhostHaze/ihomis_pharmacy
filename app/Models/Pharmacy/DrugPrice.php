@@ -18,7 +18,7 @@ class DrugPrice extends Model
 
     // protected $dateFormat = 'Y-m-d H:i:s';
 
-    protected $fillables = [
+    protected $fillable = [
         'dmdcomb',
         'dmdctr',
         'dmhdrsub',
