@@ -36,8 +36,6 @@ class ConsumptionReportRange extends Component
 
     public function render()
     {
-        // $date_from = Carbon::parse($this->date_from . '-01')->startOfMonth()->format('Y-m-d');
-        // $date_to = Carbon::parse($this->date_from . '-01')->endOfMonth()->format('Y-m-d');
 
         $charge_codes = ChargeCode::where('bentypcod', 'DRUME')
             ->where('chrgstat', 'A')
@@ -46,7 +44,10 @@ class ConsumptionReportRange extends Component
 
         $filter_charge = explode(',', $this->filter_charge);
 
-        $cons = DrugManualLogHeader::where('loc_code', session('pharm_location_id'))->latest()->get();
+        $cons = DrugManualLogHeader::where('loc_code', auth()->user()->pharm_location_id)
+            ->where('is_custom', true)
+            ->latest()
+            ->get();
 
         $drugs_issued = DB::select("SELECT pdsl.dmdcomb, pdsl.dmdctr,
                                         pdsl.loc_code,
@@ -100,7 +101,6 @@ class ConsumptionReportRange extends Component
 
     public function get_begbal()
     {
-        $pharm_location_id = session('pharm_location_id');
         $active_manual_consumption = $this->active_consumption;
 
         $card = DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, chrgcode'))
@@ -108,7 +108,7 @@ class ConsumptionReportRange extends Component
             ->where('loc_code', $this->location_id)
             ->whereNotNull('dmdprdte')
             ->groupBy('dmdcomb', 'dmdctr', 'chrgcode', 'stock_date', 'dmdprdte')
-            ->paginate(10);
+            ->get();
         foreach ($card as $log) {
             $beg_bal = $log->begbal;
 
@@ -128,13 +128,29 @@ class ConsumptionReportRange extends Component
         $this->alert('success', 'Drug Consumption Logger has been initialized successfully on ' . now());
     }
 
+    public function cleanse()
+    {
+        $cons = DrugManualLogHeader::where('is_custom', true)
+            ->where('loc_code', auth()->user()->pharm_location_id)
+            ->latest()
+            ->first();
+        if ($cons) {
+            DB::statement("DELETE FROM pharm_drug_stock_logs_copy
+                            WHERE consumption_id = $cons->id");
+        }
+
+        return;
+    }
+
     public function generate_ending_balance()
     {
+        $this->cleanse();
         $this->active_consumption = DrugManualLogHeader::updateOrCreate([
             'consumption_from' => Carbon::parse($this->date_from)->startOfDay(),
             'consumption_to' => Carbon::parse($this->date_to)->endOfDay(),
             'status' => 'I',
             'loc_code' => auth()->user()->pharm_location_id,
+            'is_custom' => true,
         ], [
             'entry_by' => session('user_id'),
         ]);

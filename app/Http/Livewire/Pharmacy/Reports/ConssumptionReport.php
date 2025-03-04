@@ -32,7 +32,10 @@ class ConssumptionReport extends Component
 
         $filter_charge = explode(',', $this->filter_charge);
 
-        $cons = ConsumptionLogDetail::where('loc_code', session('pharm_location_id'))->latest()->get();
+        $cons = ConsumptionLogDetail::where('loc_code', session('pharm_location_id'))
+            ->where('is_custom', false)
+            ->latest()
+            ->get();
 
         $drugs_issued = DB::select("SELECT pdsl.dmdcomb, pdsl.dmdctr,
                                         pdsl.loc_code,

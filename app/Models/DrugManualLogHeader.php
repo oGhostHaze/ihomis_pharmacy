@@ -19,5 +19,6 @@ class DrugManualLogHeader extends Model
         'entry_by',
         'closed_by',
         'loc_code',
+        'is_custom',
     ];
 }

@@ -97,8 +97,6 @@
                 confirmButtonText: `Save`,
                 didOpen: () => {
                     const delivery_date = Swal.getHtmlContainer().querySelector('#delivery_date');
-                    const suppcode = Swal.getHtmlContainer().querySelector('#suppcode');
-                    const charge_code = Swal.getHtmlContainer().querySelector('#charge_code');
                     const delivery_type = Swal.getHtmlContainer().querySelector('#delivery_type');
 
                 }
@@ -106,8 +104,6 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     @this.set('delivery_date', delivery_date.value);
-                    @this.set('suppcode', suppcode.value);
-                    @this.set('charge_code', charge_code.value);
                     @this.set('delivery_type', delivery_type.value);
 
                     Livewire.emit('add_delivery');

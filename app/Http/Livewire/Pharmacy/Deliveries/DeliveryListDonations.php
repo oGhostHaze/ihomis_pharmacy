@@ -50,20 +50,13 @@ class DeliveryListDonations extends Component
 
     public function add_delivery()
     {
-        $this->validate([
-            'suppcode' => 'required',
-            'charge_code' => 'required',
-        ]);
-
         $delivery = new DeliveryDetail();
-        $delivery->po_no = $this->po_no;
-        $delivery->si_no = $this->si_no;
         $delivery->pharm_location_id = session('pharm_location_id');
         $delivery->user_id = session('user_id');
         $delivery->delivery_date = $this->delivery_date;
-        $delivery->suppcode = $this->suppcode;
+        $delivery->suppcode = $this->supplier_id;
         $delivery->delivery_type = $this->delivery_type;
-        $delivery->charge_code = $this->charge_code;
+        $delivery->charge_code = 'DRUMAK';
         $delivery->save();
 
         $this->redirect(route('delivery.view', [$delivery->id, true]));
