@@ -149,7 +149,7 @@ Route::middleware([
         Route::get('/issuance/chargeslips', DrugsChargeSlips::class)->name('issuance.charges');
         Route::get('/consumption', ConssumptionReport::class)->name('consumption');
         Route::get('/consumption/manual', ManualConsumptionGenerator::class)->name('consumption.manual');
-        Route::get('/consumption/manual/daterange', ConsumptionReportRange::class)->name('consumption.manual-ramge');
+        Route::get('/consumption/manual/daterange', ConsumptionReportRange::class)->name('consumption.manual-range');
         Route::get('/consumption/warehouse', ConsumptionWarehouseReport::class)->name('consumption.warehouse');
         Route::get('/iotrans/issued', IoTransIssuedReport::class)->name('iotrans.issued');
         Route::get('/iotrans/received', IoTransReceivedReport::class)->name('iotrans.received');

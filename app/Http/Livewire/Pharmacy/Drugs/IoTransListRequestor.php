@@ -39,7 +39,7 @@ class IoTransListRequestor extends Component
     public $available_drugs;
     public $locations, $location_id;
     public $search, $dmdcomb;
-    public $filter_location_id;
+    public $filter_location_id = '1';
 
     public function render()
     {
