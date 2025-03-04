@@ -57,6 +57,7 @@ class DeliveryListDonations extends Component
         $delivery->suppcode = $this->supplier_id;
         $delivery->delivery_type = $this->delivery_type;
         $delivery->charge_code = 'DRUMAK';
+        $delivery->po_no = $this->po_no;
         $delivery->save();
 
         $this->redirect(route('delivery.view', [$delivery->id, true]));

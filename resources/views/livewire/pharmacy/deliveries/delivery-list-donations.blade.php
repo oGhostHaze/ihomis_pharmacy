@@ -76,6 +76,12 @@
                         <input id="delivery_date" type="date" value="{{ date('Y-m-d') }}" class="w-full input input-bordered" />
                     </div>
                     <div class="w-full form-control">
+                        <label class="label" for="po_no">
+                            <span class="label-text">Reference No</span>
+                        </label>
+                        <input id="po_no" type="text" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full form-control">
                         <label class="label" for="suppcode">
                             <span class="label-text">Supplier</span>
                         </label>
@@ -97,6 +103,7 @@
                 confirmButtonText: `Save`,
                 didOpen: () => {
                     const delivery_date = Swal.getHtmlContainer().querySelector('#delivery_date');
+                    const po_no = Swal.getHtmlContainer().querySelector('#po_no');
                     const delivery_type = Swal.getHtmlContainer().querySelector('#delivery_type');
 
                 }
@@ -104,6 +111,7 @@
                 /* Read more about isConfirmed, isDenied below */
                 if (result.isConfirmed) {
                     @this.set('delivery_date', delivery_date.value);
+                    @this.set('po_no', po_no.value);
                     @this.set('delivery_type', delivery_type.value);
 
                     Livewire.emit('add_delivery');

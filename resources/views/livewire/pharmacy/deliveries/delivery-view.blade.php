@@ -68,7 +68,8 @@
             </div>
             <div class="flex flex-col w-1/2">
                 <div class="flex">
-                    <div class="w-36"> Purchase Order #:</div>
+                    <div class="w-36"> {{ $details->charge_code == 'DRUMAK' ? 'Reference' : 'Purchase Order' }} #:
+                    </div>
                     <div class="font-bold uppercase w-96">{{ $details->po_no }}</div>
                 </div>
                 <div class="flex">
