@@ -135,7 +135,7 @@
                                 </div>
                             </td>
                             <td class="text-sm text-right border">{{ $card->stock_date }}</td>
-                            <td class="text-sm text-right border"></td>
+                            <td class="text-sm text-right border">{{ $card->io_trans_ref_no }}</td>
                             <td class="text-sm text-right border">{{ number_format($card->reference) }}</td>
                             <td class="text-sm border">{{ number_format($card->rec) }}</td>
                             <td class="text-sm border">{{ number_format($card->iss) }}</td>

@@ -171,23 +171,34 @@ class StockList extends Component
         $stock->stock_bal = $stock->stock_bal + $this->qty;
         $stock->beg_bal = $stock->beg_bal + $this->qty;
 
-        $new_price = new DrugPrice;
-        $new_price->dmdcomb = $stock->dmdcomb;
-        $new_price->dmdctr = $stock->dmdctr;
-        $new_price->dmhdrsub = $stock->chrgcode;
-        $new_price->dmduprice = $unit_cost;
-        $new_price->dmselprice = $stock->retail_price;
-        $new_price->dmdprdte = now();
-        $new_price->expdate = $stock->exp_date;
-        $new_price->stock_id = $stock->id;
-        $new_price->mark_up = $markup_price;
-        $new_price->acquisition_cost = $unit_cost;
-        $new_price->has_compounding = $this->has_compounding ? true : false;
+
+
+        // Prepare the attributes to check (everything except dmdprdte)
+        $attributes = [
+            'dmdcomb' => $stock->dmdcomb,
+            'dmdctr' => $stock->dmdctr,
+            'dmhdrsub' => $this->chrgcode,
+            'dmduprice' => $unit_cost,
+            'dmselprice' => $stock->retail_price,
+            'expdate' => $stock->exp_date,
+            'mark_up' => $markup_price,
+            'acquisition_cost' => $unit_cost,
+            'has_compounding' => $this->has_compounding,
+            'retail_price' => $retail_price
+        ];
+
+        // Add compounding_fee to attributes if applicable
         if ($this->has_compounding) {
-            $new_price->compounding_fee = $this->compounding_fee;
+            $attributes['compounding_fee'] = $this->compounding_fee;
         }
-        $new_price->retail_price = $retail_price;
-        $new_price->save();
+
+        // The only field not to check but to set when creating
+        $values = [
+            'dmdprdte' => now()
+        ];
+
+        // This will only create a new record if no matching record exists
+        $new_price = DrugPrice::firstOrCreate($attributes, $values);
 
         $dmdprdte = $new_price->dmdprdte;
 

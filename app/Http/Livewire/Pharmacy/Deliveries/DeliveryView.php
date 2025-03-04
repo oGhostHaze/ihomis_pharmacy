@@ -110,23 +110,33 @@ class DeliveryView extends Component
         $new_item->charge_code = $this->details->charge_code;
         $new_item->save();
 
-        $new_price = new DrugPrice;
-        $new_price->dmdcomb = $new_item->dmdcomb;
-        $new_price->dmdctr = $new_item->dmdctr;
-        $new_price->dmhdrsub = $this->details->charge_code;
-        $new_price->dmduprice = $unit_cost;
-        $new_price->dmselprice = $new_item->retail_price;
-        $new_price->dmdprdte = now();
-        $new_price->expdate = $new_item->exp_date;
-        $new_price->stock_id = $new_item->id;
-        $new_price->mark_up = $markup_price;
-        $new_price->acquisition_cost = $unit_cost;
-        $new_price->has_compounding = $this->has_compounding;
+        // Prepare the attributes to check (everything except dmdprdte)
+        $attributes = [
+            'dmdcomb' => $new_item->dmdcomb,
+            'dmdctr' => $new_item->dmdctr,
+            'dmhdrsub' => $this->details->charge_code,
+            'dmduprice' => $unit_cost,
+            'dmselprice' => $new_item->retail_price,
+            'expdate' => $new_item->exp_date,
+            'stock_id' => $new_item->id,
+            'mark_up' => $markup_price,
+            'acquisition_cost' => $unit_cost,
+            'has_compounding' => $this->has_compounding,
+            'retail_price' => $retail_price
+        ];
+
+        // Add compounding_fee to attributes if applicable
         if ($this->has_compounding) {
-            $new_price->compounding_fee = $this->compounding_fee;
+            $attributes['compounding_fee'] = $this->compounding_fee;
         }
-        $new_price->retail_price = $retail_price;
-        $new_price->save();
+
+        // The only field not to check but to set when creating
+        $values = [
+            'dmdprdte' => now()
+        ];
+
+        // This will only create a new record if no matching record exists
+        $new_price = DrugPrice::firstOrCreate($attributes, $values);
 
         $dmdprdte = $new_price->dmdprdte;
 
@@ -193,23 +203,32 @@ class DeliveryView extends Component
         $update_item->expiry_date = $this->expiry_date;
         $update_item->save();
 
-        $new_price = new DrugPrice;
-        $new_price->dmdcomb = $update_item->dmdcomb;
-        $new_price->dmdctr = $update_item->dmdctr;
-        $new_price->dmhdrsub = $this->details->charge_code;
-        $new_price->dmduprice = $unit_cost;
-        $new_price->dmselprice = $update_item->retail_price;
-        $new_price->dmdprdte = now();
-        $new_price->expdate = $update_item->exp_date;
-        $new_price->stock_id = $update_item->id;
-        $new_price->mark_up = $markup_price;
-        $new_price->acquisition_cost = $unit_cost;
-        $new_price->has_compounding = $this->has_compounding;
+        // Prepare the attributes to check (everything except dmdprdte)
+        $attributes = [
+            'dmdcomb' => $update_item->dmdcomb,
+            'dmdctr' => $update_item->dmdctr,
+            'dmhdrsub' => $this->details->charge_code,
+            'dmduprice' => $unit_cost,
+            'dmselprice' => $update_item->retail_price,
+            'expdate' => $update_item->exp_date,
+            'mark_up' => $markup_price,
+            'acquisition_cost' => $unit_cost,
+            'has_compounding' => $this->has_compounding,
+            'retail_price' => $retail_price
+        ];
+
+        // Add compounding_fee to attributes if applicable
         if ($this->has_compounding) {
-            $new_price->compounding_fee = $this->compounding_fee;
+            $attributes['compounding_fee'] = $this->compounding_fee;
         }
-        $new_price->retail_price = $retail_price;
-        $new_price->save();
+
+        // The only field not to check but to set when creating
+        $values = [
+            'dmdprdte' => now()
+        ];
+
+        // This will only create a new record if no matching record exists
+        $new_price = DrugPrice::firstOrCreate($attributes, $values);
 
         $dmdprdte = $new_price->dmdprdte;
 
