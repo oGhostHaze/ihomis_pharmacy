@@ -5,6 +5,7 @@ use App\Http\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Trash\SampleView;
 use App\Http\Livewire\References\Manual;
+use App\Http\Controllers\TicketController;
 use App\Http\Livewire\Records\PatientsList;
 use App\Http\Livewire\Records\PrescriptionEr;
 use App\Http\Livewire\Records\PatientRegister;
@@ -161,4 +162,26 @@ Route::middleware([
 
     Route::get('/pusher', Pusher::class)->name('pusher');
     Route::get('/sample', SampleView::class)->name('sample');
+
+
+    // List and Kanban views
+    Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+    Route::get('/tickets/kanban', [TicketController::class, 'kanban'])->name('tickets.kanban');
+
+    // CRUD operations
+    Route::get('/tickets/create', [TicketController::class, 'create'])->name('tickets.create');
+    Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
+    Route::get('/tickets/{id}', [TicketController::class, 'show'])->name('tickets.show');
+    Route::get('/tickets/{id}/edit', [TicketController::class, 'edit'])->name('tickets.edit');
+    Route::put('/tickets/{id}', [TicketController::class, 'update'])->name('tickets.update');
+
+    // Status and assignment
+    Route::patch('/tickets/{id}/status', [TicketController::class, 'updateStatus'])->name('tickets.update-status');
+    Route::patch('/tickets/{id}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
+
+    // Comments
+    Route::post('/tickets/{id}/comments', [TicketController::class, 'addComment'])->name('tickets.comments.add');
+
+    // Attachments
+    Route::delete('/attachments/{id}', [TicketController::class, 'deleteAttachment'])->name('tickets.attachments.delete');
 });

@@ -127,6 +127,26 @@
                         </ul>
                     </li>
                 @endcan
+                @can('view-tickets')
+                    <li tabindex="0" class="mt-2 dropdown">
+                        <x-jet-nav-link :active="request()->routeIs('tickets.*')">
+                            <i class="las la-lg la-ticket-alt"></i> {{ __('Tickets') }}
+                            <svg class="fill-current" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                viewBox="0 0 24 24">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z" />
+                            </svg>
+                        </x-jet-nav-link>
+                        <ul
+                            class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
+                            <li><a href="{{ route('tickets.index') }}">List View</a></li>
+                            <li><a href="{{ route('tickets.kanban') }}">Kanban Board</a></li>
+                            @can('create-tickets')
+                                <li><a href="{{ route('tickets.create') }}">Create New Ticket</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                @endcan
+
             </ul>
         </div>
     </div>
