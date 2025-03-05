@@ -1001,7 +1001,9 @@ class EncounterTransactionView extends Component
         if (!$data) {
             return $this->alert('error', 'Prescription not found.');
         }
-        $data->remark = $data->remark . ' [Rph rem: ' . $this->adttl_remarks . ']';
+        if ($this->adttl_remarks != null && $this->adttl_remarks != '') {
+            $data->remark = $data->remark . ' [Rph rem: ' . $this->adttl_remarks . ']';
+        }
         $data->stat = 'I';
         $data->save();
         $this->alert('success', 'Prescription updated!');
