@@ -149,7 +149,7 @@
                             {{ __('Generated Consumption Report') }}
                         </x-jet-dropdown-link>
                         <x-jet-dropdown-link href="{{ route('reports.consumption.manual-range') }}">
-                            {{ __('Ranged Consumption Report') }}
+                            {{ __('Consumption Report (New)') }}
                         </x-jet-dropdown-link>
                     </x-slot>
                 </x-jet-dropdown>

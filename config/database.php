@@ -68,9 +68,6 @@ return [
             'prefix_indexes' => true,
             'encrypt' => 'no',
             'trust_server_certificate' => 'true',
-            'options' => [
-                PDO::SQLSRV_ATTR_DIRECT_QUERY => true,
-            ],
         ],
 
         'webapp' => [
