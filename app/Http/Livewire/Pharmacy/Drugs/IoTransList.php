@@ -38,6 +38,10 @@ class IoTransList extends Component
     public $available_drugs, $issueModal = false;
     public $filter_location_id;
 
+    public function mount()
+    {
+        $this->filter_location_id = session('pharm_location_id') + 1;
+    }
 
     public function render()
     {
