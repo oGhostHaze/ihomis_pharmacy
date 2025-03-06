@@ -156,7 +156,7 @@ class IoTransList extends Component
 
             $this->select_request($txn);
         } else {
-            return $this->alert('No previous request from selected location!');
+            return $this->alert('error', 'No previous request from selected location!');
         }
     }
 
