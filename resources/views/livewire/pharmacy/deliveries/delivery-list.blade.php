@@ -130,6 +130,7 @@
                         <select class="select select-bordered" id="delivery_type">
                             <option value="procured" selected>Procured</option>
                             <option value="received">Received</option>
+                            <option value="donation">Donation</option>
                         </select>
                     </div>`,
                 showCancelButton: true,
