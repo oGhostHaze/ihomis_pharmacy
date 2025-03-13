@@ -25,6 +25,7 @@
                     </label>
                     <select class="w-full max-w-xs text-sm select select-bordered select-sm select-success"
                         wire:model="location_id">
+                        <option value="">All</option>
                         @foreach ($locations as $loc)
                             <option value="{{ $loc->id }}">{{ $loc->description }}</option>
                         @endforeach
