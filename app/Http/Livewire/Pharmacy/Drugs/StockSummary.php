@@ -35,7 +35,7 @@ class StockSummary extends Component
                             WHERE pds.stock_bal > 0 AND pds.chrgcode LIKE '%" . $this->chrgcode . "'
                                 AND pds.loc_code LIKE '%" . $this->location_id . "%'
                                 AND pds.drug_concat LIKE '%" . $this->search . "%'
-                            GROUP BY pds.drug_concat, pds.loc_code, hcharge.chrgdesc, pds.dmdcomb, pds.dmdctr, pds.chrgcode
+                            GROUP BY pds.drug_concat, hcharge.chrgdesc, pds.dmdcomb, pds.dmdctr, pds.chrgcode
                     ");
 
         $locations = PharmLocation::all();
