@@ -33,7 +33,7 @@ class StockSummary extends Component
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
                             WHERE pds.stock_bal > 0 AND pds.chrgcode LIKE '%" . $this->chrgcode . "'
-                                AND pds.loc_code = " . $this->location_id . "
+                                AND pds.loc_code LIKE '%" . $this->location_id . "%'
                                 AND pds.drug_concat LIKE '%" . $this->search . "%'
                             GROUP BY pds.drug_concat, pds.loc_code, hcharge.chrgdesc, pds.dmdcomb, pds.dmdctr, pds.chrgcode
                     ");
