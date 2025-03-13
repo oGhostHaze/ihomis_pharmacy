@@ -19,16 +19,18 @@ class StockSummary extends Component
 
     public function updatedSelectedFund()
     {
-        $fund = $this->selected_fund;
-        $selected_fund = explode(',', $fund);
-        $this->chrgcode = $selected_fund[0];
-        $this->chrgdesc = $selected_fund[1];
+        if ($this->selected_fund) {
+            $fund = $this->selected_fund;
+            $selected_fund = explode(',', $fund);
+            $this->chrgcode = $selected_fund[0];
+            $this->chrgdesc = $selected_fund[1];
+        }
     }
 
     public function render()
     {
-
-        $stocks = DB::select("SELECT hcharge.chrgdesc, pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+        if ($this->selected_fund and $this->selected_fund != 'all') {
+            $stocks = DB::select("SELECT hcharge.chrgdesc, pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                                 pds.dmdcomb, pds.dmdctr, pds.chrgcode
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
@@ -37,6 +39,16 @@ class StockSummary extends Component
                                 AND pds.drug_concat LIKE '%" . $this->search . "%'
                             GROUP BY pds.drug_concat, hcharge.chrgdesc, pds.dmdcomb, pds.dmdctr, pds.chrgcode
                     ");
+        } else {
+            $stocks = DB::select("SELECT 'ALL' as chrgdesc, pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+                    pds.dmdcomb, pds.dmdctr
+                FROM pharm_drug_stocks as pds
+                JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
+                WHERE pds.stock_bal > 0 AND pds.loc_code LIKE '%" . $this->location_id . "%'
+                    AND pds.drug_concat LIKE '%" . $this->search . "%'
+                GROUP BY pds.drug_concat, pds.dmdcomb, pds.dmdctr
+            ");
+        }
 
         $locations = PharmLocation::all();
 
