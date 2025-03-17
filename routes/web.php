@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Trash\SampleView;
 use App\Http\Livewire\References\Manual;
 use App\Http\Controllers\TicketController;
+use App\Http\Livewire\DashboardExecutive;
 use App\Http\Livewire\Records\PatientsList;
 use App\Http\Livewire\Records\PrescriptionEr;
 use App\Http\Livewire\Records\PatientRegister;
@@ -82,6 +83,7 @@ Route::middleware([
     Route::get('/', Dashboard::class);
 
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/dashboard2', DashboardExecutive::class)->name('dashboard2');
 
     Route::get('/patients', PatientsList::class)->name('patients.list');
     Route::get('/patients/for-discharge', PatientsForDischarge::class)->name('patients.fordisc');

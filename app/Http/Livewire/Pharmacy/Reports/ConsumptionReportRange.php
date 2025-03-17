@@ -242,7 +242,7 @@ class ConsumptionReportRange extends Component
                 dmdprdte,
                 chrgcode
             FROM
-                drug_stock_cards
+                pharm_drug_stock_cards
             WHERE
                 stock_date = ?
                 AND loc_code = ?
