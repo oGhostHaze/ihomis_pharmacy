@@ -38,10 +38,6 @@ class DashboardExecutive extends Component
     public $top_drugs = [];
     public $recent_activities = [];
     public $locations = [];
-    public $transactions_served;
-    public $returnItems;
-    public $issueItems;
-    private $totalInventoryItems = [];
     // Listeners
     protected $listeners = [
         'start_log',
@@ -69,7 +65,6 @@ class DashboardExecutive extends Component
             'emergency_purchases' => $this->emergency_purchases,
             'top_drugs' => $this->top_drugs,
             'recent_activities' => $this->recent_activities,
-            'totalInventory' => $this->totalInventoryItems
         ]);
     }
 
@@ -138,10 +133,6 @@ class DashboardExecutive extends Component
 
         // Load dashboard statistics
         $this->loadDashboardStats($date_from_formatted, $date_to_formatted);
-        $this->loadTransactions($date_from_formatted, $date_to_formatted);
-        $this->loadReturns($date_from_formatted, $date_to_formatted);
-        $this->loadIssued($date_from_formatted, $date_to_formatted);
-        $this->totalInventory($date_from_formatted, $date_to_formatted);
         $this->loadLocations();
     }
 
@@ -202,26 +193,5 @@ class DashboardExecutive extends Component
         $this->locations = PharmLocation::where('non_pharma', false)
             ->orderBy('description')
             ->get();
-    }
-
-    private function loadTransactions($date_from, $date_to)
-    {
-        $this->transactions_served = collect(DB::select("SELECT COUNT(estatus) as total FROM hrxo WHERE hrxo.estatus = 'S' AND hrxo.dodtepost BETWEEN '$date_from' AND '$date_to' AND (pcchrgcod <> '' OR pcchrgcod IS NOT NULL) GROUP BY pcchrgcod"))->count() ?? 0;
-    }
-
-    private function loadIssued($date_from, $date_to)
-    {
-        $this->issueItems = number_format(collect(DB::select("SELECT SUM(qty) as total FROM hrxoissue WHERE issuedte BETWEEN '$date_from' AND '$date_to'"))->first()->total ?? 0);
-    }
-
-    private function loadReturns($date_from, $date_to)
-    {
-        $this->returnItems = number_format(collect(DB::select("SELECT SUM(qty) as total FROM hrxoreturn WHERE returndate BETWEEN '$date_from' AND '$date_to'"))->first()->total ?? 0);
-    }
-
-    private function totalInventory($date_from, $date_to)
-    {
-        $cur_date = Carbon::now()->format('Y-m-d');
-        $this->totalInventoryItems = collect(DB::select("SELECT SUM(stock_bal) stock_bal, SUM(retail_price * stock_bal) as amount FROM pharm_drug_stocks WHERE exp_date > '$cur_date' AND stock_bal > 0 AND chrgcode NOT IN ('DRUMAD', 'DRUMAJ')"))->first();
     }
 }

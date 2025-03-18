@@ -57,9 +57,9 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="flex flex-col space-y-4">
+                <div class="flex flex-col w-full space-y-4">
                     <!-- Stats Cards Section -->
-                    <div class="grid self-start flex-1 grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid self-start flex-1 w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 
                         <!-- Near Expiry -->
                         <a href="{{ route('reports.near.exp') }}"
@@ -132,81 +132,8 @@
                                 </div>
                             </div>
                         </a>
-
-                        <!-- Transactions Served -->
-                        <a href="{{ route('dmd.stk.reorder') }}"
-                            class="transition-colors shadow-xl card bg-base-100 hover:bg-base-200">
-                            <div class="p-4 card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h2 class="text-base font-semibold">Transactions Served</h2>
-                                        <p class="mt-2 text-2xl font-bold text-error">
-                                            {{ $transactions_served }}
-                                        </p>
-                                    </div>
-                                    <div class="p-3 text-white rounded-full bg-error bg-opacity-20">
-                                        <i class="text-2xl las la-exclamation-triangle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-
-                        <!-- Total Returned Meds -->
-                        <a href="{{ route('dmd.stk.reorder') }}"
-                            class="transition-colors shadow-xl card bg-base-100 hover:bg-base-200">
-                            <div class="p-4 card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h2 class="text-base font-semibold">Total Returned Meds</h2>
-                                        <p class="mt-2 text-2xl font-bold text-error">
-                                            {{ $returnItems }}
-                                        </p>
-                                    </div>
-                                    <div class="p-3 text-white rounded-full bg-error bg-opacity-20">
-                                        <i class="text-2xl las la-exclamation-triangle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-
-                        <!-- Total Issued Meds -->
-                        <a href="{{ route('dmd.stk.reorder') }}"
-                            class="transition-colors shadow-xl card bg-base-100 hover:bg-base-200">
-                            <div class="p-4 card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h2 class="text-base font-semibold">Total Issued Meds</h2>
-                                        <p class="mt-2 text-2xl font-bold text-error">
-                                            {{ $issueItems }}
-                                        </p>
-                                    </div>
-                                    <div class="p-3 text-white rounded-full bg-error bg-opacity-20">
-                                        <i class="text-2xl las la-exclamation-triangle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
-
-                        <!-- Total QTY and value of Inventory -->
-                        <a href="{{ route('dmd.stk.reorder') }}"
-                            class="transition-colors shadow-xl card bg-base-100 hover:bg-base-200">
-                            <div class="p-4 card-body">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <h2 class="text-base font-semibold">Total QTY and value of Inventory</h2>
-                                        <p class="mt-2 text-2xl font-bold text-error">
-                                            {{ number_format($totalInventory->stock_bal) }} /
-                                            {{ number_format($totalInventory->amount, 2) }}
-                                        </p>
-                                    </div>
-                                    <div class="p-3 text-white rounded-full bg-error bg-opacity-20">
-                                        <i class="text-2xl las la-exclamation-triangle"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </a>
                     </div>
-                    <div>
+                    <div class="w-full">
                         @livewire('components.consolidated-drug-summary')
                     </div>
                 </div>
