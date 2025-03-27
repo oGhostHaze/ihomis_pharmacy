@@ -725,6 +725,23 @@ class EncounterTransactionView extends Component
             ]);
             $log->return_qty += $returned_qty;
 
+
+            $card = DrugStockCard::firstOrNew([
+                'chrgcode' => $log->chrgcode,
+                'loc_code' => $log->loc_code,
+                'dmdcomb' => $log->dmdcomb,
+                'dmdctr' => $log->dmdctr,
+                'exp_date' => $stock_issued->stock->exp_date,
+                'stock_date' => $date,
+                'drug_concat' => $stock_issued->stock->drug_concat,
+                'dmdprdte' => $stock_issued->stock->dmdprdte,
+                'io_trans_ref_no' => $item->pcchrgcod,
+            ]);
+            $card->rec += $returned_qty;
+            $card->bal += $returned_qty;
+
+
+            $card->save();
             $log->save();
             $stock->save();
             $stock_issued->save();

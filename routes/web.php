@@ -83,9 +83,11 @@ Route::middleware([
     Route::get('/', Dashboard::class)
         ->middleware('role.redirect')
         ->name('dashboard');
+
     Route::get('/dashboard', Dashboard::class)
         ->middleware('role.redirect')
         ->name('dashboard');
+
     Route::get('/dashboard2', DashboardExecutive::class)->name('dashboard2');
 
     Route::get('/patients', PatientsList::class)->name('patients.list');
