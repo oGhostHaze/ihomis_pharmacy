@@ -123,13 +123,11 @@
                             wire:click="view_enctr('{{ $enc->enccode }}')" wire:key="view_enctr-{{ $enc->enccode }}"
                             style="cursor: pointer">
                             <td>{{ $enc->toecode ?? '' }}</td>
-                            {{-- <td>{{$enc->enclock ?? ''}}</td> --}}
                             <td class="text-end">
                                 <small class="text-end">{!! $enc->diagtext ?? 'No Diagnosis' !!}</small> <br>
                                 <small
                                     class="text-muted text-end">{{ date('F j, Y H:i a', strtotime($enc->encdate)) }}</small>
                             </td>
-                            {{-- <td class="text-end">{{ $enc->encstat == 'A' ? 'Active' : 'Inactive' }}</td> --}}
                         </tr>
                     @empty
                         <tr>

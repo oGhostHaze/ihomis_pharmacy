@@ -119,6 +119,7 @@ Route::middleware([
         Route::get('/requests', IoTransListRequestor::class)->name('requests');
     });
 
+    Route::match(['get', 'post'], '/encounter/trans/{enccode}', EncounterTransactionView::class)->name('dispensing.view.enctr');
     Route::name('dispensing.')->prefix('dispensing')->group(function () {
         Route::get('/encounter/trans/{enccode}', EncounterTransactionView::class)->name('view.enctr');
         Route::get('/encounter/charge/{pcchrgcod}', RxoChargeSlip::class)->name('rxo.chargeslip');

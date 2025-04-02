@@ -101,7 +101,9 @@ class PatientsList extends Component
             $this->enccode = $code;
         }
         $enccode = Crypt::encrypt(str_replace(' ', '--', $this->enccode));
-        return redirect()->route('dispensing.view.enctr', ['enccode' => $enccode]);
+
+        // Instead of redirect, use Livewire's redirect method
+        return redirect()->to(route('dispensing.view.enctr', ['enccode' => $enccode]));
     }
 
     public function walk_in()
@@ -132,7 +134,8 @@ class PatientsList extends Component
             $enccode = Crypt::encrypt(str_replace(' ', '--', $new_encounter->enccode));
         }
 
-        return redirect()->route('dispensing.view.enctr', ['enccode' => $enccode]);
+        // Instead of redirect, use Livewire's redirect method
+        return redirect()->to(route('dispensing.view.enctr', ['enccode' => $enccode]));
     }
 
     public function new_pat()
