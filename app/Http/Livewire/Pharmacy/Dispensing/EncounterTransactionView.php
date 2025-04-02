@@ -309,6 +309,7 @@ class EncounterTransactionView extends Component
                 WHERE pharm_drug_stocks.dmdcomb = '" . $rxo->dmdcomb . "'
                     AND pharm_drug_stocks.dmdctr = '" . $rxo->dmdctr . "'
                     AND pharm_drug_stocks.chrgcode = '" . $rxo->orderfrom . "'
+                    AND hdmhdrprice.dmduprice = '" . $rxo->pchrgup . "'
                     AND pharm_drug_stocks.loc_code = '" . session('pharm_location_id') . "'
                     AND pharm_drug_stocks.exp_date > '" . date('Y-m-d') . "'
                     AND pharm_drug_stocks.stock_bal > 0
