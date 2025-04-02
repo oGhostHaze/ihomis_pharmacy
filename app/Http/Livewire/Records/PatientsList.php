@@ -103,7 +103,7 @@ class PatientsList extends Component
         $enccode = Crypt::encrypt(str_replace(' ', '--', $this->enccode));
 
         // Instead of redirect, use Livewire's redirect method
-        return redirect()->to(route('dispensing.view.enctr', ['enccode' => $enccode]));
+        return redirect()->to(route('dispensing.view.enctr', [$enccode]));
     }
 
     public function walk_in()
