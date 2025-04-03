@@ -217,7 +217,7 @@ class ConsumptionReportRange extends Component
             $this->alert('success', 'Consumption report has been generated successfully on ' . now());
         } catch (Exception $e) {
             $this->alert('error', 'Error generating report: ' . $e->getMessage());
-            Log::error('error', 'Error generating report: ' . $e->getMessage());
+            Log::error('Error generating report: ' . $e->getMessage());
         }
 
         $this->processing = false;
