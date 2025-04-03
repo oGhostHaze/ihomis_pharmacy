@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Pharmacy\Reports;
 use Exception;
 use Carbon\Carbon;
 use Livewire\Component;
+use App\Models\DrugManualLogItem;
 use Illuminate\Support\Facades\DB;
 use App\Models\DrugManualLogHeader;
 use Illuminate\Support\Facades\Log;
@@ -271,11 +272,11 @@ class ConsumptionReportRange extends Component
                     dmdprdte,
                     reference as begbal
                 FROM
-                    drug_stock_cards a
+                    pharm_drug_stock_cards a
                 WHERE
                     stock_date = (
                         SELECT MAX(stock_date)
-                        FROM drug_stock_cards
+                        FROM pharm_drug_stock_cards
                         WHERE dmdcomb = a.dmdcomb
                         AND dmdctr = a.dmdctr
                         AND chrgcode = a.chrgcode
@@ -455,7 +456,36 @@ class ConsumptionReportRange extends Component
      */
     private function processIssuances($from_date, $to_date, $location_id, $consumption_id, $filter_charge)
     {
-        // Implementation left unchanged for brevity
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
+            FROM pharm_delivery_items di
+                JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
+            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND di.pharm_location_id = '" . $location_id . "'
+            GROUP BY pri.acquisition_cost, pri.dmselprice, di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'purchased' => $item->qty_returned,
+            ]);
+        }
+
+        $this->alert('success', 'Deliveries recorded successfully ' . now());
+        $this->generate_pullout();
     }
 
     /**
@@ -463,7 +493,33 @@ class ConsumptionReportRange extends Component
      */
     private function processReturns($from_date, $to_date, $location_id, $consumption_id, $filter_charge)
     {
-        // Implementation left unchanged for brevity
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
+            FROM pharm_delivery_items di
+                JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
+            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND di.pharm_location_id = '" . $location_id . "'
+            GROUP BY pri.acquisition_cost, pri.dmselprice, di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'purchased' => $item->qty_returned,
+            ]);
+        }
     }
 
     /**
@@ -471,7 +527,62 @@ class ConsumptionReportRange extends Component
      */
     private function processIOTransfers($from_date, $to_date, $location_id, $consumption_id, $filter_charge)
     {
-        // Implementation left unchanged for brevity
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $incoming = DB::select("
+                SELECT pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, pri.acquisition_cost, pri.dmselprice, SUM(qty) qty, [to]
+                FROM pharm_io_trans_items pit
+                    JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
+                    JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
+                WHERE [to] = '" . $location_id . "'
+                    AND status = 'Received'
+                    AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, [to]
+            ");
+
+        foreach ($incoming as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->to,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->acquisition_cost,
+                'unit_price' => $item->dmselprice,
+                'consumption_id' => $active_consumption->id,
+                'received' => $item->qty,
+            ]);
+        }
+
+        $outgoing = DB::select("
+                SELECT pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, pri.acquisition_cost, pri.dmselprice, SUM(qty) qty, [to]
+                FROM pharm_io_trans_items pit
+                    JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
+                    JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
+                WHERE [from] = '" . $location_id . "'
+                    AND status = 'Received'
+                    AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr, drug_concat, pit.chrgcode, [to]
+            ");
+
+
+        foreach ($outgoing as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->to,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->acquisition_cost,
+                'unit_price' => $item->dmselprice,
+                'consumption_id' => $active_consumption->id,
+                'transferred' => $item->qty,
+            ]);
+        }
+
+        $this->alert('success', 'IO Trans recorded successfully ' . now());
+        $this->generate_deliveries();
     }
 
     /**
@@ -479,14 +590,101 @@ class ConsumptionReportRange extends Component
      */
     private function processDeliveries($from_date, $to_date, $location_id, $consumption_id, $filter_charge)
     {
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT i.pullout_qty, p.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, price.acquisition_cost unit_cost, s.retail_price
+            FROM pharm_pull_out_items i
+            JOIN pharm_pull_outs p ON i.detail_id = p.id
+            JOIN pharm_drug_stocks s ON i.stock_id = s.id
+            JOIN hdmhdrprice price ON s.dmdprdte = price.dmdprdte
+            WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND p.pharm_location_id = '" . $location_id . "'
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'pullout_qty' => $item->pullout_qty,
+            ]);
+        }
         // Implementation left unchanged for brevity
     }
 
-    /**
-     * Process pullouts
-     */
-    private function processPullouts($from_date, $to_date, $location_id, $consumption_id, $filter_charge)
+    public function generate_ep()
     {
-        // Implementation left unchanged for brevity
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode, COUNT(*) LineItem, SUM(qty) qty_returned, pri.acquisition_cost unit_cost, pri.dmselprice retail_price
+            FROM pharm_delivery_items di
+                JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
+            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND di.pharm_location_id = '" . $location_id . "'
+            GROUP BY pri.acquisition_cost, pri.dmselprice, di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'purchased' => $item->qty_returned,
+            ]);
+        }
+
+        $this->alert('success', 'Deliveries recorded successfully ' . now());
+    }
+
+    public function processPullouts($date_from, $location_id, $consumption_id, $filter_charge)
+    {
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+
+        $returns = DB::select("
+            SELECT i.pullout_qty, p.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode, price.acquisition_cost unit_cost, s.retail_price
+            FROM pharm_pull_out_items i
+            JOIN pharm_pull_outs p ON i.detail_id = p.id
+            JOIN pharm_drug_stocks s ON i.stock_id = s.id
+            JOIN hdmhdrprice price ON s.dmdprdte = price.dmdprdte
+            WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
+                AND p.pharm_location_id = '" . $location_id . "'
+        ");
+
+        foreach ($returns as $item) {
+            DrugManualLogItem::create([
+                'loc_code' => $item->pharm_location_id,
+                'dmdcomb' => $item->dmdcomb,
+                'dmdctr' => $item->dmdctr,
+                'chrgcode' => $item->chrgcode,
+                'unit_cost' => $item->unit_cost,
+                'unit_price' => $item->retail_price,
+                'consumption_id' => $active_consumption->id,
+
+                'pullout_qty' => $item->pullout_qty,
+            ]);
+        }
+
+        $this->alert('success', 'Pullouts recorded successfully ' . now());
     }
 }
