@@ -486,7 +486,6 @@ class ConsumptionReportRange extends Component
         }
 
         $this->alert('success', 'Deliveries recorded successfully ' . now());
-        $this->generate_pullout();
     }
 
     /**
@@ -583,7 +582,6 @@ class ConsumptionReportRange extends Component
         }
 
         $this->alert('success', 'IO Trans recorded successfully ' . now());
-        $this->generate_deliveries();
     }
 
     /**
