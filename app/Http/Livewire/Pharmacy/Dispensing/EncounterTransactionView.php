@@ -87,15 +87,16 @@ class EncounterTransactionView extends Component
                                     ORDER BY dodate DESC");
         }
 
-        $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date
+        $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, hdmhdr.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date
                                 FROM hospital.dbo.pharm_drug_stocks
+                                INNER JOIN hdmhdr ON hdmhdr.dmdcomb = pharm_drug_stocks.dmdcomb AND hdmhdr.dmdctr = pharm_drug_stocks.dmdctr
                                 INNER JOIN hcharge on hcharge.chrgcode = pharm_drug_stocks.chrgcode
                                 INNER JOIN hdmhdrprice on hdmhdrprice.dmdprdte = pharm_drug_stocks.dmdprdte
                                 WHERE loc_code = '" . $this->location_id . "'
-                                AND drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
+                                AND hdmhdr.drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
                                 AND stock_bal > 0
-                                GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
-                                ORDER BY drug_concat");
+                                GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, hdmhdr.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
+                                ORDER BY hdmhdr.drug_concat");
 
 
         $summaries = DB::select("
@@ -522,6 +523,7 @@ class EncounterTransactionView extends Component
 
     public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date)
     {
+        $drug = Drug::where('dmdcomb', $dmdcomb)->where('dmdctr', $dmdctr)->first();
         $with_rx = false;
         if ($dmdcomb == $this->rx_dmdcomb and $dmdctr == $this->rx_dmdctr) {
             $with_rx = true;
