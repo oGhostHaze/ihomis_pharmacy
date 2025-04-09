@@ -58,7 +58,7 @@ class EncounterTransactionView extends Component
     public $patlast;
     public $patfirst;
     public $patmiddle, $billstat = null;
-    public $addtl_remarks;
+    public $adttl_remarks;
 
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
 
@@ -854,7 +854,7 @@ class EncounterTransactionView extends Component
     {
         $data = PrescriptionData::find($rx_id);
         $data->stat = 'I';
-        $data->addtl_remarks = $this->addtl_remarks;
+        $data->addtl_remarks = $this->adttl_remarks;
         $data->save();
         $this->alert('success', 'Prescription updated!');
     }
