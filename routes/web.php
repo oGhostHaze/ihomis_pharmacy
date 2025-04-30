@@ -61,6 +61,7 @@ use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
+use App\Http\Livewire\Pims\IarList;
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +134,20 @@ Route::middleware([
         Route::get('/emergency-purchase', EmergencyPurchases::class)->name('ep');
         Route::get('/view/{delivery_id}', DeliveryView::class)->name('view');
     });
+
+    Route::get('/ris', function () {
+        return view('ris.index');
+    })->name('ris.index');
+
+    // Placeholder for create functionality
+    Route::get('/ris/create', function () {
+        // This will be implemented with a proper controller/livewire component
+        return redirect()->route('ris.index')->with('info', 'Create functionality coming soon');
+    })->name('ris.create');
+
+    Route::get('/ris/print/{id}', [App\Http\Controllers\RisPrintController::class, 'print'])->name('ris.print');
+
+    Route::get('/ris/{id}', App\Http\Livewire\ShowRis::class)->name('ris.show');
 
     Route::name('ref.')->prefix('/reference')->group(function () {
         Route::get('/wards', ListRisWards::class)->name('wards');
