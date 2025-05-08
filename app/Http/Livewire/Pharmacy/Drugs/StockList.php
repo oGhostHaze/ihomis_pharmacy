@@ -339,6 +339,15 @@ class StockList extends Component
         ]);
         $log->beg_bal += $this->qty;
         $stock->dmdprdte =  $new_price->dmdprdte;
+
+
+        StockAdjustment::create([
+            'stock_id' => $stock->id,
+            'user_id' => session('user_id'),
+            'from_qty' => $stock->stock_bal,
+            'to_qty' => $this->qty,
+        ]);
+
         $new_price->save();
         $log->save();
         $stock->save();
