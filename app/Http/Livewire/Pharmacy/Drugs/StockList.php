@@ -291,6 +291,8 @@ class StockList extends Component
 
             $retail_price = $retail_price + $this->compounding_fee;
         }
+        $previous_qty = $stock->stock_bal;
+
         $stock->beg_bal = 0;
         $stock->stock_bal = 0;
 
@@ -344,7 +346,7 @@ class StockList extends Component
         StockAdjustment::create([
             'stock_id' => $stock->id,
             'user_id' => session('user_id'),
-            'from_qty' => $stock->stock_bal,
+            'from_qty' => $previous_qty,
             'to_qty' => $this->qty,
         ]);
 
