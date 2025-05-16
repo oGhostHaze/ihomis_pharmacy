@@ -101,7 +101,7 @@ class EncounterTransactionView extends Component
 
 
         $summaries = DB::select("
-            SELECT drug_concat, SUM(pchrgqty) qty_issued, MAX(dodtepost) last_issue
+            SELECT drug_concat, SUM(qtyissued) qty_issued, MAX(dodtepost) last_issue
                 FROM hrxo
             JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
                 WHERE enccode = '" . $enccode . "' AND estatus = 'S'
