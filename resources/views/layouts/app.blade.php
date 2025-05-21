@@ -64,7 +64,17 @@
     </div>
 
     @stack('modals')
-
+    <script>
+        window.addEventListener('livewire:load', function() {
+            Livewire.onError(function(statusCode, message) {
+                if (message.includes('1.1.1.3') || message.includes('CORS')) {
+                    // Refresh the page on CORS errors to bypass the issue
+                    window.location.reload();
+                    return false; // Prevent the default error handling
+                }
+            });
+        });
+    </script>
     @livewireScripts
     <x-livewire-alert::scripts />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
