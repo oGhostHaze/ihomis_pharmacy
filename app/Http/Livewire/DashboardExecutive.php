@@ -4,21 +4,10 @@ namespace App\Http\Livewire;
 
 use Carbon\Carbon;
 use Livewire\Component;
-use App\Models\User;
-use App\Models\UserSession;
 use App\Models\Pharmacy\Drugs\DrugStock;
-use App\Models\Pharmacy\Drugs\DrugStockLog;
-use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
-use App\Models\Pharmacy\Drugs\DrugManualLogHeader;
-use App\Models\Pharmacy\Drugs\DrugManualLogItem;
-use App\Models\Pharmacy\Drugs\DrugManualLogWarehouse;
-use App\Models\Pharmacy\Drugs\DrugEmergencyPurchase;
-use App\Models\Pharmacy\Drugs\InOutTransaction;
 use App\Models\Pharmacy\PharmLocation;
-use App\Models\PharmManual;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class DashboardExecutive extends Component

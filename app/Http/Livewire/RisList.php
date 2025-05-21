@@ -51,13 +51,34 @@ class RisList extends Component
                 'tbl_ris.issuedstat',
                 'tbl_ris.status',
                 'tbl_ris.ris_in_iar',
+                'tbl_ris.transferred_to_pdims',
+                'tbl_ris.transferred_at',
                 'tbl_office.officeName',
                 'req.fullName AS requested_by',
-                'issue.fullName AS issued_by'
+                'issue.fullName AS issued_by',
+                // Add count of line items
+                DB::raw('(SELECT COUNT(*)
+                          FROM tbl_ris_details
+                          WHERE tbl_ris_details.risid = tbl_ris.risid
+                          AND tbl_ris_details.status = "A") as item_count'),
+                // Add total amount
+                DB::raw('(SELECT SUM(tbl_ris_release.releaseqty * tbl_ris_release.unitprice)
+                          FROM tbl_ris_details
+                          JOIN tbl_ris_release ON tbl_ris_release.risdetid = tbl_ris_details.risdetid
+                          WHERE tbl_ris_details.risid = tbl_ris.risid
+                          AND tbl_ris_details.status = "A"
+                          AND tbl_ris_release.status = "A") as total_amount')
             ])
             ->leftJoin('tbl_user AS req', 'req.userID', '=', 'tbl_ris.requestby')
             ->leftJoin('tbl_user AS issue', 'issue.userID', '=', 'tbl_ris.issuedby')
             ->join('tbl_office', 'tbl_office.officeID', '=', 'tbl_ris.officeID')
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('tbl_ris_details')
+                    ->join('tbl_items', 'tbl_items.itemid', '=', 'tbl_ris_details.itemid')
+                    ->whereRaw('tbl_ris_details.risid = tbl_ris.risid')
+                    ->where('tbl_items.catid', 9); // Category ID for Drugs and Medicines
+            })
             ->where('tbl_ris.officeID', $this->officeId)
             ->when($this->statusFilter !== 'all', function ($query) {
                 if ($this->statusFilter === 'approved') {
@@ -68,6 +89,10 @@ class RisList extends Component
                     return $query->where('tbl_ris.issuedstat', 'I');
                 } elseif ($this->statusFilter === 'with-iar') {
                     return $query->where('tbl_ris.ris_in_iar', 'Y');
+                } elseif ($this->statusFilter === 'transferred') {
+                    return $query->whereNotNull('tbl_ris.transferred_to_pdims');
+                } elseif ($this->statusFilter === 'not-transferred') {
+                    return $query->whereNull('tbl_ris.transferred_to_pdims');
                 }
             })
             ->when($this->search, function ($query) {
@@ -84,5 +109,35 @@ class RisList extends Component
         return view('livewire.ris-list', [
             'risItems' => $risItems
         ]);
+    }
+
+    public function getDeliveryStatus($risItem)
+    {
+        if ($risItem->transferred_to_pdims) {
+            return 'Transferred to Delivery';
+        } elseif ($risItem->issuedstat === 'I') {
+            return 'Issued';
+        } elseif ($risItem->apprvstat === 'A') {
+            return 'Approved';
+        } elseif ($risItem->apprvstat === 'P') {
+            return 'Pending Approval';
+        } else {
+            return 'Draft';
+        }
+    }
+
+    public function getDeliveryStatusClass($risItem)
+    {
+        if ($risItem->transferred_to_pdims) {
+            return 'badge-success';
+        } elseif ($risItem->issuedstat === 'I') {
+            return 'badge-primary';
+        } elseif ($risItem->apprvstat === 'A') {
+            return 'badge-info';
+        } elseif ($risItem->apprvstat === 'P') {
+            return 'badge-warning';
+        } else {
+            return 'badge-ghost';
+        }
     }
 }

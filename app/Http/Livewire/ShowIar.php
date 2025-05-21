@@ -63,8 +63,8 @@ class ShowIar extends Component
             ->table('tbl_iar_details')
             ->select([
                 'tbl_iar_details.iardetailsid',
-                'tbl_iar_details.description',
-                'tbl_iar_details.unit',
+                'tbl_items.description',
+                'tbl_items.unit',
                 'tbl_iar_details.quantity',
                 'tbl_iar_details.unitprice',
                 'tbl_iar_details.totalprice',
@@ -73,6 +73,7 @@ class ShowIar extends Component
                 'tbl_iar_details.expire_date',
                 'tbl_iar_details.invoiceno'
             ])
+            ->join('tbl_items', 'tbl_items.itemid', '=', 'tbl_iar_details.itemid')
             ->where('tbl_iar_details.iarID', $this->iarId)
             ->where('tbl_iar_details.status', 'A')
             ->get();

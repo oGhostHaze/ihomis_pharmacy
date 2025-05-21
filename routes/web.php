@@ -1,14 +1,18 @@
 <?php
 
 use App\Http\Livewire\Pusher;
+use App\Http\Livewire\ShowIar;
+use App\Http\Livewire\ShowRis;
 use App\Http\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Trash\SampleView;
 use App\Http\Livewire\References\Manual;
-use App\Http\Controllers\TicketController;
 use App\Http\Livewire\DashboardExecutive;
+use App\Http\Controllers\TicketController;
 use App\Http\Livewire\Records\PatientsList;
+use App\Http\Controllers\RisPrintController;
 use App\Http\Livewire\Records\PrescriptionEr;
+use App\Http\Controllers\DrugHelperController;
 use App\Http\Livewire\Records\PatientRegister;
 use App\Http\Livewire\Records\PrescriptionOpd;
 use App\Http\Livewire\References\CreateManual;
@@ -61,7 +65,6 @@ use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
-use App\Http\Livewire\Pims\IarList;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,10 +85,6 @@ Route::middleware([
 ])->group(function () {
 
     Route::get('/', Dashboard::class)
-        ->middleware('role.redirect')
-        ->name('dashboard');
-
-    Route::get('/dashboard', Dashboard::class)
         ->middleware('role.redirect')
         ->name('dashboard');
 
@@ -120,7 +119,6 @@ Route::middleware([
         Route::get('/requests', IoTransListRequestor::class)->name('requests');
     });
 
-    Route::match(['get', 'post'], '/encounter/trans/{enccode}', EncounterTransactionView::class)->name('dispensing.view.enctr');
     Route::name('dispensing.')->prefix('dispensing')->group(function () {
         Route::get('/encounter/trans/{enccode}', EncounterTransactionView::class)->name('view.enctr');
         Route::get('/encounter/charge/{pcchrgcod}', RxoChargeSlip::class)->name('rxo.chargeslip');
@@ -148,6 +146,17 @@ Route::middleware([
     Route::get('/ris/print/{id}', [App\Http\Controllers\RisPrintController::class, 'print'])->name('ris.print');
 
     Route::get('/ris/{id}', App\Http\Livewire\ShowRis::class)->name('ris.show');
+
+    Route::get('/iar', function () {
+        return view('iar.index');
+    })->name('iar.index');
+    Route::get('/iar/{id}', App\Http\Livewire\ShowIar::class)->name('iar.show');
+    Route::prefix('drugs')->name('drugs.')->middleware(['auth'])->group(function () {
+        Route::get('/search', [DrugHelperController::class, 'searchDrugs'])->name('search');
+        Route::post('/associate', [DrugHelperController::class, 'associateDrug'])->name('associate');
+        Route::post('/remove-association', [DrugHelperController::class, 'removeDrugAssociation'])->name('remove-association');
+        Route::get('/stats', [DrugHelperController::class, 'getDrugAssociationStats'])->name('stats');
+    });
 
     Route::name('ref.')->prefix('/reference')->group(function () {
         Route::get('/wards', ListRisWards::class)->name('wards');
@@ -208,3 +217,29 @@ Route::middleware([
     // Attachments
     Route::delete('/attachments/{id}', [TicketController::class, 'deleteAttachment'])->name('tickets.attachments.delete');
 });
+
+// In routes/web.php
+Route::post('/livewire-proxy', function (Illuminate\Http\Request $request) {
+    // Get the request data
+    $data = $request->all();
+
+    // Make an internal request to the Livewire endpoint
+    $response = \Illuminate\Support\Facades\Http::withOptions([
+        'verify' => false, // Skip SSL verification for internal requests
+    ])->withHeaders([
+        'X-CSRF-TOKEN' => csrf_token(),
+        'Content-Type' => 'application/json',
+        'Accept' => 'text/html, application/xhtml+xml',
+    ])->post(url('/livewire/message/' . $data['fingerprint']['name']), $data);
+
+    // Return the response
+    return $response->body();
+});
+Route::any('/livewire/message/{component}', function ($component) {
+    return response()->json([
+        'effects' => [
+            'html' => '<div>Loading...</div>',
+            'dirty' => []
+        ]
+    ]);
+})->where('component', '.*')->fallback();
