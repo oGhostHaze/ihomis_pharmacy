@@ -23,6 +23,9 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ mix('js/turbolinks.js') }}" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/livewire/turbolinks@v0.1.x/dist/livewire-turbolinks.js"
+        data-turbolinks-eval="false" data-turbo-eval="false" defer></script>
 
     @stack('head')
 
@@ -64,39 +67,7 @@
     </div>
 
     @stack('modals')
-    <script>
-        // Override Livewire's HTTP endpoint
-        document.addEventListener('livewire:load', function() {
-            // Store the original message method
-            const originalMessageMethod = Livewire.connection.messageInTransit;
 
-            // Override the message method
-            Livewire.connection.messageInTransit = function(message) {
-                // Get the original endpoint
-                const originalEndpoint = '/livewire/message/' + message.fingerprint.name;
-
-                // Use our proxy endpoint instead
-                const proxyEndpoint = '/livewire-proxy';
-
-                // Replace the endpoint in the message
-                message.endpoint = proxyEndpoint;
-
-                // Call the original method with our modified message
-                return originalMessageMethod.call(this, message);
-            }
-
-            // Handle errors
-            Livewire.onError(function(statusCode, message) {
-                if (statusCode === 0 || (message && (message.includes('1.1.1.3') || message.includes(
-                        'CORS')))) {
-                    console.error('CORS error detected. Reloading page...');
-                    // Optional: reload the page to recover
-                    // window.location.reload();
-                    return false;
-                }
-            });
-        });
-    </script>
     @livewireScripts
     <x-livewire-alert::scripts />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -124,6 +95,33 @@
 
             return x1 + x2;
         }
+
+        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+            .listen('park-IoTransNewRequest', (e) => {
+                // console.log(e.requestor);
+                Swal.fire({
+                    icon: 'info',
+                    title: 'New Request from ' + e.requestor,
+                })
+            });
+
+        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+            .listen('park-IoTransRequestUpdated', (e) => {
+                // console.log(e.requestor);
+                Swal.fire({
+                    icon: 'info',
+                    title: e.message,
+                })
+            });
+
+        Echo.private(`park-encounter-view.{{ session('pharm_location_id') }}`)
+            .listen('park-DrugOrderEvent', (e) => {
+                // console.log(e.requestor);
+                Swal.fire({
+                    icon: 'info',
+                    title: e.message,
+                })
+            });
     </script>
 </body>
 

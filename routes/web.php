@@ -217,29 +217,3 @@ Route::middleware([
     // Attachments
     Route::delete('/attachments/{id}', [TicketController::class, 'deleteAttachment'])->name('tickets.attachments.delete');
 });
-
-// In routes/web.php
-Route::post('/livewire-proxy', function (Illuminate\Http\Request $request) {
-    // Get the request data
-    $data = $request->all();
-
-    // Make an internal request to the Livewire endpoint
-    $response = \Illuminate\Support\Facades\Http::withOptions([
-        'verify' => false, // Skip SSL verification for internal requests
-    ])->withHeaders([
-        'X-CSRF-TOKEN' => csrf_token(),
-        'Content-Type' => 'application/json',
-        'Accept' => 'text/html, application/xhtml+xml',
-    ])->post(url('/livewire/message/' . $data['fingerprint']['name']), $data);
-
-    // Return the response
-    return $response->body();
-});
-Route::any('/livewire/message/{component}', function ($component) {
-    return response()->json([
-        'effects' => [
-            'html' => '<div>Loading...</div>',
-            'dirty' => []
-        ]
-    ]);
-})->where('component', '.*')->fallback();
