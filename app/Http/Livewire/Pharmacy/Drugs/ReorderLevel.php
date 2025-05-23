@@ -23,8 +23,10 @@ class ReorderLevel extends Component
     public function render()
     {
 
-        $from = Carbon::parse(now())->startOfWeek();
-        $to = Carbon::parse(now())->endOfWeek();
+        $from = Carbon::parse(now())->startOfWeek()->format('Y-m-d H:i:s');
+        $to = Carbon::parse(now())->endOfWeek()->format('Y-m-d H:i:s');
+        $prev_from = Carbon::parse(now())->subWeek()->startOfWeek()->format('Y-m-d H:i:s');
+        $prev_to = Carbon::parse(now())->subWeek()->endOfWeek()->format('Y-m-d H:i:s');
 
         $stocks = DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                             (SELECT reorder_point
@@ -36,6 +38,18 @@ class ReorderLevel extends Component
                             AND card.loc_code = pds.loc_code
                             AND card.iss > 0
                             AND card.stock_date BETWEEN '" . $this->prev_week_start . "' AND '" . now() . "') as average,
+                                (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
+                            WHERE card.dmdcomb = pds.dmdcomb
+                            AND card.dmdctr = pds.dmdctr
+                            AND card.loc_code = pds.loc_code
+                            AND card.iss > 0
+                            AND card.stock_date BETWEEN '" . $from . "' AND '" . $to . "') as cur_average,
+                                (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
+                            WHERE card.dmdcomb = pds.dmdcomb
+                            AND card.dmdctr = pds.dmdctr
+                            AND card.loc_code = pds.loc_code
+                            AND card.iss > 0
+                            AND card.stock_date BETWEEN '" . $prev_from . "' AND '" . $prev_to . "') as prev_average,
                                 pds.dmdcomb, pds.dmdctr
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode

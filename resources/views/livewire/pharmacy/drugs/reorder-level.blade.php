@@ -67,6 +67,7 @@
                     <th>Generic</th>
                     <th class="text-end">Remaining</th>
                     <th class="text-end">Prev. Week Ave.</th>
+                    <th class="text-end">Per Week Average</th>
                     <th class="text-end">Max Level</th>
                     <th class="text-end">Stock Order QTY</th>
                     <th class="text-end">Reorder Point</th>
@@ -82,7 +83,10 @@
                                 : ($stk->stock_bal < 1
                                     ? ''
                                     : 'over');
-
+                        $weekly_average =
+                            $stk->cur_average && $stk->prev_average
+                                ? (($stk->cur_average - $stk->prev_average) / $stk->prev_average) * 100
+                                : 0;
                         $concat = implode('', explode('_', $stk->drug_concat));
                     @endphp
                     <tr class="cursor-pointer hover">
@@ -106,6 +110,17 @@
                             @endif
                         </td>
                         <td class="text-end">{{ $stk->average ? number_format($stk->average, 2) : '' }}</td>
+                        <td class="text-end">
+                            @if ($weekly_average)
+                                <span class="text-info tooltip"
+                                    data-tip="(({{ number_format($stk->cur_average) }} -
+                                    {{ number_format($stk->prev_average) }}) / {{ number_format($stk->prev_average) }})
+                                    * 100">
+                                    <i class="las la-lg la-exclamation-circle"></i>
+                                </span>
+                                {{ number_format($weekly_average) }}
+                            @endif
+                        </td>
                         <td class="text-end">{{ $stk->average ? number_format($max_level) : '' }}
                         </td>
                         <td class="text-end">
