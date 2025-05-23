@@ -116,9 +116,8 @@
                         <ul
                             class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
                             @can('view-deliveries')
+                                <li><a href="{{ route('ris.index') }}">PIMS RIS</a></li>
                                 <li><a href="{{ route('delivery.list') }}">Deliveries</a></li>
-                            @endcan
-                            @can('view-deliveries')
                                 <li><a href="{{ route('delivery.donations') }}">Donations</a></li>
                             @endcan
                             @can('view-eps')
@@ -159,30 +158,6 @@
                         <span class="inline-flex rounded-md">
                             <button type="button"
                                 class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 border border-transparent rounded-md focus:outline-none">
-                                <i class="las la-lg la-code"></i>
-                            </button>
-                        </span>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-jet-dropdown-link href="{{ route('reports.consumption.manual') }}">
-                            {{ __('Generated Consumption Report') }}
-                        </x-jet-dropdown-link>
-                        <x-jet-dropdown-link href="{{ route('reports.consumption.manual-range') }}">
-                            {{ __('Consumption Report (New)') }}
-                        </x-jet-dropdown-link>
-                    </x-slot>
-                </x-jet-dropdown>
-            </div>
-        @endcan
-        @can('view-reports')
-            <!-- Reports Dropdown -->
-            <div class="relative ml-3">
-                <x-jet-dropdown align="right" width="48">
-                    <x-slot name="trigger">
-                        <span class="inline-flex rounded-md">
-                            <button type="button"
-                                class="inline-flex items-center px-3 py-2 text-sm font-medium leading-4 border border-transparent rounded-md focus:outline-none">
                                 <i class="las la-lg la-file-excel"></i>
                             </button>
                         </span>
@@ -193,7 +168,7 @@
                         <x-jet-dropdown-link href="{{ route('reports.stkcrd') }}">
                             {{ __('Stock Card') }}
                         </x-jet-dropdown-link>
-                        <x-jet-dropdown-link href="{{ route('reports.consumption') }}">
+                        <x-jet-dropdown-link href="{{ route('reports.consumption.manual-range') }}">
                             {{ __('Consumption Report') }}
                         </x-jet-dropdown-link>
                         <x-jet-dropdown-link href="{{ route('reports.consumption.depts') }}">

@@ -25,19 +25,8 @@ class DeliveryView extends Component
 
     public function render()
     {
-        $drugs = Drug::where('dmdstat', 'A')
-            // ->whereHas('sub', function ($query) {
-            //     // return $query->whereIn('dmhdrsub', array('DRUMA', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMAA', 'DRUMAB', 'DRUMR', 'DRUMS', 'DRUMAD', 'DRUMAE'));
-            //     return $query->where('dmhdrsub', 'LIKE', '%DRUM%');
-            // })
-            ->whereNotNull('drug_concat')
-            ->has('generic')
-            ->orderBy('drug_concat', 'ASC')
-            ->get();
 
-        return view('livewire.pharmacy.deliveries.delivery-view', [
-            'drugs' => $drugs,
-        ]);
+        return view('livewire.pharmacy.deliveries.delivery-view');
     }
 
     public function mount($delivery_id)
@@ -151,31 +140,34 @@ class DeliveryView extends Component
     public function edit_item($item_id)
     {
         $this->validate([
-            'unit_price' => 'required',
-            'qty' => 'required',
-            'expiry_date' => 'required'
+            'compounding_fee' => ['required_if:has_compounding,true', 'numeric', 'min:0'],
         ]);
 
-        $unit_cost = $this->unit_cost;
-        $excess = 0;
+        $update_item = DeliveryItems::find($item_id);
 
+        // Use the existing values from the database
+        $unit_cost = $update_item->unit_price;
+        $qty = $update_item->qty;
+
+        // Recalculate the base retail price (without compounding)
+        $excess = 0;
         if ($unit_cost >= 10000.01) {
             $excess = $unit_cost - 10000;
             $markup_price = 1115 + ($excess * 0.05);
             $retail_price = $unit_cost + $markup_price;
-        } elseif ($unit_cost >= 1000.01 and $unit_cost <= 10000.00) {
+        } elseif ($unit_cost >= 1000.01 && $unit_cost <= 10000.00) {
             $excess = $unit_cost - 1000;
             $markup_price = 215 + ($excess * 0.10);
             $retail_price = $unit_cost + $markup_price;
-        } elseif ($unit_cost >= 100.01 and $unit_cost <= 1000.00) {
+        } elseif ($unit_cost >= 100.01 && $unit_cost <= 1000.00) {
             $excess = $unit_cost - 100;
             $markup_price = 35 + ($excess * 0.20);
             $retail_price = $unit_cost + $markup_price;
-        } elseif ($unit_cost >= 50.01 and $unit_cost <= 100.00) {
+        } elseif ($unit_cost >= 50.01 && $unit_cost <= 100.00) {
             $excess = $unit_cost - 50;
             $markup_price = 20 + ($excess * 0.30);
             $retail_price = $unit_cost + $markup_price;
-        } elseif ($unit_cost >= 0.01 and $unit_cost <= 50.00) {
+        } elseif ($unit_cost >= 0.01 && $unit_cost <= 50.00) {
             $markup_price = $unit_cost * 0.40;
             $retail_price = $unit_cost + $markup_price;
         } else {
@@ -183,34 +175,24 @@ class DeliveryView extends Component
             $retail_price = 0;
         }
 
+        // Add compounding fee if applicable
         if ($this->has_compounding) {
-
-            $this->validate([
-                'compounding_fee' => ['required', 'numeric', 'min:0'],
-            ]);
-
             $retail_price = $retail_price + $this->compounding_fee;
         }
 
-        $total_amount = $unit_cost * $this->qty;
-
-        $update_item = DeliveryItems::find($item_id);
-        $update_item->qty = $this->qty;
-        $update_item->unit_price = $unit_cost;
-        $update_item->total_amount = $total_amount;
+        // Update only the retail price - all other values remain the same
         $update_item->retail_price = $retail_price;
-        $update_item->lot_no = $this->lot_no;
-        $update_item->expiry_date = $this->expiry_date;
         $update_item->save();
 
-        // Prepare the attributes to check (everything except dmdprdte)
+        // Update drug price record
         $attributes = [
             'dmdcomb' => $update_item->dmdcomb,
             'dmdctr' => $update_item->dmdctr,
             'dmhdrsub' => $this->details->charge_code,
             'dmduprice' => $unit_cost,
             'dmselprice' => $update_item->retail_price,
-            'expdate' => $update_item->exp_date,
+            'expdate' => $update_item->expiry_date,
+            'stock_id' => $update_item->id,
             'mark_up' => $markup_price,
             'acquisition_cost' => $unit_cost,
             'has_compounding' => $this->has_compounding,
@@ -222,22 +204,29 @@ class DeliveryView extends Component
             $attributes['compounding_fee'] = $this->compounding_fee;
         }
 
-        // The only field not to check but to set when creating
-        $values = [
-            'dmdprdte' => now()
-        ];
+        // Find existing price record for this stock_id
+        $price_record = DrugPrice::where('stock_id', $update_item->id)->first();
 
-        // This will only create a new record if no matching record exists
-        $new_price = DrugPrice::firstOrCreate($attributes, $values);
-
-        $dmdprdte = $new_price->dmdprdte;
+        if ($price_record) {
+            // Update existing record
+            $price_record->fill($attributes);
+            $price_record->save();
+            $dmdprdte = $price_record->dmdprdte;
+        } else {
+            // Create new if not exists
+            $values = [
+                'dmdprdte' => now()
+            ];
+            $new_price = DrugPrice::create(array_merge($attributes, $values));
+            $dmdprdte = $new_price->dmdprdte;
+        }
 
         $update_item->dmdprdte = $dmdprdte;
         $update_item->save();
 
         $this->emit('refresh');
         $this->resetExcept('details', 'delivery_id', 'search');
-        $this->alert('success', 'Item updated!');
+        $this->alert('success', 'Compounding fee updated!');
     }
 
     public function delete_item($item_id)

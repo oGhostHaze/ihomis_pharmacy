@@ -13,10 +13,10 @@
 
 <div class="flex flex-col py-5 mx-auto max-w-screen-2xl">
     <div class="flex justify-between">
-        <div>
+        {{-- <div>
             <button class="btn btn-sm btn-primary" onclick="new_delivery()" wire:loading.attr="disabled">Add
                 Delivery</button>
-        </div>
+        </div> --}}
         <div class="flex space-x-2">
             <div class="form-control">
                 <label class="input-group">
