@@ -140,11 +140,14 @@ class ShowRis extends Component
                 'req.fullName AS requested_by_name',
                 'req.designation AS requested_by_desig',
                 'issue.fullName AS issued_by_name',
-                'issue.designation AS issued_by_desig'
+                'issue.designation AS issued_by_desig',
+                'po.poNo'
             ])
             ->join(DB::raw('tbl_ris_details'), 'tbl_ris.risid', '=', 'tbl_ris_details.risid')
             ->join(DB::raw('tbl_items'), 'tbl_items.itemid', '=', 'tbl_ris_details.itemid')
             ->leftJoin(DB::raw('tbl_user AS req'), 'req.userID', '=', 'tbl_ris.requestby')
+            ->leftJoin('tbl_iar AS iar', 'iar.iarID', '=', 'tbl_ris.iarid')
+            ->leftJoin('tbl_po AS po', 'po.poID', '=', 'iar.poid')
             ->leftJoin(DB::raw('tbl_user AS issue'), 'issue.userID', '=', 'tbl_ris.issuedby')
             ->join(DB::raw('tbl_office'), 'tbl_office.officeID', '=', 'tbl_ris.officeID')
             ->where('tbl_ris.risid', $this->risId)
@@ -546,7 +549,7 @@ class ShowRis extends Component
 
 
         // Set default values
-        $this->deliveryData['po_no'] = $this->risNo; // Use RIS number as PO number
+        $this->deliveryData['po_no'] = $this->ris->poNo; // Use RIS number as PO number
         $this->deliveryData['delivery_date'] = date('Y-m-d'); // Set today's date as default
 
         $this->isTransferModalOpen = true;
