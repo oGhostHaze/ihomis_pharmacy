@@ -242,13 +242,6 @@
                             compounding_div.style.display = 'none';
                         }
                     });
-                    has_compounding.addEventListener('click', function handleClick() {
-                        if (has_compounding.checked) {
-                            compounding_div.style.display = 'block';
-                        } else {
-                            compounding_div.style.display = 'none';
-                        }
-                    });
 
                     $('.select2').select2({
                         dropdownParent: $('.swal2-container'),
@@ -265,8 +258,6 @@
                     @this.set('lot_no', lot_no.value);
                     @this.set('has_compounding', has_compounding.checked);
                     @this.set('compounding_fee', compounding_fee.value);
-                    const has_compounding = document.querySelector('#has_compounding');
-                    const compounding_fee = document.querySelector('#compounding_fee');
 
                     Livewire.emit('add_item');
                 }
@@ -294,22 +285,22 @@
 
             <div class="px-2 form-control">
                 <label class="flex mt-3 space-x-3 cursor-pointer">
-                    <input type="checkbox" id="has_compounding" class="checkbox" />
+                    <input type="checkbox" id="edit_has_compounding" class="checkbox" />
                     <span class="mr-auto label-text !justify-self-start">Highly Specialised Drugs</span>
                 </label>
             </div>
             <div class="w-full px-2 form-control" hidden id="compounding_div">
-                <label class="label" for="compounding_fee">
+                <label class="label" for="edit_compounding_fee">
                     <span class="label-text">Compounding fee</span>
                 </label>
-                <input id="compounding_fee" type="number" step="0.01" class="w-full input input-bordered" />
+                <input id="edit_compounding_fee" type="number" step="0.01" class="w-full input input-bordered" />
             </div>`,
                 showCancelButton: true,
                 showConfirmButton: true,
                 confirmButtonText: `Save Changes`,
                 didOpen: () => {
-                    const has_compounding = Swal.getHtmlContainer().querySelector('#has_compounding');
-                    const compounding_div = Swal.getHtmlContainer().querySelector('#compounding_div');
+                    const has_compounding = Swal.getHtmlContainer().querySelector('#edit_has_compounding');
+                    const compounding_div = Swal.getHtmlContainer().querySelector('#edit_compounding_div');
                     compounding_div.style.display = 'none';
                     // Check if the current item has compounding fee
                     // You can determine this based on retail_price vs calculated price
