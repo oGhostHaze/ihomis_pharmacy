@@ -96,32 +96,32 @@
             return x1 + x2;
         }
 
-        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
-            .listen('park-IoTransNewRequest', (e) => {
-                // console.log(e.requestor);
-                Swal.fire({
-                    icon: 'info',
-                    title: 'New Request from ' + e.requestor,
-                })
-            });
+        // Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+        //     .listen('park-IoTransNewRequest', (e) => {
+        //         // console.log(e.requestor);
+        //         Swal.fire({
+        //             icon: 'info',
+        //             title: 'New Request from ' + e.requestor,
+        //         })
+        //     });
 
-        Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
-            .listen('park-IoTransRequestUpdated', (e) => {
-                // console.log(e.requestor);
-                Swal.fire({
-                    icon: 'info',
-                    title: e.message,
-                })
-            });
+        // Echo.private(`park-ioTrans.{{ session('pharm_location_id') }}`)
+        //     .listen('park-IoTransRequestUpdated', (e) => {
+        //         // console.log(e.requestor);
+        //         Swal.fire({
+        //             icon: 'info',
+        //             title: e.message,
+        //         })
+        //     });
 
-        Echo.private(`park-encounter-view.{{ session('pharm_location_id') }}`)
-            .listen('park-DrugOrderEvent', (e) => {
-                // console.log(e.requestor);
-                Swal.fire({
-                    icon: 'info',
-                    title: e.message,
-                })
-            });
+        // Echo.private(`park-encounter-view.{{ session('pharm_location_id') }}`)
+        //     .listen('park-DrugOrderEvent', (e) => {
+        //         // console.log(e.requestor);
+        //         Swal.fire({
+        //             icon: 'info',
+        //             title: e.message,
+        //         })
+        //     });
     </script>
 </body>
 

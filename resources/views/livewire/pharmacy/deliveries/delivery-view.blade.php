@@ -56,10 +56,12 @@
                     <button class="btn btn-sm btn-warning" onclick="save_lock()" wire:loading.attr="disabled">Save &
                         Lock</button>
                 </div>
-                {{-- <div>
-                    <button class="btn btn-sm btn-primary" onclick="add_item()" wire:loading.attr="disabled">Add
-                        Item</button>
-                </div> --}}
+                @if ($details->delivery_type != 'RIS')
+                    <div>
+                        <button class="btn btn-sm btn-primary" onclick="add_item()" wire:loading.attr="disabled">Add
+                            Item</button>
+                    </div>
+                @endif
             </div>
         </div>
     @endif
@@ -168,6 +170,109 @@
 
 @push('scripts')
     <script>
+        function add_item() {
+            Swal.fire({
+                html: `
+                    <span class="text-xl font-bold"> Add Item </span>
+                    <div class="w-full form-control">
+                        <label class="label" for="dmdcomb">
+                            <span class="label-text">Drug/Medicine</span>
+                        </label>
+                        <select class="select select-bordered select2" id="dmdcomb">
+                            <option disabled selected>Choose drug/medicine</option>
+                            @foreach ($drugs as $drug)
+                                <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">{{ $drug->drug_concat() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="expiry_date">
+                            <span class="label-text">Expiry Date</span>
+                        </label>
+                        <input id="expiry_date" type="date" value="{{ date('Y-m-d', strtotime(now() . '+1 years')) }}" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="qty">
+                            <span class="label-text">QTY</span>
+                        </label>
+                        <input id="qty" type="number" value="1" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="unit_price">
+                            <span class="label-text">Unit Cost</span>
+                              </label>
+                            <input id="unit_price" type="number" class="w-full input input-bordered" />
+                    </div>
+                    <div class="w-full form-control">
+                        <label class="label" for="lot_no">
+                            <span class="label-text">Lot No</span>
+                        </label>
+                        <input id="lot_no" type="text" class="w-full input input-bordered" />
+                    </div>
+                    <div class="px-2 form-control">
+                        <label class="flex mt-3 space-x-3 cursor-pointer">
+                            <input type="checkbox" id="has_compounding" class="checkbox" />
+                            <span class="mr-auto label-text !justify-self-start">Highly Specialised Drugs</span>
+                        </label>
+                    </div>
+                    <div class="w-full px-2 form-control" hidden id="compounding_div">
+                        <label class="label" for="compounding_fee">
+                            <span class="label-text">Compounding fee</span>
+                        </label>
+                        <input id="compounding_fee" type="number" step="0.01" class="w-full input input-bordered" />
+                    </div>`,
+                showCancelButton: true,
+                confirmButtonText: `Save`,
+                didOpen: () => {
+                    const dmdcomb = Swal.getHtmlContainer().querySelector('#dmdcomb');
+                    const expiry_date = Swal.getHtmlContainer().querySelector('#expiry_date');
+                    const qty = Swal.getHtmlContainer().querySelector('#qty');
+                    const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
+                    const lot_no = Swal.getHtmlContainer().querySelector('#lot_no');
+                    const has_compounding = Swal.getHtmlContainer().querySelector('#has_compounding');
+                    const compounding_div = Swal.getHtmlContainer().querySelector('#compounding_div');
+                    const compounding_fee = Swal.getHtmlContainer().querySelector('#compounding_fee');
+
+                    compounding_div.style.display = 'none';
+
+                    has_compounding.addEventListener('click', function handleClick() {
+                        if (has_compounding.checked) {
+                            compounding_div.style.display = 'block';
+                        } else {
+                            compounding_div.style.display = 'none';
+                        }
+                    });
+                    has_compounding.addEventListener('click', function handleClick() {
+                        if (has_compounding.checked) {
+                            compounding_div.style.display = 'block';
+                        } else {
+                            compounding_div.style.display = 'none';
+                        }
+                    });
+
+                    $('.select2').select2({
+                        dropdownParent: $('.swal2-container'),
+                        width: 'resolve',
+                    });
+                }
+            }).then((result) => {
+                /* Read more about isConfirmed, isDenied below */
+                if (result.isConfirmed) {
+                    @this.set('dmdcomb', $('#dmdcomb').select2('val'));
+                    @this.set('expiry_date', expiry_date.value);
+                    @this.set('qty', qty.value);
+                    @this.set('unit_price', unit_price.value);
+                    @this.set('lot_no', lot_no.value);
+                    @this.set('has_compounding', has_compounding.checked);
+                    @this.set('compounding_fee', compounding_fee.value);
+                    const has_compounding = document.querySelector('#has_compounding');
+                    const compounding_fee = document.querySelector('#compounding_fee');
+
+                    Livewire.emit('add_item');
+                }
+            });
+        }
+
         function edit_item(item_id, item_lot_no, item_qty, item_unit_price, item_retail_price, item_total_amount,
             item_expiry_date, drug_name) {
             Swal.fire({
