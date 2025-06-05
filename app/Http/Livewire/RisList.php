@@ -53,7 +53,6 @@ class RisList extends Component
                 'tbl_ris.ris_in_iar',
                 'tbl_ris.transferred_to_pdims',
                 'tbl_ris.transferred_at',
-                'tbl_office.officeName',
                 'req.fullName AS requested_by',
                 'issue.fullName AS issued_by',
                 // Add count of line items
@@ -71,7 +70,6 @@ class RisList extends Component
             ])
             ->leftJoin('tbl_user AS req', 'req.userID', '=', 'tbl_ris.requestby')
             ->leftJoin('tbl_user AS issue', 'issue.userID', '=', 'tbl_ris.issuedby')
-            ->join('tbl_office', 'tbl_office.officeID', '=', 'tbl_ris.officeID')
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('tbl_ris_details')

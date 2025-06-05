@@ -58,6 +58,7 @@ class ShowRis extends Component
         'po_no' => '' // Will be set to RIS number
     ];
 
+    public $relatedDeliveries = [];
     // Add validation rules
     protected function rules()
     {
@@ -90,6 +91,118 @@ class ShowRis extends Component
         }
     }
 
+
+    protected function loadRelatedDeliveries()
+    {
+        if (!$this->ris || !$this->ris->transferred_to_pdims) {
+            $this->relatedDeliveries = [];
+            return;
+        }
+
+        try {
+            // Get all deliveries that were created from this RIS
+            // We'll check both the primary delivery ID and any other deliveries with the same PO number
+            $deliveries = DeliveryDetail::with(['supplier'])
+                ->where(function ($query) {
+                    // Primary delivery ID stored in RIS
+                    $query->where('id', $this->ris->transferred_to_pdims)
+                        // Or deliveries with the same PO number (RIS number)
+                        ->orWhere('po_no', $this->ris->poNo);
+                })
+                ->get();
+
+            // Add calculated fields
+            $deliveries = $deliveries->map(function ($delivery) {
+                $delivery->items_count = $delivery->items->count();
+                $delivery->total_amount = $delivery->items->sum(function ($item) {
+                    return $item->qty * $item->unit_price;
+                });
+                return $delivery;
+            });
+
+            // Group deliveries by invoice number (SI number) and convert to array
+            $grouped = $deliveries->groupBy(function ($delivery) {
+                return $delivery->si_no ?: 'NO_INVOICE';
+            });
+
+            // Convert to simple array structure that Livewire can handle
+            $this->relatedDeliveries = $grouped->map(function ($deliveriesInGroup) {
+                return $deliveriesInGroup->map(function ($delivery) {
+                    return [
+                        'id' => $delivery->id,
+                        'po_no' => $delivery->po_no,
+                        'si_no' => $delivery->si_no,
+                        'delivery_date' => $delivery->delivery_date,
+                        'delivery_type' => $delivery->delivery_type,
+                        'items_count' => $delivery->items_count,
+                        'total_amount' => $delivery->total_amount,
+                        'supplier_name' => $delivery->supplier->suppname ?? 'N/A',
+                        'location_description' => $delivery->location->description ?? 'N/A',
+                        'status' => $delivery->status ?? 'pending'
+                    ];
+                })->toArray();
+            })->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error loading related deliveries: ' . $e->getMessage());
+            $this->relatedDeliveries = [];
+        }
+    }
+
+    // Alternative simpler method if the above is too complex
+    protected function loadRelatedDeliveriesSimple()
+    {
+        if (!$this->ris || !$this->ris->transferred_to_pdims) {
+            $this->relatedDeliveries = [];
+            return;
+        }
+
+        try {
+            // Get deliveries by PO number (which should match RIS number)
+            $deliveries = DeliveryDetail::with(['supplier'])
+                ->where('po_no', $this->ris->poNo)
+                ->get();
+
+            // Add calculated fields
+            $deliveries = $deliveries->map(function ($delivery) {
+                // Count items for this delivery
+                $itemsCount = DeliveryItems::where('delivery_id', $delivery->id)->count();
+                $totalAmount = DeliveryItems::where('delivery_id', $delivery->id)
+                    ->selectRaw('SUM(qty * unit_price) as total')
+                    ->first()->total ?? 0;
+
+                $delivery->items_count = $itemsCount;
+                $delivery->total_amount = $totalAmount;
+                return $delivery;
+            });
+
+            // Group by invoice number and convert to simple array
+            $grouped = $deliveries->groupBy(function ($delivery) {
+                return $delivery->si_no ?: 'NO_INVOICE';
+            });
+
+            // Convert to simple array structure that Livewire can handle
+            $this->relatedDeliveries = $grouped->map(function ($deliveriesInGroup) {
+                return $deliveriesInGroup->map(function ($delivery) {
+                    return [
+                        'id' => $delivery->id,
+                        'po_no' => $delivery->po_no,
+                        'si_no' => $delivery->si_no,
+                        'delivery_date' => $delivery->delivery_date,
+                        'delivery_type' => $delivery->delivery_type,
+                        'items_count' => $delivery->items_count,
+                        'total_amount' => $delivery->total_amount,
+                        'supplier_name' => $delivery->supplier->suppname ?? 'N/A',
+                        'location_description' => $delivery->location->description ?? 'N/A',
+                        'status' => $delivery->status ?? 'pending'
+                    ];
+                })->toArray();
+            })->toArray();
+        } catch (\Exception $e) {
+            \Log::error('Error loading related deliveries: ' . $e->getMessage());
+            $this->relatedDeliveries = [];
+        }
+    }
+
     public function loadRis()
     {
         $this->loading = true;
@@ -97,6 +210,7 @@ class ShowRis extends Component
 
         try {
             $this->loadRisData();
+            $this->loadRelatedDeliveriesSimple();
             $this->dataLoaded = true;
 
             // Ensure the calculateAssociationStatus gets called
@@ -141,12 +255,13 @@ class ShowRis extends Component
                 'req.designation AS requested_by_desig',
                 'issue.fullName AS issued_by_name',
                 'issue.designation AS issued_by_desig',
-                'po.poNo'
+                'po.poNo',
+                'tbl_iar_details.invoiceno'
             ])
-            ->join(DB::raw('tbl_ris_details'), 'tbl_ris.risid', '=', 'tbl_ris_details.risid')
-            ->join(DB::raw('tbl_items'), 'tbl_items.itemid', '=', 'tbl_ris_details.itemid')
-            ->leftJoin(DB::raw('tbl_user AS req'), 'req.userID', '=', 'tbl_ris.requestby')
             ->leftJoin('tbl_iar AS iar', 'iar.iarID', '=', 'tbl_ris.iarid')
+            ->join(DB::raw('tbl_iar_details'), 'iar.iarID', '=', 'tbl_iar_details.iarID')
+            ->join(DB::raw('tbl_items'), 'tbl_items.itemid', '=', 'tbl_iar_details.itemid')
+            ->leftJoin(DB::raw('tbl_user AS req'), 'req.userID', '=', 'tbl_ris.requestby')
             ->leftJoin('tbl_po AS po', 'po.poID', '=', 'iar.poid')
             ->leftJoin(DB::raw('tbl_user AS issue'), 'issue.userID', '=', 'tbl_ris.issuedby')
             ->join(DB::raw('tbl_office'), 'tbl_office.officeID', '=', 'tbl_ris.officeID')
@@ -214,7 +329,9 @@ class ShowRis extends Component
                     ->select([
                         'tbl_supply_slc.lotno',
                         'tbl_supply_slc.expiredate',
+                        'tbl_supply_slc.pono',
                         'tbl_iar_details.batch_no',
+                        'tbl_iar_details.invoiceno',
                         'tbl_iar_details.expire_date'
                     ])
                     ->leftJoin(DB::raw('tbl_iar_details'), 'tbl_iar_details.iardetailsid', '=', 'tbl_supply_slc.iardetid')
@@ -223,10 +340,11 @@ class ShowRis extends Component
                     ->first();
 
                 if ($batchAndExpiryInfo) {
-                    $detail->batch_no = $batchAndExpiryInfo->batch_no ?? $batchAndExpiryInfo->lotno ?? null;
+                    $detail->batch_no = $batchAndExpiryInfo->batch_no ? $batchAndExpiryInfo->lotno : null;
+                    $detail->invoiceno = $batchAndExpiryInfo->invoiceno ?? null;
 
                     // Parse the expiry date using our new function
-                    $rawExpiryDate = $batchAndExpiryInfo->expire_date ?? $batchAndExpiryInfo->expiredate ?? null;
+                    $rawExpiryDate = $batchAndExpiryInfo->expire_date ? $batchAndExpiryInfo->expiredate : null;
                     $parsedExpiry = DateHelper::parseExpiryDate($rawExpiryDate);
 
                     $detail->expire_date = $parsedExpiry['raw'];
@@ -530,11 +648,39 @@ class ShowRis extends Component
     }
 
     /**
-     * Open the transfer modal
+     * Close the transfer modal
+     */
+    public function closeTransferModal()
+    {
+        $this->isTransferModalOpen = false;
+        $this->resetTransferForm();
+    }
+
+    /**
+     * Reset the transfer form data
+     */
+    public function resetTransferForm()
+    {
+        $this->deliveryData = [
+            'suppcode' => '',
+            'delivery_type' => 'RIS',
+            'charge_code' => '',
+            'pharm_location_id' => '',
+            'delivery_date' => '',
+            'si_no' => '',
+            'po_no' => ''
+        ];
+
+        // Reset validation errors
+        $this->resetErrorBag();
+        $this->resetValidation();
+    }
+
+    /**
+     * Open the transfer modal with proper initialization
      */
     public function openTransferModal()
     {
-
         // Check if RIS is already transferred
         if ($this->ris && $this->ris->transferred_to_pdims) {
             session()->flash('error', 'This RIS has already been transferred to delivery system.');
@@ -547,10 +693,22 @@ class ShowRis extends Component
             return;
         }
 
+        // Reset form first
+        $this->resetTransferForm();
 
         // Set default values
-        $this->deliveryData['po_no'] = $this->ris->poNo; // Use RIS number as PO number
-        $this->deliveryData['delivery_date'] = date('Y-m-d'); // Set today's date as default
+        $this->deliveryData['po_no'] = $this->ris->poNo ?? $this->risNo;
+        $this->deliveryData['delivery_date'] = date('Y-m-d');
+        $this->deliveryData['delivery_type'] = 'RIS';
+
+        // Set default pharmacy location if available
+        $pharmacyLocations = \App\Models\Pharmacy\PharmLocation::where('description', 'like', '%warehouse%')
+            ->where('deleted_at', null)
+            ->get();
+
+        if ($pharmacyLocations->isNotEmpty()) {
+            $this->deliveryData['pharm_location_id'] = $pharmacyLocations->first()->id;
+        }
 
         $this->isTransferModalOpen = true;
     }
@@ -558,176 +716,393 @@ class ShowRis extends Component
     /**
      * Transfer RIS items to the pharmacy delivery system
      */
+    // public function transferToDelivery()
+    // {
+    //     $this->validate();
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $invoiceNo = null;
+    //         if ($this->ris && $this->ris->iarid) {
+    //             $iar = DB::connection('pims')
+    //                 ->table('tbl_iar')
+    //                 ->from(DB::raw('tbl_iar'))
+    //                 ->select('invoiceNo')
+    //                 ->where('iarID', $this->ris->iarid)
+    //                 ->first();
+
+    //             $invoiceNo = $iar->invoiceNo ?? null;
+    //         }
+
+    //         // Create new delivery detail
+    //         $delivery = new DeliveryDetail();
+    //         $delivery->po_no = $this->deliveryData['po_no'] ?? $this->risNo;
+    //         $delivery->si_no = $invoiceNo ?? $this->deliveryData['si_no']; // Use IAR invoice number if available
+    //         $delivery->pharm_location_id = $this->deliveryData['pharm_location_id'];
+    //         $delivery->user_id = Auth::id() ?? session('user_id');
+    //         $delivery->delivery_date = $this->deliveryData['delivery_date'];
+    //         $delivery->suppcode = $this->deliveryData['suppcode'];
+    //         $delivery->delivery_type = $this->deliveryData['delivery_type'];
+    //         $delivery->charge_code = $this->deliveryData['charge_code'];
+    //         $delivery->save();
+
+    //         // Transfer each RIS item to delivery items
+    //         foreach ($this->risDetails as $detail) {
+    //             // Skip items without drug association
+    //             if (empty($detail->pdims_itemcode)) {
+    //                 continue;
+    //             }
+
+    //             // Parse the drug code (format: dmdcomb.dmdctr)
+    //             list($dmdcomb, $dmdctr) = explode('.', $detail->pdims_itemcode);
+
+    //             // Get total amount from fund sources if available
+    //             $unit_cost = 0;
+    //             $total_amount = 0;
+
+    //             if (isset($detail->fundSources) && count($detail->fundSources) > 0) {
+    //                 // Use the first fund source for simplicity
+    //                 $unit_cost = $detail->fundSources[0]->unitprice ?? 0;
+    //                 $total_amount = $detail->itmqty * $unit_cost;
+    //             }
+
+    //             // Calculate retail price with markup (same logic as add_item)
+    //             $excess = 0;
+    //             if ($unit_cost >= 10000.01) {
+    //                 $excess = $unit_cost - 10000;
+    //                 $markup_price = 1115 + ($excess * 0.05);
+    //                 $retail_price = $unit_cost + $markup_price;
+    //             } elseif ($unit_cost >= 1000.01 && $unit_cost <= 10000.00) {
+    //                 $excess = $unit_cost - 1000;
+    //                 $markup_price = 215 + ($excess * 0.10);
+    //                 $retail_price = $unit_cost + $markup_price;
+    //             } elseif ($unit_cost >= 100.01 && $unit_cost <= 1000.00) {
+    //                 $excess = $unit_cost - 100;
+    //                 $markup_price = 35 + ($excess * 0.20);
+    //                 $retail_price = $unit_cost + $markup_price;
+    //             } elseif ($unit_cost >= 50.01 && $unit_cost <= 100.00) {
+    //                 $excess = $unit_cost - 50;
+    //                 $markup_price = 20 + ($excess * 0.30);
+    //                 $retail_price = $unit_cost + $markup_price;
+    //             } elseif ($unit_cost >= 0.01 && $unit_cost <= 50.00) {
+    //                 $markup_price = $unit_cost * 0.40;
+    //                 $retail_price = $unit_cost + $markup_price;
+    //             } else {
+    //                 $retail_price = 0;
+    //                 $markup_price = 0;
+    //             }
+
+    //             // Create new delivery item
+    //             $deliveryItem = new DeliveryItems();
+    //             $deliveryItem->delivery_id = $delivery->id;
+    //             $deliveryItem->dmdcomb = $dmdcomb;
+    //             $deliveryItem->dmdctr = $dmdctr;
+    //             $deliveryItem->qty = $detail->itmqty;
+    //             $deliveryItem->unit_price = $unit_cost;
+    //             $deliveryItem->total_amount = $total_amount;
+    //             $deliveryItem->retail_price = $retail_price;
+    //             $deliveryItem->lot_no = $detail->batch_no ?? ''; // Use batch_no for lot_no
+
+    //             // Use the SQL-formatted expiry date
+    //             if (isset($detail->sql_formatted_expire_date) && !empty($detail->sql_formatted_expire_date)) {
+    //                 $deliveryItem->expiry_date = $detail->sql_formatted_expire_date;
+    //             } else {
+    //                 // Default to 1 year if no expiry date is available
+    //                 $deliveryItem->expiry_date = date('Y-m-d', strtotime('+1 year'));
+    //             }
+
+    //             $deliveryItem->pharm_location_id = $this->deliveryData['pharm_location_id'];
+    //             $deliveryItem->charge_code = $this->deliveryData['charge_code'];
+    //             $deliveryItem->save();
+
+    //             // Create/Update DrugPrice (same as add_item logic)
+    //             $attributes = [
+    //                 'dmdcomb' => $deliveryItem->dmdcomb,
+    //                 'dmdctr' => $deliveryItem->dmdctr,
+    //                 'dmhdrsub' => $delivery->charge_code,
+    //                 'dmduprice' => $unit_cost,
+    //                 'dmselprice' => $deliveryItem->retail_price,
+    //                 'expdate' => $deliveryItem->expiry_date,
+    //                 'stock_id' => $deliveryItem->id,
+    //                 'mark_up' => $markup_price,
+    //                 'acquisition_cost' => $unit_cost,
+    //                 'has_compounding' => false,
+    //                 'retail_price' => $retail_price
+    //             ];
+
+    //             $values = [
+    //                 'dmdprdte' => now()
+    //             ];
+
+    //             // Create or find existing price record
+    //             $new_price = \App\Models\Pharmacy\DrugPrice::firstOrCreate($attributes, $values);
+
+    //             $dmdprdte = $new_price->dmdprdte;
+    //             $deliveryItem->dmdprdte = $dmdprdte;
+    //             $deliveryItem->save();
+
+    //             // Update RIS detail to mark as transferred with NOLOCK for read
+    //             $risDetailInfo = DB::connection('pims')
+    //                 ->table('tbl_ris_details')
+    //                 ->from(DB::raw('tbl_ris_details'))
+    //                 ->select('risdetid')
+    //                 ->where('risdetid', $detail->risdetid)
+    //                 ->first();
+
+    //             if ($risDetailInfo) {
+    //                 DB::connection('pims')
+    //                     ->table('tbl_ris_details')
+    //                     ->where('risdetid', $detail->risdetid)
+    //                     ->update([
+    //                         'transferred_to_pdims' => $delivery->id,
+    //                         'transferred_at' => now()
+    //                     ]);
+    //             }
+    //         }
+
+    //         // Update RIS header to mark as transferred with NOLOCK for read
+    //         $risHeaderInfo = DB::connection('pims')
+    //             ->table('tbl_ris')
+    //             ->from(DB::raw('tbl_ris'))
+    //             ->select('risid')
+    //             ->where('risid', $this->risId)
+    //             ->first();
+
+    //         if ($risHeaderInfo) {
+    //             DB::connection('pims')
+    //                 ->table('tbl_ris')
+    //                 ->where('risid', $this->risId)
+    //                 ->update([
+    //                     'transferred_to_pdims' => $delivery->id,
+    //                     'transferred_at' => now()
+    //                 ]);
+    //         }
+
+    //         DB::commit();
+
+    //         session()->flash('message', 'RIS items successfully transferred to delivery system.');
+    //         $this->isTransferModalOpen = false;
+
+    //         // Redirect to the delivery view page
+    //         return redirect()->route('delivery.view', [$delivery->id]);
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         session()->flash('error', 'Error transferring items: ' . $e->getMessage());
+    //         \Log::error('Transfer to delivery error: ' . $e->getMessage(), [
+    //             'trace' => $e->getTraceAsString()
+    //         ]);
+    //     }
+    // }
+
+    /**
+     * Transfer RIS items to the pharmacy delivery system
+     * Creates separate DeliveryDetail records for different invoice numbers
+     */
     public function transferToDelivery()
     {
+        // Group RIS details by invoice number
+        $itemsByInvoice = collect($this->risDetails)->groupBy(function ($detail) {
+            return $detail->invoiceno ?? 'NO_INVOICE';
+        });
         $this->validate();
 
         try {
             DB::beginTransaction();
 
-            $invoiceNo = null;
-            if ($this->ris && $this->ris->iarid) {
-                $iar = DB::connection('pims')
-                    ->table('tbl_iar')
-                    ->from(DB::raw('tbl_iar'))
-                    ->select('invoiceNo')
-                    ->where('iarID', $this->ris->iarid)
-                    ->first();
+            // Group RIS details by invoice number
+            $itemsByInvoice = collect($this->risDetails)->groupBy(function ($detail) {
+                return $detail->invoiceno ?? 'NO_INVOICE';
+            });
 
-                $invoiceNo = $iar->invoiceNo ?? null;
+            $createdDeliveries = [];
+            $transferredItemsCount = 0;
+
+            foreach ($itemsByInvoice as $invoiceNo => $invoiceItems) {
+                // Skip items without drug association
+                $validItems = $invoiceItems->filter(function ($detail) {
+                    return !empty($detail->pdims_itemcode);
+                });
+
+                if ($validItems->isEmpty()) {
+                    continue; // Skip if no valid items for this invoice
+                }
+
+                // Create new delivery detail for this invoice group
+                $delivery = new DeliveryDetail();
+                $delivery->po_no = $this->deliveryData['po_no'] ?? $this->risNo;
+
+                // Use the actual invoice number, or fallback to user input
+                if ($invoiceNo !== 'NO_INVOICE') {
+                    $delivery->si_no = $invoiceNo;
+                } else {
+                    $delivery->si_no = $this->deliveryData['si_no'] ?? '';
+                }
+
+                $delivery->pharm_location_id = $this->deliveryData['pharm_location_id'];
+                $delivery->user_id = Auth::id() ?? session('user_id');
+                $delivery->delivery_date = $this->deliveryData['delivery_date'];
+                $delivery->suppcode = $this->deliveryData['suppcode'];
+                $delivery->delivery_type = $this->deliveryData['delivery_type'];
+                $delivery->charge_code = $this->deliveryData['charge_code'];
+                $delivery->save();
+
+                $createdDeliveries[] = $delivery;
+
+                // Transfer each item in this invoice group to delivery items
+                foreach ($validItems as $detail) {
+                    // Parse the drug code (format: dmdcomb.dmdctr)
+                    list($dmdcomb, $dmdctr) = explode('.', $detail->pdims_itemcode);
+
+                    // Get total amount from fund sources if available
+                    $unit_cost = 0;
+                    $total_amount = 0;
+
+                    if (isset($detail->fundSources) && count($detail->fundSources) > 0) {
+                        // Use the first fund source for simplicity
+                        $unit_cost = $detail->fundSources[0]->unitprice ?? 0;
+                        $total_amount = $detail->itmqty * $unit_cost;
+                    }
+
+                    // Calculate retail price with markup (same logic as add_item)
+                    $excess = 0;
+                    if ($unit_cost >= 10000.01) {
+                        $excess = $unit_cost - 10000;
+                        $markup_price = 1115 + ($excess * 0.05);
+                        $retail_price = $unit_cost + $markup_price;
+                    } elseif ($unit_cost >= 1000.01 && $unit_cost <= 10000.00) {
+                        $excess = $unit_cost - 1000;
+                        $markup_price = 215 + ($excess * 0.10);
+                        $retail_price = $unit_cost + $markup_price;
+                    } elseif ($unit_cost >= 100.01 && $unit_cost <= 1000.00) {
+                        $excess = $unit_cost - 100;
+                        $markup_price = 35 + ($excess * 0.20);
+                        $retail_price = $unit_cost + $markup_price;
+                    } elseif ($unit_cost >= 50.01 && $unit_cost <= 100.00) {
+                        $excess = $unit_cost - 50;
+                        $markup_price = 20 + ($excess * 0.30);
+                        $retail_price = $unit_cost + $markup_price;
+                    } elseif ($unit_cost >= 0.01 && $unit_cost <= 50.00) {
+                        $markup_price = $unit_cost * 0.40;
+                        $retail_price = $unit_cost + $markup_price;
+                    } else {
+                        $retail_price = 0;
+                        $markup_price = 0;
+                    }
+
+                    // Create new delivery item
+                    $deliveryItem = new DeliveryItems();
+                    $deliveryItem->delivery_id = $delivery->id;
+                    $deliveryItem->dmdcomb = $dmdcomb;
+                    $deliveryItem->dmdctr = $dmdctr;
+                    $deliveryItem->qty = $detail->itmqty;
+                    $deliveryItem->unit_price = $unit_cost;
+                    $deliveryItem->total_amount = $total_amount;
+                    $deliveryItem->retail_price = $retail_price;
+                    $deliveryItem->lot_no = $detail->batch_no ?? '';
+
+                    // Use the SQL-formatted expiry date
+                    if (isset($detail->sql_formatted_expire_date) && !empty($detail->sql_formatted_expire_date)) {
+                        $deliveryItem->expiry_date = $detail->sql_formatted_expire_date;
+                    } else {
+                        // Default to 1 year if no expiry date is available
+                        $deliveryItem->expiry_date = date('Y-m-d', strtotime('+1 year'));
+                    }
+
+                    $deliveryItem->pharm_location_id = $this->deliveryData['pharm_location_id'];
+                    $deliveryItem->charge_code = $this->deliveryData['charge_code'];
+                    $deliveryItem->save();
+
+                    // Create/Update DrugPrice (same as add_item logic)
+                    $attributes = [
+                        'dmdcomb' => $deliveryItem->dmdcomb,
+                        'dmdctr' => $deliveryItem->dmdctr,
+                        'dmhdrsub' => $delivery->charge_code,
+                        'dmduprice' => $unit_cost,
+                        'dmselprice' => $deliveryItem->retail_price,
+                        'expdate' => $deliveryItem->expiry_date,
+                        'stock_id' => $deliveryItem->id,
+                        'mark_up' => $markup_price,
+                        'acquisition_cost' => $unit_cost,
+                        'has_compounding' => false,
+                        'retail_price' => $retail_price
+                    ];
+
+                    $values = [
+                        'dmdprdte' => now()
+                    ];
+
+                    // Create or find existing price record
+                    $new_price = \App\Models\Pharmacy\DrugPrice::firstOrCreate($attributes, $values);
+
+                    $dmdprdte = $new_price->dmdprdte;
+                    $deliveryItem->dmdprdte = $dmdprdte;
+                    $deliveryItem->save();
+
+                    // Update RIS detail to mark as transferred
+                    $risDetailInfo = DB::connection('pims')
+                        ->table('tbl_ris_details')
+                        ->select('risdetid')
+                        ->where('risdetid', $detail->risdetid)
+                        ->first();
+
+                    if ($risDetailInfo) {
+                        DB::connection('pims')
+                            ->table('tbl_ris_details')
+                            ->where('risdetid', $detail->risdetid)
+                            ->update([
+                                'transferred_to_pdims' => $delivery->id,
+                                'transferred_at' => now()
+                            ]);
+                    }
+
+                    $transferredItemsCount++;
+                }
             }
 
-            // Create new delivery detail
-            $delivery = new DeliveryDetail();
-            $delivery->po_no = $this->deliveryData['po_no'] ?? $this->risNo;
-            $delivery->si_no = $invoiceNo ?? $this->deliveryData['si_no']; // Use IAR invoice number if available
-            $delivery->pharm_location_id = $this->deliveryData['pharm_location_id'];
-            $delivery->user_id = Auth::id() ?? session('user_id');
-            $delivery->delivery_date = $this->deliveryData['delivery_date'];
-            $delivery->suppcode = $this->deliveryData['suppcode'];
-            $delivery->delivery_type = $this->deliveryData['delivery_type'];
-            $delivery->charge_code = $this->deliveryData['charge_code'];
-            $delivery->save();
+            // Update RIS header to mark as transferred
+            // Use the first delivery ID as the primary reference
+            $primaryDeliveryId = !empty($createdDeliveries) ? $createdDeliveries[0]->id : null;
 
-            // Transfer each RIS item to delivery items
-            foreach ($this->risDetails as $detail) {
-                // Skip items without drug association
-                if (empty($detail->pdims_itemcode)) {
-                    continue;
-                }
-
-                // Parse the drug code (format: dmdcomb.dmdctr)
-                list($dmdcomb, $dmdctr) = explode('.', $detail->pdims_itemcode);
-
-                // Get total amount from fund sources if available
-                $unit_cost = 0;
-                $total_amount = 0;
-
-                if (isset($detail->fundSources) && count($detail->fundSources) > 0) {
-                    // Use the first fund source for simplicity
-                    $unit_cost = $detail->fundSources[0]->unitprice ?? 0;
-                    $total_amount = $detail->itmqty * $unit_cost;
-                }
-
-                // Calculate retail price with markup (same logic as add_item)
-                $excess = 0;
-                if ($unit_cost >= 10000.01) {
-                    $excess = $unit_cost - 10000;
-                    $markup_price = 1115 + ($excess * 0.05);
-                    $retail_price = $unit_cost + $markup_price;
-                } elseif ($unit_cost >= 1000.01 && $unit_cost <= 10000.00) {
-                    $excess = $unit_cost - 1000;
-                    $markup_price = 215 + ($excess * 0.10);
-                    $retail_price = $unit_cost + $markup_price;
-                } elseif ($unit_cost >= 100.01 && $unit_cost <= 1000.00) {
-                    $excess = $unit_cost - 100;
-                    $markup_price = 35 + ($excess * 0.20);
-                    $retail_price = $unit_cost + $markup_price;
-                } elseif ($unit_cost >= 50.01 && $unit_cost <= 100.00) {
-                    $excess = $unit_cost - 50;
-                    $markup_price = 20 + ($excess * 0.30);
-                    $retail_price = $unit_cost + $markup_price;
-                } elseif ($unit_cost >= 0.01 && $unit_cost <= 50.00) {
-                    $markup_price = $unit_cost * 0.40;
-                    $retail_price = $unit_cost + $markup_price;
-                } else {
-                    $retail_price = 0;
-                    $markup_price = 0;
-                }
-
-                // Create new delivery item
-                $deliveryItem = new DeliveryItems();
-                $deliveryItem->delivery_id = $delivery->id;
-                $deliveryItem->dmdcomb = $dmdcomb;
-                $deliveryItem->dmdctr = $dmdctr;
-                $deliveryItem->qty = $detail->itmqty;
-                $deliveryItem->unit_price = $unit_cost;
-                $deliveryItem->total_amount = $total_amount;
-                $deliveryItem->retail_price = $retail_price;
-                $deliveryItem->lot_no = $detail->batch_no ?? ''; // Use batch_no for lot_no
-
-                // Use the SQL-formatted expiry date
-                if (isset($detail->sql_formatted_expire_date) && !empty($detail->sql_formatted_expire_date)) {
-                    $deliveryItem->expiry_date = $detail->sql_formatted_expire_date;
-                } else {
-                    // Default to 1 year if no expiry date is available
-                    $deliveryItem->expiry_date = date('Y-m-d', strtotime('+1 year'));
-                }
-
-                $deliveryItem->pharm_location_id = $this->deliveryData['pharm_location_id'];
-                $deliveryItem->charge_code = $this->deliveryData['charge_code'];
-                $deliveryItem->save();
-
-                // Create/Update DrugPrice (same as add_item logic)
-                $attributes = [
-                    'dmdcomb' => $deliveryItem->dmdcomb,
-                    'dmdctr' => $deliveryItem->dmdctr,
-                    'dmhdrsub' => $delivery->charge_code,
-                    'dmduprice' => $unit_cost,
-                    'dmselprice' => $deliveryItem->retail_price,
-                    'expdate' => $deliveryItem->expiry_date,
-                    'stock_id' => $deliveryItem->id,
-                    'mark_up' => $markup_price,
-                    'acquisition_cost' => $unit_cost,
-                    'has_compounding' => false,
-                    'retail_price' => $retail_price
-                ];
-
-                $values = [
-                    'dmdprdte' => now()
-                ];
-
-                // Create or find existing price record
-                $new_price = \App\Models\Pharmacy\DrugPrice::firstOrCreate($attributes, $values);
-
-                $dmdprdte = $new_price->dmdprdte;
-                $deliveryItem->dmdprdte = $dmdprdte;
-                $deliveryItem->save();
-
-                // Update RIS detail to mark as transferred with NOLOCK for read
-                $risDetailInfo = DB::connection('pims')
-                    ->table('tbl_ris_details')
-                    ->from(DB::raw('tbl_ris_details'))
-                    ->select('risdetid')
-                    ->where('risdetid', $detail->risdetid)
+            if ($primaryDeliveryId) {
+                $risHeaderInfo = DB::connection('pims')
+                    ->table('tbl_ris')
+                    ->select('risid')
+                    ->where('risid', $this->risId)
                     ->first();
 
-                if ($risDetailInfo) {
+                if ($risHeaderInfo) {
                     DB::connection('pims')
-                        ->table('tbl_ris_details')
-                        ->where('risdetid', $detail->risdetid)
+                        ->table('tbl_ris')
+                        ->where('risid', $this->risId)
                         ->update([
-                            'transferred_to_pdims' => $delivery->id,
+                            'transferred_to_pdims' => $primaryDeliveryId,
                             'transferred_at' => now()
                         ]);
                 }
             }
 
-            // Update RIS header to mark as transferred with NOLOCK for read
-            $risHeaderInfo = DB::connection('pims')
-                ->table('tbl_ris')
-                ->from(DB::raw('tbl_ris'))
-                ->select('risid')
-                ->where('risid', $this->risId)
-                ->first();
-
-            if ($risHeaderInfo) {
-                DB::connection('pims')
-                    ->table('tbl_ris')
-                    ->where('risid', $this->risId)
-                    ->update([
-                        'transferred_to_pdims' => $delivery->id,
-                        'transferred_at' => now()
-                    ]);
-            }
-
             DB::commit();
 
-            session()->flash('message', 'RIS items successfully transferred to delivery system.');
+            $this->closeTransferModal();
+
+            $deliveryCount = count($createdDeliveries);
+            $message = "RIS items successfully transferred to delivery system. ";
+            $message .= "Created {$deliveryCount} delivery record(s) for {$transferredItemsCount} items.";
+
+            session()->flash('message', $message);
             $this->isTransferModalOpen = false;
 
-            // Redirect to the delivery view page
-            return redirect()->route('delivery.view', [$delivery->id]);
+            // If only one delivery was created, redirect to it
+            // If multiple deliveries, redirect to the first one or a list
+            if ($deliveryCount === 1) {
+                return redirect()->route('delivery.view', [$createdDeliveries[0]->id]);
+            } else {
+                // You might want to create a summary page or redirect to delivery list
+                // For now, redirect to the first delivery with a note about multiple deliveries
+                session()->flash('info', "Multiple deliveries were created. You are viewing the first one.");
+                return redirect()->route('delivery.view', [$createdDeliveries[0]->id]);
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Error transferring items: ' . $e->getMessage());
@@ -736,7 +1111,6 @@ class ShowRis extends Component
             ]);
         }
     }
-
     /**
      * Handle transfer complete event
      */

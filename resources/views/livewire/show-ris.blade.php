@@ -54,27 +54,178 @@
             <!-- Add this after the Drug Association Status section -->
             @if (isset($associationStatus) && $associationStatus['allAssociated'])
                 @if (isset($ris->transferred_to_pdims) && $ris->transferred_to_pdims)
-                    <div class="p-3 mt-4 border border-green-200 rounded-lg bg-green-50">
-                        <div class="flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2 text-green-500"
-                                viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            <span class="font-medium text-green-800">
-                                This RIS was transferred to Pharmacy Delivery System
-                            </span>
-                            <a href="{{ route('delivery.view', $ris->transferred_to_pdims) }}"
-                                class="ml-3 text-green-700 underline hover:text-green-900">
-                                View Delivery
-                            </a>
+                    <!-- Related Deliveries Section with Toggle -->
+                    @if (isset($relatedDeliveries) && count($relatedDeliveries) > 0)
+                        <div class="mt-3 overflow-hidden bg-white rounded-lg shadow-md" x-data="{ showDeliveries: false }">
+                            <div class="px-6 py-4 border-b bg-green-50">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <h2 class="text-xl font-semibold text-green-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="inline w-6 h-6 mr-2"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                            Related Deliveries
+                                        </h2>
+                                        <span
+                                            class="px-3 py-1 ml-3 text-sm font-medium text-green-800 bg-green-100 rounded-full">
+                                            @php $totalCount = collect($relatedDeliveries)->flatten(1)->count(); @endphp
+                                            {{ $totalCount }} Delivery{{ $totalCount > 1 ? 's' : '' }}
+                                        </span>
+                                    </div>
+
+                                    <!-- Toggle Button -->
+                                    <button @click="showDeliveries = !showDeliveries"
+                                        class="flex items-center px-3 py-2 text-sm font-medium text-green-700 transition-colors bg-green-100 border border-green-200 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                        <span x-text="showDeliveries ? 'Hide Details' : 'Show Details'">Show
+                                            Details</span>
+                                        <svg x-show="!showDeliveries" xmlns="http://www.w3.org/2000/svg"
+                                            class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                        <svg x-show="showDeliveries" xmlns="http://www.w3.org/2000/svg"
+                                            class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <p class="mt-1 text-sm text-green-600">
+                                    Deliveries created from this RIS transfer, grouped by invoice number
+                                </p>
+                            </div>
+
+                            <!-- Collapsible Content -->
+                            <div x-show="showDeliveries" x-cloak x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                x-transition:enter-end="opacity-100 transform translate-y-0"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 transform translate-y-0"
+                                x-transition:leave-end="opacity-0 transform -translate-y-2">
+                                <div class="p-6">
+                                    <div class="space-y-4">
+                                        @foreach ($relatedDeliveries as $invoiceGroup => $deliveries)
+                                            <div class="border border-gray-200 rounded-lg">
+                                                <!-- Invoice Group Header -->
+                                                <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                                                    <div class="flex items-center justify-between">
+                                                        <div>
+                                                            <h3 class="font-medium text-gray-900">
+                                                                Invoice:
+                                                                {{ $invoiceGroup !== 'NO_INVOICE' ? $invoiceGroup : 'No Invoice Number' }}
+                                                            </h3>
+                                                            <p class="text-sm text-gray-500">
+                                                                {{ count($deliveries) }} delivery
+                                                                record{{ count($deliveries) > 1 ? 's' : '' }}
+                                                            </p>
+                                                        </div>
+                                                        @if ($invoiceGroup === 'NO_INVOICE')
+                                                            <span
+                                                                class="px-2 py-1 text-xs text-yellow-800 bg-yellow-100 rounded">
+                                                                No Invoice
+                                                            </span>
+                                                        @else
+                                                            <span
+                                                                class="px-2 py-1 text-xs text-blue-800 bg-blue-100 rounded">
+                                                                {{ $invoiceGroup }}
+                                                            </span>
+                                                        @endif
+                                                    </div>
+                                                </div>
+
+                                                <!-- Deliveries in this invoice group -->
+                                                <div class="p-4">
+                                                    <div class="space-y-3">
+                                                        @foreach ($deliveries as $delivery)
+                                                            <div
+                                                                class="flex items-center justify-between p-3 border border-gray-100 rounded-md hover:bg-gray-50">
+                                                                <div class="flex-1">
+                                                                    <div class="flex items-center space-x-4">
+                                                                        <div>
+                                                                            <p class="font-medium text-gray-900">
+                                                                                Delivery #{{ $delivery['id'] }}
+                                                                            </p>
+                                                                            <p class="text-sm text-gray-500">
+                                                                                PO: {{ $delivery['po_no'] }}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        <div class="text-sm text-gray-600">
+                                                                            <p><span class="font-medium">Date:</span>
+                                                                                {{ date('M d, Y', strtotime($delivery['delivery_date'])) }}
+                                                                            </p>
+                                                                            <p><span
+                                                                                    class="font-medium">Location:</span>
+                                                                                {{ $delivery['location_description'] }}
+                                                                            </p>
+                                                                        </div>
+
+                                                                        <div class="text-sm text-gray-600">
+                                                                            <p><span
+                                                                                    class="font-medium">Supplier:</span>
+                                                                                {{ $delivery['supplier_name'] }}</p>
+                                                                            <p><span class="font-medium">Type:</span>
+                                                                                {{ $delivery['delivery_type'] }}</p>
+                                                                        </div>
+
+                                                                        <div class="text-sm text-gray-600">
+                                                                            <p><span class="font-medium">Items:</span>
+                                                                                {{ $delivery['items_count'] ?? 0 }}</p>
+                                                                            <p><span class="font-medium">Total:</span>
+                                                                                ₱{{ number_format($delivery['total_amount'] ?? 0, 2) }}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="flex space-x-2">
+                                                                    <a target="_blank"
+                                                                        href="{{ route('delivery.view', $delivery['id']) }}"
+                                                                        class="px-3 py-1 text-sm text-blue-600 border border-blue-300 rounded hover:bg-blue-50">
+                                                                        View Details
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    <!-- Summary -->
+                                    @php
+                                        $allDeliveries = collect($relatedDeliveries)->flatten(1);
+                                        $totalDeliveries = $allDeliveries->count();
+                                        $totalAmount = $allDeliveries->sum('total_amount');
+                                        $totalItems = $allDeliveries->sum('items_count');
+                                    @endphp
+
+                                    <div class="pt-4 mt-4 border-t border-gray-200">
+                                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                            <div class="text-center">
+                                                <p class="text-2xl font-bold text-blue-600">{{ $totalDeliveries }}</p>
+                                                <p class="text-sm text-gray-500">Total Deliveries</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-2xl font-bold text-green-600">{{ $totalItems }}</p>
+                                                <p class="text-sm text-gray-500">Total Items</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-2xl font-bold text-purple-600">
+                                                    ₱{{ number_format($totalAmount, 2) }}</p>
+                                                <p class="text-sm text-gray-500">Total Value</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <p class="mt-1 text-xs text-green-600">
-                            Transferred on:
-                            {{ $ris->transferred_at ? date('M d, Y h:i A', strtotime($ris->transferred_at)) : 'N/A' }}
-                        </p>
-                    </div>
+                    @endif
                 @else
                     <div class="flex justify-end mt-4">
                         <button wire:click="openTransferModal" class="flex items-center btn btn-success">
@@ -99,8 +250,8 @@
 
         @if ($ris || $dataLoaded)
             <!-- RIS Form styled like the sample image -->
-            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow-md sm:p-6 lg:p-8" wire:key="ris-form-data-table"
-                id="ris-form-data-table">
+            <div class="mb-6 overflow-hidden bg-white rounded-lg shadow-md sm:p-6 lg:p-8"
+                wire:key="ris-form-data-table" id="ris-form-data-table">
                 <table class="w-full border border-gray-300">
                     <tr class="border-t border-gray-300">
                         <td colspan="5" class="p-2 pl-4">
@@ -160,8 +311,12 @@
                             Requisition</td>
                         <td colspan="6" class="p-2 font-bold text-center bg-gray-100 border-b border-gray-300">
                             Issuance</td>
+                        <td class="p-2 font-bold text-center bg-gray-100 border-b border-gray-300">
+                            Actions</td>
+
                     </tr>
                     <tr class="border-b border-gray-300">
+                        <td class="w-24 p-2 font-bold text-center border-r border-gray-300">Invoice No.</td>
                         <td class="w-24 p-2 font-bold text-center border-r border-gray-300">Stock No.</td>
                         <td class="w-16 p-2 font-bold text-center border-r border-gray-300">Unit</td>
                         <td class="p-2 font-bold text-center border-r border-gray-300">Description</td>
@@ -176,6 +331,8 @@
 
                     @forelse($risDetails ?? [] as $detail)
                         <tr class="border-b border-gray-300">
+                            <td class="p-2 text-center border-r border-gray-300">
+                                {{ $detail->invoiceno ?? 'N/A' }}</td>
                             <td class="p-2 text-center border-r border-gray-300">
                                 {{ number_format($detail->stockno) ?? 'N/A' }}</td>
                             <td class="p-2 text-center border-r border-gray-300">{{ $detail->unit ?? 'N/A' }}</td>
@@ -250,7 +407,7 @@
                         </tr>
                     @empty
                         <tr class="border-b border-gray-300">
-                            <td colspan="10" class="p-2 text-center">No items found</td>
+                            <td colspan="11" class="p-2 text-center">No items found</td>
                         </tr>
                     @endforelse
 
@@ -262,7 +419,7 @@
 
                     <!-- Grand Total row -->
                     <tr class="border-b border-gray-300 bg-gray-50">
-                        <td colspan="7" class="p-2 font-bold text-right border-r border-gray-300">Grand Total:</td>
+                        <td colspan="8" class="p-2 font-bold text-right border-r border-gray-300">Grand Total:</td>
                         <td class="p-2 font-bold text-right border-r border-gray-300">
                             @php
                                 $grandTotal = 0;
@@ -430,34 +587,56 @@
         </div>
     </div>
 
-    <!-- Transfer to Delivery Modal -->
-    <div x-data="{ show: @entangle('isTransferModalOpen').defer }" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak>
+    <!-- Transfer to Delivery Modal - Backend Compliant -->
+    <div x-data="{
+        show: @entangle('isTransferModalOpen').defer,
+        closeModal() {
+            this.show = false;
+            $wire.closeTransferModal(); // Calls backend cleanup method
+        }
+    }" x-show="show" class="fixed inset-0 z-50 overflow-y-auto" x-cloak
+        @keydown.escape.window="closeModal()">
+
         <div class="flex items-end justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Backdrop -->
             <div x-show="show" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
                 x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                class="fixed inset-0 transition-opacity" aria-hidden="true">
+                class="fixed inset-0 transition-opacity" aria-hidden="true" @click="closeModal()">
                 <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <!-- Modal Panel -->
             <div x-show="show" x-transition:enter="ease-out duration-300"
                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave="ease-in duration-200"
                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                class="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                class="inline-block px-4 pt-5 pb-4 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6"
+                @click.stop>
 
-                <div class="mb-4">
+                <!-- Modal Header with Close Button -->
+                <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium leading-6 text-gray-900">
                         Transfer RIS to Pharmacy Delivery
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Please provide delivery information to complete the transfer.
-                    </p>
+                    <button type="button" @click="closeModal()"
+                        class="text-gray-400 rounded hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
 
+                <p class="mb-4 text-sm text-gray-500">
+                    Please provide delivery information to complete the transfer.
+                </p>
+
+                <!-- RIS Info Summary -->
                 <div class="p-3 mb-4 rounded-md bg-blue-50">
                     <p class="text-sm text-blue-800">
                         <span class="font-medium">RIS #:</span> {{ $ris->risno ?? ($risNo ?? 'N/A') }}
@@ -473,13 +652,14 @@
                     </p>
                 </div>
 
+                <!-- Form -->
                 <form wire:submit.prevent="transferToDelivery">
                     <div class="space-y-4">
                         <!-- Supplier Selection -->
                         <div>
-                            <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier</label>
+                            <label for="supplier" class="block text-sm font-medium text-gray-700">Supplier *</label>
                             <div class="mt-1">
-                                <select wire:model="deliveryData.suppcode" id="supplier" required
+                                <select wire:model.defer="deliveryData.suppcode" id="supplier" required
                                     class="w-full select select-bordered">
                                     <option value="">Select a supplier</option>
                                     @foreach ($suppliers as $supplier)
@@ -494,10 +674,10 @@
 
                         <!-- Delivery Type -->
                         <div>
-                            <label for="delivery_type" class="block text-sm font-medium text-gray-700">Delivery
-                                Type</label>
+                            <label for="delivery_type" class="block text-sm font-medium text-gray-700">Delivery Type
+                                *</label>
                             <div class="mt-1">
-                                <select wire:model="deliveryData.delivery_type" id="delivery_type" required
+                                <select wire:model.defer="deliveryData.delivery_type" id="delivery_type" required
                                     class="w-full select select-bordered">
                                     <option value="">Select delivery type</option>
                                     <option value="RIS">RIS Transfer</option>
@@ -512,10 +692,10 @@
 
                         <!-- Charge Code -->
                         <div>
-                            <label for="charge_code" class="block text-sm font-medium text-gray-700">Fund
-                                Source</label>
+                            <label for="charge_code" class="block text-sm font-medium text-gray-700">Fund Source
+                                *</label>
                             <div class="mt-1">
-                                <select wire:model="deliveryData.charge_code" id="charge_code" required
+                                <select wire:model.defer="deliveryData.charge_code" id="charge_code" required
                                     class="w-full select select-bordered">
                                     <option value="">Select fund source</option>
                                     @foreach ($chargeCodes as $chargeCode)
@@ -532,10 +712,10 @@
                         <!-- Pharmacy Location -->
                         <div>
                             <label for="pharm_location_id" class="block text-sm font-medium text-gray-700">Pharmacy
-                                Location</label>
+                                Location *</label>
                             <div class="mt-1">
-                                <select wire:model="deliveryData.pharm_location_id" id="pharm_location_id" required
-                                    class="w-full select select-bordered">
+                                <select wire:model.defer="deliveryData.pharm_location_id" id="pharm_location_id"
+                                    required class="w-full select select-bordered">
                                     <option value="">Select location</option>
                                     @foreach ($pharmacyLocations as $location)
                                         <option value="{{ $location->id }}">{{ $location->description }}</option>
@@ -549,11 +729,11 @@
 
                         <!-- Delivery Date -->
                         <div>
-                            <label for="delivery_date" class="block text-sm font-medium text-gray-700">Delivery
-                                Date</label>
+                            <label for="delivery_date" class="block text-sm font-medium text-gray-700">Delivery Date
+                                *</label>
                             <div class="mt-1">
-                                <input type="date" wire:model="deliveryData.delivery_date" id="delivery_date"
-                                    required class="w-full input input-bordered">
+                                <input type="date" wire:model.defer="deliveryData.delivery_date"
+                                    id="delivery_date" required class="w-full input input-bordered">
                                 @error('deliveryData.delivery_date')
                                     <span class="text-xs text-red-500">{{ $message }}</span>
                                 @enderror
@@ -561,7 +741,6 @@
                         </div>
 
                         <!-- SI Number -->
-
                         <div>
                             <label for="si_no" class="block text-sm font-medium text-gray-700">SI Number</label>
                             <div class="mt-1">
@@ -572,7 +751,7 @@
                                         Using invoice number from related IAR
                                     </p>
                                 @else
-                                    <input type="text" wire:model="deliveryData.si_no" id="si_no"
+                                    <input type="text" wire:model.defer="deliveryData.si_no" id="si_no"
                                         class="w-full input input-bordered"
                                         placeholder="Enter SI number if available">
                                 @endif
@@ -580,13 +759,29 @@
                         </div>
                     </div>
 
+                    <!-- Modal Actions -->
                     <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
                         <button type="submit"
-                            class="inline-flex justify-center w-full btn btn-primary sm:col-start-2">
-                            Transfer to Delivery
+                            class="inline-flex justify-center w-full btn btn-primary sm:col-start-2 disabled:opacity-50"
+                            wire:loading.attr="disabled" wire:loading.class="opacity-50"
+                            wire:target="transferToDelivery">
+                            <div wire:loading.remove wire:target="transferToDelivery">
+                                Transfer to Delivery
+                            </div>
+                            <div wire:loading wire:target="transferToDelivery" class="items-center">
+                                <svg class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                    </path>
+                                </svg>
+                                Transferring...
+                            </div>
                         </button>
-                        <button type="button" @click="show = false"
-                            class="inline-flex justify-center w-full mt-3 btn btn-outline sm:mt-0 sm:col-start-1">
+                        <button type="button" @click="closeModal()"
+                            class="inline-flex justify-center w-full mt-3 btn btn-outline sm:mt-0 sm:col-start-1"
+                            wire:loading.attr="disabled" wire:target="transferToDelivery">
                             Cancel
                         </button>
                     </div>
