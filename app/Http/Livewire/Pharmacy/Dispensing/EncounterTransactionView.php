@@ -714,7 +714,7 @@ class EncounterTransactionView extends Component
                 'dmdprdte' => $stock_issued->stock->dmdprdte,
             ]);
             $stock->stock_bal = $stock->stock_bal + $this->return_qty;
-            $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
+            $date = Carbon::parse(now())->format('Y-m-d');
 
             $log = DrugStockLog::firstOrNew([
                 'loc_code' => $this->location_id,
