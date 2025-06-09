@@ -53,7 +53,7 @@ class DailyStockCard extends Component
                                 AND t2.dmdctr = pharm_drug_stock_cards.dmdctr
                                 AND t2.drug_concat = pharm_drug_stock_cards.drug_concat
                                 AND t2.chrgcode = pharm_drug_stock_cards.chrgcode
-                                AND t2.stock_date = pharm_drug_stock_cards.stock_date) t3
+                                AND CONVERT(DATE, t2.created_at) = CONVERT(DATE, pharm_drug_stock_cards.created_at)) t3
                         FOR XML PATH('')), 1, 2, '') AS io_trans_ref_no"),
             DB::raw("SUM(reference) as reference"),
             DB::raw("SUM(rec) as rec"),
@@ -61,18 +61,18 @@ class DailyStockCard extends Component
             DB::raw("SUM(bal) as bal"),
             DB::raw("SUM(pullout_qty) as pullout_qty"),
             'drug_concat',
-            'stock_date',
+            DB::raw("CONVERT(DATE, created_at) as stock_date"),
             'chrgcode'
         )
             ->where('dmdcomb', $this->dmdcomb)
             ->where('dmdctr', $this->dmdctr)
-            ->whereBetween('stock_date', [$this->date_from, $this->date_to])
+            ->whereBetween('created_at', [$this->date_from, Carbon::parse($this->date_to)->endOfDay()->format('Y-m-d H:i:s')])
             ->where('loc_code', $this->location_id)
             ->when($this->chrgcode, function ($query3) {
                 $query3->where('chrgcode', $this->chrgcode);
             })
-            ->groupBy('dmdcomb', 'dmdctr', 'drug_concat', 'chrgcode', 'stock_date')
-            ->orderBy('stock_date', 'DESC')
+            ->groupBy('dmdcomb', 'dmdctr', 'drug_concat', 'chrgcode', DB::raw("CONVERT(DATE, created_at)"))
+            ->orderBy(DB::raw("CONVERT(DATE, created_at)"), 'DESC')
             ->orderBy('drug_concat', 'ASC')
             ->with('charge')
             ->get();
