@@ -151,6 +151,8 @@ class DeliveryView extends Component
     public function edit_item($item_id)
     {
         $this->validate([
+            'lot_no' => 'required|string',
+            'expiry_date' => 'required|date',
             'compounding_fee' => ['required_if:has_compounding,true', 'numeric', 'min:0'],
         ]);
 
@@ -191,7 +193,9 @@ class DeliveryView extends Component
             $retail_price = $retail_price + $this->compounding_fee;
         }
 
-        // Update only the retail price - all other values remain the same
+        // Update the lot number, expiry date, and retail price
+        $update_item->lot_no = $this->lot_no;
+        $update_item->expiry_date = $this->expiry_date;
         $update_item->retail_price = $retail_price;
         $update_item->save();
 
@@ -237,7 +241,7 @@ class DeliveryView extends Component
 
         $this->emit('refresh');
         $this->resetExcept('details', 'delivery_id', 'search');
-        $this->alert('success', 'Compounding fee updated!');
+        $this->alert('success', 'Item updated successfully!');
     }
 
     public function delete_item($item_id)

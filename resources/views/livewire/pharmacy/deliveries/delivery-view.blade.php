@@ -268,40 +268,55 @@
             item_expiry_date, drug_name) {
             Swal.fire({
                 html: `
-            <span class="text-xl font-bold uppercase"> Update Compounding Fee: <br>` + drug_name + ` </span>
+        <span class="text-xl font-bold uppercase"> Edit Item: <br>` + drug_name + ` </span>
 
-            <div class="w-full form-control">
-                <label class="label">
-                    <span class="label-text">Current Details (Read-only)</span>
-                </label>
-                <div class="p-4 mb-4 bg-gray-100 rounded">
-                    <p><strong>Lot No:</strong> ` + item_lot_no + `</p>
-                    <p><strong>Expiry Date:</strong> ` + item_expiry_date + `</p>
-                    <p><strong>Quantity:</strong> ` + item_qty + `</p>
-                    <p><strong>Unit Price:</strong> ` + item_unit_price + `</p>
-                    <p><strong>Current Retail Price:</strong> ` + item_retail_price + `</p>
-                </div>
+        <div class="w-full form-control">
+            <label class="label">
+                <span class="label-text">Current Details</span>
+            </label>
+            <div class="p-4 mb-4 bg-gray-100 rounded">
+                <p><strong>Quantity:</strong> ` + item_qty + `</p>
+                <p><strong>Unit Price:</strong> ` + item_unit_price + `</p>
+                <p><strong>Current Retail Price:</strong> ` + item_retail_price + `</p>
             </div>
+        </div>
 
-            <div class="px-2 form-control">
-                <label class="flex mt-3 space-x-3 cursor-pointer">
-                    <input type="checkbox" id="edit_has_compounding" class="checkbox" />
-                    <span class="mr-auto label-text !justify-self-start">Highly Specialised Drugs</span>
-                </label>
-            </div>
-            <div class="w-full px-2 form-control" hidden id="compounding_div">
-                <label class="label" for="edit_compounding_fee">
-                    <span class="label-text">Compounding fee</span>
-                </label>
-                <input id="edit_compounding_fee" type="number" step="0.01" class="w-full input input-bordered" />
-            </div>`,
+        <div class="w-full form-control">
+            <label class="label" for="edit_lot_no">
+                <span class="label-text">Lot No</span>
+            </label>
+            <input id="edit_lot_no" type="text" value="` + item_lot_no + `" class="w-full input input-bordered" />
+        </div>
+
+        <div class="w-full form-control">
+            <label class="label" for="edit_expiry_date">
+                <span class="label-text">Expiry Date</span>
+            </label>
+            <input id="edit_expiry_date" type="date" value="` + item_expiry_date + `" class="w-full input input-bordered" />
+        </div>
+
+        <div class="px-2 form-control">
+            <label class="flex mt-3 space-x-3 cursor-pointer">
+                <input type="checkbox" id="edit_has_compounding" class="checkbox" />
+                <span class="mr-auto label-text !justify-self-start">Highly Specialised Drugs</span>
+            </label>
+        </div>
+        <div class="w-full px-2 form-control" hidden id="edit_compounding_div">
+            <label class="label" for="edit_compounding_fee">
+                <span class="label-text">Compounding fee</span>
+            </label>
+            <input id="edit_compounding_fee" type="number" step="0.01" class="w-full input input-bordered" />
+        </div>`,
                 showCancelButton: true,
                 showConfirmButton: true,
                 confirmButtonText: `Save Changes`,
                 didOpen: () => {
                     const has_compounding = Swal.getHtmlContainer().querySelector('#edit_has_compounding');
                     const compounding_div = Swal.getHtmlContainer().querySelector('#edit_compounding_div');
+                    const compounding_fee = Swal.getHtmlContainer().querySelector('#edit_compounding_fee');
+
                     compounding_div.style.display = 'none';
+
                     // Check if the current item has compounding fee
                     // You can determine this based on retail_price vs calculated price
                     const unit_price = parseFloat(item_unit_price);
@@ -328,7 +343,6 @@
                     if (current_retail > calculated_base_price) {
                         has_compounding.checked = true;
                         compounding_div.style.display = 'block';
-                        const compounding_fee = Swal.getHtmlContainer().querySelector('#compounding_fee');
                         compounding_fee.value = (current_retail - calculated_base_price).toFixed(2);
                     }
 
@@ -342,9 +356,13 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const has_compounding = document.querySelector('#has_compounding');
-                    const compounding_fee = document.querySelector('#compounding_fee');
+                    const lot_no = document.querySelector('#edit_lot_no');
+                    const expiry_date = document.querySelector('#edit_expiry_date');
+                    const has_compounding = document.querySelector('#edit_has_compounding');
+                    const compounding_fee = document.querySelector('#edit_compounding_fee');
 
+                    @this.set('lot_no', lot_no.value);
+                    @this.set('expiry_date', expiry_date.value);
                     @this.set('has_compounding', has_compounding.checked);
                     @this.set('compounding_fee', compounding_fee ? compounding_fee.value : 0);
 

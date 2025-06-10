@@ -340,11 +340,11 @@ class ShowRis extends Component
                     ->first();
 
                 if ($batchAndExpiryInfo) {
-                    $detail->batch_no = $batchAndExpiryInfo->batch_no ? $batchAndExpiryInfo->lotno : null;
+                    $detail->batch_no = $batchAndExpiryInfo->batch_no;
                     $detail->invoiceno = $batchAndExpiryInfo->invoiceno ?? null;
 
                     // Parse the expiry date using our new function
-                    $rawExpiryDate = $batchAndExpiryInfo->expire_date ? $batchAndExpiryInfo->expiredate : null;
+                    $rawExpiryDate = $batchAndExpiryInfo->expire_date;
                     $parsedExpiry = DateHelper::parseExpiryDate($rawExpiryDate);
 
                     $detail->expire_date = $parsedExpiry['raw'];
