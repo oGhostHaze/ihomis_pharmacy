@@ -498,7 +498,7 @@ class ShowRis extends Component
                             }
                         }
                     })
-                    ->limit(15) // Increased from 10 to 15
+                    ->limit(30) // Increased from 10 to 15
                     ->get(['dmdcomb', 'dmdctr', 'brandname', 'drug_concat']);
 
                 // Format and highlight results
