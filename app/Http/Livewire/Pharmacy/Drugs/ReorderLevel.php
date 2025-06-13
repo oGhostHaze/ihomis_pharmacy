@@ -56,6 +56,7 @@ class ReorderLevel extends Component
                             WHERE pds.loc_code = " . $this->location_id . "
                                 AND pds.drug_concat LIKE '%" . $this->search . "%'
                             GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
+                            ORDER BY pds.drug_concat ASC
                     ");
 
         $locations = PharmLocation::all();
