@@ -484,6 +484,7 @@ class ShowRis extends Component
             try {
                 // Search for drugs in the SQL Server database
                 $drugs = Drug::query()
+                    ->has('generic')
                     ->where(function ($query) {
                         $query->whereRaw("brandname LIKE ?", ['%' . $this->drugSearchTerm . '%'])
                             ->orWhereRaw("drug_concat LIKE ?", ['%' . $this->drugSearchTerm . '%']);

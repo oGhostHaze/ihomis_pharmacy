@@ -165,7 +165,7 @@ class StockList extends Component
             'brandname' => $drug->brandname,
             'dmdrem' => $drug->dmdrem,
             'dmdrxot' => $drug->dmdrxot,
-            'gencode' => $drug->generic->gzencode,
+            'gencode' => $drug->generic->gencode,
             'lot_no' => $this->lot_no,
         ]);
         $stock->stock_bal = $stock->stock_bal + $this->qty;
