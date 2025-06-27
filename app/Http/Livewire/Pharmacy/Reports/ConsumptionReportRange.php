@@ -187,7 +187,6 @@ class ConsumptionReportRange extends Component
         return $this->active_consumption;
     }
 
-
     /**
      * Main function to generate the ending balance report
      */
@@ -239,40 +238,44 @@ class ConsumptionReportRange extends Component
     }
 
     /**
-     * Get beginning balances for drugs
+     * Get beginning balances for drugs (first day reference only)
      */
     private function getBeginningBalances($date_from, $location_id)
     {
-        return DrugStockCard::select(DB::raw('SUM(reference) as begbal, dmdcomb, dmdctr, dmdprdte, chrgcode'))
-            ->whereBetween('stock_date', [$date_from, Carbon::parse($date_from)->endOfDay()])
-            ->where('loc_code', $location_id)
-            ->whereNotNull('dmdprdte')
-            ->groupBy('dmdcomb', 'dmdctr', 'chrgcode', 'stock_date', 'dmdprdte')
-            ->get()
-            ->map(function ($item) {
-                // Add the drug information
-                $drug = DB::table('hdmhdr')
-                    ->where('dmdcomb', $item->dmdcomb)
-                    ->where('dmdctr', $item->dmdctr)
-                    ->first(['drug_concat']);
-
-                // Add price information
-                $price = DB::table('hdmhdrprice')
-                    ->where('dmdprdte', $item->dmdprdte)
-                    ->first(['acquisition_cost', 'dmselprice']);
-
-                return [
-                    'dmdcomb' => $item->dmdcomb,
-                    'dmdctr' => $item->dmdctr,
-                    'chrgcode' => $item->chrgcode,
-                    'dmdprdte' => $item->dmdprdte,
-                    'beg_bal' => $item->begbal > 0 ? $item->begbal : 0,
-                    'drug_concat' => $drug ? $drug->drug_concat : null,
-                    'acquisition_cost' => $price ? $price->acquisition_cost : 0,
-                    'dmselprice' => $price ? $price->dmselprice : 0
-                ];
-            })
-            ->toArray();
+        return DB::select("
+            SELECT
+                first_day_reference as beg_bal,
+                dmdcomb,
+                dmdctr,
+                dmdprdte,
+                chrgcode,
+                drug_concat,
+                acquisition_cost,
+                dmselprice
+            FROM (
+                SELECT
+                    dsc.reference as first_day_reference,
+                    dsc.dmdcomb,
+                    dsc.dmdctr,
+                    dsc.dmdprdte,
+                    dsc.chrgcode,
+                    drug.drug_concat,
+                    price.acquisition_cost,
+                    price.dmselprice,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY dsc.dmdcomb, dsc.dmdctr, dsc.chrgcode, dsc.dmdprdte,
+                                     price.acquisition_cost, price.dmselprice
+                        ORDER BY dsc.stock_date ASC
+                    ) as rn
+                FROM pharm_drug_stock_cards dsc
+                    JOIN hdmhdr drug ON dsc.dmdcomb = drug.dmdcomb AND dsc.dmdctr = drug.dmdctr
+                    JOIN hdmhdrprice price ON dsc.dmdprdte = price.dmdprdte
+                WHERE dsc.stock_date BETWEEN ? AND ?
+                    AND dsc.loc_code = ?
+                    AND dsc.dmdprdte IS NOT NULL
+            ) ranked
+            WHERE rn = 1
+        ", [$date_from, Carbon::parse($date_from)->endOfDay(), $location_id]);
     }
 
     /**
@@ -281,18 +284,33 @@ class ConsumptionReportRange extends Component
     private function getIssuances($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT hrxo.loc_code, hrxo.dmdcomb, hrxo.dmdctr, hrxo.orderfrom chrgcode,
-                   drug.drug_concat, COUNT(*) LineItem, SUM(pchrgqty) qty_issued,
-                   pri.acquisition_cost unit_cost, pri.dmselprice retail_price, tx_type
+            SELECT
+                hrxo.loc_code,
+                hrxo.dmdcomb,
+                hrxo.dmdctr,
+                hrxo.orderfrom as chrgcode,
+                drug.drug_concat,
+                COUNT(*) as LineItem,
+                SUM(pchrgqty) as qty_issued,
+                pri.acquisition_cost as unit_cost,
+                pri.dmselprice as retail_price,
+                tx_type
             FROM hrxo
                 JOIN hdmhdr drug ON hrxo.dmdcomb = drug.dmdcomb AND hrxo.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON hrxo.dmdprdte = pri.dmdprdte
-            WHERE dodtepost BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-                AND loc_code = '" . $location_id . "'
+            WHERE dodtepost BETWEEN ? AND ?
+                AND loc_code = ?
                 AND hrxo.estatus = 'S'
-            GROUP BY drug.drug_concat, pri.acquisition_cost, pri.dmselprice, tx_type,
-                     hrxo.dmdcomb, hrxo.dmdctr, hrxo.orderfrom, hrxo.loc_code
-        ");
+            GROUP BY
+                hrxo.dmdcomb,
+                hrxo.dmdctr,
+                hrxo.orderfrom,
+                hrxo.loc_code,
+                drug.drug_concat,
+                pri.acquisition_cost,
+                pri.dmselprice,
+                tx_type
+        ", [$from_date, $to_date, $location_id]);
     }
 
     /**
@@ -301,17 +319,30 @@ class ConsumptionReportRange extends Component
     private function getReturns($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT hrxo.loc_code, hrxo.dmdcomb, hrxo.dmdctr, hrxo.chrgcode chrgcode,
-                   drug.drug_concat, COUNT(*) LineItem, SUM(qty) qty_returned,
-                   pri.acquisition_cost unit_cost, pri.dmselprice retail_price
+            SELECT
+                hrxo.loc_code,
+                hrxo.dmdcomb,
+                hrxo.dmdctr,
+                hrxo.chrgcode as chrgcode,
+                drug.drug_concat,
+                COUNT(*) as LineItem,
+                SUM(qty) as qty_returned,
+                pri.acquisition_cost as unit_cost,
+                pri.dmselprice as retail_price
             FROM hrxoreturn hrxo
                 JOIN hdmhdr drug ON hrxo.dmdcomb = drug.dmdcomb AND hrxo.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON hrxo.dmdprdte = pri.dmdprdte
-            WHERE returndate BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-                AND loc_code = '" . $location_id . "'
-            GROUP BY drug.drug_concat, pri.acquisition_cost, pri.dmselprice,
-                     hrxo.dmdcomb, hrxo.dmdctr, hrxo.chrgcode, hrxo.loc_code
-        ");
+            WHERE returndate BETWEEN ? AND ?
+                AND loc_code = ?
+            GROUP BY
+                hrxo.dmdcomb,
+                hrxo.dmdctr,
+                hrxo.chrgcode,
+                hrxo.loc_code,
+                drug.drug_concat,
+                pri.acquisition_cost,
+                pri.dmselprice
+        ", [$from_date, $to_date, $location_id]);
     }
 
     /**
@@ -320,17 +351,30 @@ class ConsumptionReportRange extends Component
     private function getIncomingTransfers($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT pit.dmdcomb, pit.dmdctr, drug.drug_concat, pit.chrgcode,
-                   pri.acquisition_cost, pri.dmselprice, SUM(qty) qty, [to]
+            SELECT
+                pit.dmdcomb,
+                pit.dmdctr,
+                drug.drug_concat,
+                pit.chrgcode,
+                pri.acquisition_cost,
+                pri.dmselprice,
+                SUM(qty) as qty,
+                [to]
             FROM pharm_io_trans_items pit
-                JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
+                JOIN hdmhdr drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
-            WHERE [to] = '" . $location_id . "'
+            WHERE [to] = ?
                 AND status = 'Received'
-                AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-            GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr,
-                     drug.drug_concat, pit.chrgcode, [to]
-        ");
+                AND pit.updated_at BETWEEN ? AND ?
+            GROUP BY
+                pit.dmdcomb,
+                pit.dmdctr,
+                drug.drug_concat,
+                pit.chrgcode,
+                [to],
+                pri.acquisition_cost,
+                pri.dmselprice
+        ", [$location_id, $from_date, $to_date]);
     }
 
     /**
@@ -339,17 +383,30 @@ class ConsumptionReportRange extends Component
     private function getOutgoingTransfers($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT pit.dmdcomb, pit.dmdctr, drug.drug_concat, pit.chrgcode,
-                   pri.acquisition_cost, pri.dmselprice, SUM(qty) qty, [from]
+            SELECT
+                pit.dmdcomb,
+                pit.dmdctr,
+                drug.drug_concat,
+                pit.chrgcode,
+                pri.acquisition_cost,
+                pri.dmselprice,
+                SUM(qty) as qty,
+                [from]
             FROM pharm_io_trans_items pit
-                JOIN hdmhdr as drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
+                JOIN hdmhdr drug ON pit.dmdcomb = drug.dmdcomb AND pit.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON pit.dmdprdte = pri.dmdprdte
-            WHERE [from] = '" . $location_id . "'
+            WHERE [from] = ?
                 AND status = 'Received'
-                AND pit.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-            GROUP BY pri.acquisition_cost, pri.dmselprice, pit.dmdcomb, pit.dmdctr,
-                     drug.drug_concat, pit.chrgcode, [from]
-        ");
+                AND pit.updated_at BETWEEN ? AND ?
+            GROUP BY
+                pit.dmdcomb,
+                pit.dmdctr,
+                drug.drug_concat,
+                pit.chrgcode,
+                [from],
+                pri.acquisition_cost,
+                pri.dmselprice
+        ", [$location_id, $from_date, $to_date]);
     }
 
     /**
@@ -358,17 +415,30 @@ class ConsumptionReportRange extends Component
     private function getDeliveries($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT di.pharm_location_id, di.dmdcomb, di.dmdctr, di.charge_code chrgcode,
-                   drug.drug_concat, COUNT(*) LineItem, SUM(qty) qty_delivered,
-                   pri.acquisition_cost unit_cost, pri.dmselprice retail_price
+            SELECT
+                di.pharm_location_id,
+                di.dmdcomb,
+                di.dmdctr,
+                di.charge_code as chrgcode,
+                drug.drug_concat,
+                COUNT(*) as LineItem,
+                SUM(qty) as qty_delivered,
+                pri.acquisition_cost as unit_cost,
+                pri.dmselprice as retail_price
             FROM pharm_delivery_items di
                 JOIN hdmhdr drug ON di.dmdcomb = drug.dmdcomb AND di.dmdctr = drug.dmdctr
                 JOIN hdmhdrprice pri ON di.dmdprdte = pri.dmdprdte
-            WHERE di.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-                AND di.pharm_location_id = '" . $location_id . "'
-            GROUP BY drug.drug_concat, pri.acquisition_cost, pri.dmselprice,
-                     di.dmdcomb, di.dmdctr, di.charge_code, di.pharm_location_id
-        ");
+            WHERE di.updated_at BETWEEN ? AND ?
+                AND di.pharm_location_id = ?
+            GROUP BY
+                di.dmdcomb,
+                di.dmdctr,
+                di.charge_code,
+                di.pharm_location_id,
+                drug.drug_concat,
+                pri.acquisition_cost,
+                pri.dmselprice
+        ", [$from_date, $to_date, $location_id]);
     }
 
     /**
@@ -377,18 +447,32 @@ class ConsumptionReportRange extends Component
     private function getPullouts($from_date, $to_date, $location_id)
     {
         return DB::select("
-            SELECT i.pullout_qty, p.pharm_location_id, s.dmdcomb, s.dmdctr, s.chrgcode,
-                   drug.drug_concat, price.acquisition_cost unit_cost, s.retail_price
+            SELECT
+                SUM(i.pullout_qty) as pullout_qty,
+                p.pharm_location_id,
+                s.dmdcomb,
+                s.dmdctr,
+                s.chrgcode,
+                drug.drug_concat,
+                price.acquisition_cost as unit_cost,
+                price.dmselprice as retail_price
             FROM pharm_pull_out_items i
-            JOIN pharm_pull_outs p ON i.detail_id = p.id
-            JOIN pharm_drug_stocks s ON i.stock_id = s.id
-            JOIN hdmhdr drug ON s.dmdcomb = drug.dmdcomb AND s.dmdctr = drug.dmdctr
-            JOIN hdmhdrprice price ON s.dmdprdte = price.dmdprdte
-            WHERE i.updated_at BETWEEN '" . $from_date . "' AND '" . $to_date . "'
-                AND p.pharm_location_id = '" . $location_id . "'
-        ");
+                JOIN pharm_pull_outs p ON i.detail_id = p.id
+                JOIN pharm_drug_stocks s ON i.stock_id = s.id
+                JOIN hdmhdr drug ON s.dmdcomb = drug.dmdcomb AND s.dmdctr = drug.dmdctr
+                JOIN hdmhdrprice price ON s.dmdprdte = price.dmdprdte
+            WHERE i.updated_at BETWEEN ? AND ?
+                AND p.pharm_location_id = ?
+            GROUP BY
+                p.pharm_location_id,
+                s.dmdcomb,
+                s.dmdctr,
+                s.chrgcode,
+                drug.drug_concat,
+                price.acquisition_cost,
+                price.dmselprice
+        ", [$from_date, $to_date, $location_id]);
     }
-
 
     /**
      * Aggregate and save all the data directly to PharmConsumptionGenerated
@@ -410,19 +494,19 @@ class ConsumptionReportRange extends Component
 
         // Process beginning balances
         foreach ($beginningBalances as $item) {
-            if ($item['chrgcode'] != $charge_code) continue;
+            if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item['dmdcomb'] . '_' . $item['dmdctr'];
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->acquisition_cost . '_' . $item->dmselprice;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
-                    'dmdcomb' => $item['dmdcomb'],
-                    'dmdctr' => $item['dmdctr'],
+                    'dmdcomb' => $item->dmdcomb,
+                    'dmdctr' => $item->dmdctr,
                     'loc_code' => $location_id,
-                    'chrgcode' => $item['chrgcode'],
-                    'drug_concat' => $item['drug_concat'],
-                    'acquisition_cost' => $item['acquisition_cost'],
-                    'dmselprice' => $item['dmselprice'],
-                    'beg_bal' => $item['beg_bal'],
+                    'chrgcode' => $item->chrgcode,
+                    'drug_concat' => $item->drug_concat,
+                    'acquisition_cost' => $item->acquisition_cost,
+                    'dmselprice' => $item->dmselprice,
+                    'beg_bal' => $item->beg_bal > 0 ? $item->beg_bal : 0,
                     'purchased' => 0,
                     'received_iotrans' => 0,
                     'transferred_iotrans' => 0,
@@ -443,7 +527,7 @@ class ConsumptionReportRange extends Component
                 ]);
             } else {
                 $existingData = $aggregatedData->get($key);
-                $existingData['beg_bal'] += $item['beg_bal'];
+                $existingData['beg_bal'] += $item->beg_bal;
                 $aggregatedData->put($key, $existingData);
             }
         }
@@ -452,7 +536,7 @@ class ConsumptionReportRange extends Component
         foreach ($issuances as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->unit_cost . '_' . $item->retail_price;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -502,7 +586,7 @@ class ConsumptionReportRange extends Component
         foreach ($returns as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->unit_cost . '_' . $item->retail_price;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -542,7 +626,7 @@ class ConsumptionReportRange extends Component
         foreach ($incomingTransfers as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->acquisition_cost . '_' . $item->dmselprice;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -582,7 +666,7 @@ class ConsumptionReportRange extends Component
         foreach ($outgoingTransfers as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->acquisition_cost . '_' . $item->dmselprice;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -622,7 +706,7 @@ class ConsumptionReportRange extends Component
         foreach ($deliveries as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->unit_cost . '_' . $item->retail_price;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -662,7 +746,7 @@ class ConsumptionReportRange extends Component
         foreach ($pullouts as $item) {
             if ($item->chrgcode != $charge_code) continue;
 
-            $key = $item->dmdcomb . '_' . $item->dmdctr;
+            $key = $item->dmdcomb . '_' . $item->dmdctr . '_' . $item->unit_cost . '_' . $item->retail_price;
             if (!$aggregatedData->has($key)) {
                 $aggregatedData->put($key, [
                     'dmdcomb' => $item->dmdcomb,
@@ -706,7 +790,9 @@ class ConsumptionReportRange extends Component
                     'dmdctr' => $data['dmdctr'],
                     'chrgcode' => $data['chrgcode'],
                     'consumption_id' => $data['consumption_id'],
-                    'loc_code' => $data['loc_code']
+                    'loc_code' => $data['loc_code'],
+                    'acquisition_cost' => $data['acquisition_cost'],
+                    'dmselprice' => $data['dmselprice']
                 ],
                 $data
             );
