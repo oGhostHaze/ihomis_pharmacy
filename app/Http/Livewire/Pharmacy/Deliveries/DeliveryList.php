@@ -18,7 +18,7 @@ class DeliveryList extends Component
 
     protected $listeners = ['add_delivery'];
 
-    public $po_no, $si_no, $pharm_location_id, $user_id, $delivery_date, $suppcode, $delivery_type, $charge_code = 'DRUMAG';
+    public $po_no, $si_no, $pharm_location_id, $user_id, $delivery_date, $suppcode, $delivery_type, $charge_code = 'DRUMA';
 
     public $search, $supplier_id;
 
@@ -43,7 +43,7 @@ class DeliveryList extends Component
         $suppliers = Supplier::all();
         $charges = ChargeCode::where('bentypcod', 'DRUME')
             ->where('chrgstat', 'A')
-            ->whereIn('chrgcode', ['DRUMK', 'DRUMAG', 'DRUMAM'])
+            ->whereIn('chrgcode', ['DRUMK', 'DRUMAG', 'DRUMAM', 'DRUMA'])
             ->get();
 
         return view('livewire.pharmacy.deliveries.delivery-list', [
