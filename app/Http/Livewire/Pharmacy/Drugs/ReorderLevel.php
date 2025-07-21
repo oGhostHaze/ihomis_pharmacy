@@ -27,29 +27,37 @@ class ReorderLevel extends Component
         $to = Carbon::parse(now())->endOfWeek()->format('Y-m-d H:i:s');
         $prev_from = Carbon::parse(now())->subWeek()->startOfWeek()->format('Y-m-d H:i:s');
         $prev_to = Carbon::parse(now())->subWeek()->endOfWeek()->format('Y-m-d H:i:s');
+        $ma_from = Carbon::parse(now())->subMonth()->startOfDay()->format('Y-m-d H:i:s');
+        $ma_to = Carbon::parse(now())->subDay()->endOfDay()->format('Y-m-d H:i:s');
 
         $stocks = DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
                             (SELECT reorder_point
                                 FROM pharm_drug_stock_reorder_levels as level
                                 WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
                                 (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
-                            WHERE card.dmdcomb = pds.dmdcomb
-                            AND card.dmdctr = pds.dmdctr
-                            AND card.loc_code = pds.loc_code
-                            AND card.iss > 0
-                            AND card.stock_date BETWEEN '" . $this->prev_week_start . "' AND '" . now() . "') as average,
+                                    WHERE card.dmdcomb = pds.dmdcomb
+                                    AND card.dmdctr = pds.dmdctr
+                                    AND card.loc_code = 1
+                                    AND card.iss > 0
+                                    AND card.stock_date BETWEEN '" . $ma_from . "' AND '" . $ma_to . "') as ma,
                                 (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
-                            WHERE card.dmdcomb = pds.dmdcomb
-                            AND card.dmdctr = pds.dmdctr
-                            AND card.loc_code = pds.loc_code
-                            AND card.iss > 0
-                            AND card.stock_date BETWEEN '" . $from . "' AND '" . $to . "') as cur_average,
+                                    WHERE card.dmdcomb = pds.dmdcomb
+                                    AND card.dmdctr = pds.dmdctr
+                                    AND card.loc_code = pds.loc_code
+                                    AND card.iss > 0
+                                    AND card.stock_date BETWEEN '" . $this->prev_week_start . "' AND '" . now() . "') as average,
                                 (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
-                            WHERE card.dmdcomb = pds.dmdcomb
-                            AND card.dmdctr = pds.dmdctr
-                            AND card.loc_code = pds.loc_code
-                            AND card.iss > 0
-                            AND card.stock_date BETWEEN '" . $prev_from . "' AND '" . $prev_to . "') as prev_average,
+                                    WHERE card.dmdcomb = pds.dmdcomb
+                                    AND card.dmdctr = pds.dmdctr
+                                    AND card.loc_code = pds.loc_code
+                                    AND card.iss > 0
+                                    AND card.stock_date BETWEEN '" . $from . "' AND '" . $to . "') as cur_average,
+                                (SELECT SUM(card.iss) as average FROM pharm_drug_stock_cards card
+                                    WHERE card.dmdcomb = pds.dmdcomb
+                                    AND card.dmdctr = pds.dmdctr
+                                    AND card.loc_code = pds.loc_code
+                                    AND card.iss > 0
+                                    AND card.stock_date BETWEEN '" . $prev_from . "' AND '" . $prev_to . "') as prev_average,
                                 pds.dmdcomb, pds.dmdctr
                             FROM pharm_drug_stocks as pds
                             JOIN hcharge ON pds.chrgcode = hcharge.chrgcode

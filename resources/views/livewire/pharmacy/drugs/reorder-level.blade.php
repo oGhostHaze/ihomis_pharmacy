@@ -66,6 +66,8 @@
                 <tr>
                     <th>Generic</th>
                     <th class="text-end">Remaining</th>
+                    <th class="text-end bg-primary">30-day Moving Average</th>
+                    <th class="text-end bg-primary">Critical Level</th>
                     <th class="text-end">Prev. Week Ave.</th>
                     <th class="text-end">Per Week Average</th>
                     <th class="text-end">Max Level</th>
@@ -77,6 +79,7 @@
                 @forelse ($stocks as $stk)
                     @php
                         $max_level = $stk->average ? $stk->average * 2 : 0;
+                        $critical = $stk->ma ? $stk->ma * 1.5 - $stk->stock_bal : 0;
                         $order_qty =
                             $max_level > $stk->stock_bal
                                 ? number_format($max_level - $stk->stock_bal)
@@ -108,6 +111,10 @@
                                     <i class="las la-lg la-pause-circle"></i>
                                 </span>
                             @endif
+                        </td>
+                        <td class="text-end bg-primary">{{ $stk->ma ? number_format($stk->ma, 2) : '' }}</td>
+                        <td class="text-end bg-primary">
+                            {{ $critical ? ($critical < 1 ? 'over' : number_format($critical, 2)) : '' }}
                         </td>
                         <td class="text-end">{{ $stk->average ? number_format($stk->average, 2) : '' }}</td>
                         <td class="text-end">
