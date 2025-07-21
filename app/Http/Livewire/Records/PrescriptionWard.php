@@ -44,44 +44,6 @@ class PrescriptionWard extends Component
 
     public function render()
     {
-        // $prescriptions = DB::table(DB::raw('hospital.dbo.henctr enctr'))
-        //     ->rightJoin(DB::raw('webapp.dbo.prescription rx'), 'enctr.enccode', 'rx.enccode')
-        //     ->leftJoin(DB::raw('hospital.dbo.hadmlog adm'), 'enctr.enccode', 'adm.enccode')
-        //     ->rightJoin(DB::raw('hospital.dbo.hpatroom pat_room'), 'rx.enccode', 'pat_room.enccode')
-        //     ->rightJoin(DB::raw('hospital.dbo.hroom room'), 'pat_room.rmintkey', 'room.rmintkey')
-        //     ->rightJoin(DB::raw('hospital.dbo.hward ward'), 'pat_room.wardcode', 'ward.wardcode')
-        //     ->rightJoin(DB::raw('hospital.dbo.hperson pt'), 'enctr.hpercode', 'pt.hpercode')
-        //     ->leftJoin(DB::raw('hospital.dbo.hpatmss mss'), 'enctr.enccode', 'mss.enccode')
-        //     ->select(
-        //         'enctr.enccode',
-        //         'adm.admdate',
-        //         'enctr.hpercode',
-        //         'pt.patfirst',
-        //         'pt.patmiddle',
-        //         'pt.patlast',
-        //         'pt.patsuffix',
-        //         'room.rmname',
-        //         'ward.wardname',
-        //         'mss.mssikey',
-        //         DB::raw("(SELECT COUNT(qty) FROM webapp.dbo.prescription_data data WHERE rx.id = data.presc_id AND data.stat = 'A' AND (data.order_type = '' OR data.order_type IS NULL)) basic"),
-        //         DB::raw("(SELECT COUNT(qty) FROM webapp.dbo.prescription_data data WHERE rx.id = data.presc_id AND data.stat = 'A' AND data.order_type = 'G24') g24"),
-        //         DB::raw("(SELECT COUNT(qty) FROM webapp.dbo.prescription_data data WHERE rx.id = data.presc_id AND data.stat = 'A' AND data.order_type = 'OR') 'or'")
-        //     )
-        //     ->where(function ($query) {
-        //         $query->where('toecode', 'ADM')
-        //             ->orWhere('toecode', 'OPDAD')
-        //             ->orWhere('toecode', 'ERADM');
-        //     })
-        //     ->where('pat_room.patrmstat', 'A')
-        //     ->where('rx.stat', 'A')
-        //     ->where('enctr.encstat', 'A')
-        //     ->where('rx.created_at', '>', '2023-01-01')
-        //     ->orderBy('pt.patlast', 'ASC')
-        //     ->orderBy('pt.patfirst', 'ASC')
-        //     ->orderBy('pt.patmiddle', 'ASC')
-        //     ->orderByDesc('rx.created_at')
-        //     ->get();
-
         $prescriptions = DB::select("SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname, mss.mssikey,
                                 (SELECT COUNT(qty) FROM webapp.dbo.prescription_data data WHERE rx.id = data.presc_id AND data.stat = 'A' AND (data.order_type = '' OR data.order_type IS NULL)) basic,
                                 (SELECT COUNT(qty) FROM webapp.dbo.prescription_data data WHERE rx.id = data.presc_id AND data.stat = 'A' AND data.order_type = 'G24') g24,
@@ -98,8 +60,6 @@ class PrescriptionWard extends Component
                             AND rx.stat = 'A'
                             ORDER BY pt.patlast ASC, pt.patfirst ASC, pt.patmiddle ASC, rx.created_at DESC
                             ");
-
-        // dd($prescriptions);
 
         return view('livewire.records.prescription-ward', [
             'prescriptions' => $prescriptions,

@@ -370,7 +370,35 @@
                                     <td class="text-xs cursor-pointer"
                                         onclick="select_rx_item({{ $presc_data->id }}, `{{ $presc_data->dm->drug_concat() }}`, '{{ $presc_data->qty }}', '{{ $presc->empid }}', '{{ $presc_data->dmdcomb }}', '{{ $presc_data->dmdctr }}')">
                                         {{ $presc_data->dm->drug_concat() }}</td>
-                                    <td class="text-xs">{{ $presc_data->qty }}</td>
+                                    <td class="text-xs">
+                                        @switch($presc_data->order_type)
+                                            @case('g24')
+                                            @case('G24')
+                                                <div class="flex tooltip" data-tip="Good For 24 Hrs"><i
+                                                        class="las la-2g la-hourglass-start"></i>
+                                                    <div class="badge badge-error badge-xs">{{ $presc_data->qty }}
+                                                    </div>
+                                                </div>
+                                            @break
+
+                                            @case('or')
+                                            @case('Or')
+
+                                            @case('OR')
+                                                <div class="flex tooltip" data-tip="For Operating Use"><i
+                                                        class="las la-2g la-syringe"></i>
+                                                    <div class="badge badge-secondary badge-xs">
+                                                        {{ $presc_data->qty }}</div>
+                                                </div>
+                                            @break
+
+                                            @default
+                                                <div class="flex tooltip" data-tip="BASIC"><i
+                                                        class="las la-2g la-prescription"></i>
+                                                    <div class="badge badge-accent badge-xs">{{ $presc_data->qty }}</div>
+                                                </div>
+                                        @endswitch
+                                    </td>
                                     <td class="text-xs">{{ $presc_data->remark }}</td>
                                     <td class="text-xs">{{ $presc_data->employee->fullname() }}</td>
                                     <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
@@ -378,356 +406,440 @@
                                             wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button>
                                     </td>
                                 </tr>
-                            @empty
+                                @empty
+                                    <tr>
+                                        <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
+                                    </tr>
+                                @endforelse
+                                @empty
+                                @endforelse
+                                @foreach ($extra_prescriptions as $extra)
+                                    @forelse($extra->data_active->all() as $extra_data)
+                                        <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $extra_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $extra_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $extra_data->id }}, '{{ $extra_data->dm->drug_concat() }}', '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')" --}}
+                                            wire:key="select-rx-item-{{ $loop->iteration }}">
+                                            <td class="text-xs">
+                                                {{ date('Y-m-d', strtotime($extra_data->updated_at)) }}
+                                                {{ date('h:i A', strtotime($extra_data->updated_at)) }}
+                                            </td>
+                                            <td class="text-xs cursor-pointer"
+                                                onclick="select_rx_item({{ $extra_data->id }}, `{{ $extra_data->dm->drug_concat() }}`, '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')">
+                                                {{ $extra_data->dm->drug_concat() }}</td>
+                                            <td class="text-xs">
+                                                @switch($extra_data->order_type)
+                                                    @case('g24')
+                                                    @case('G24')
+                                                        <div class="flex tooltip" data-tip="Good For 24 Hrs"><i
+                                                                class="las la-2g la-hourglass-start"></i>
+                                                            <div class="badge badge-error badge-xs">{{ $extra_data->qty }}
+                                                            </div>
+                                                        </div>
+                                                    @break
+
+                                                    @case('or')
+                                                    @case('Or')
+
+                                                    @case('OR')
+                                                        <div class="flex tooltip" data-tip="For Operating Use"><i
+                                                                class="las la-2g la-syringe"></i>
+                                                            <div class="badge badge-secondary badge-xs">
+                                                                {{ $extra_data->qty }}</div>
+                                                        </div>
+                                                    @break
+
+                                                    @default
+                                                        <div class="flex tooltip" data-tip="BASIC"><i
+                                                                class="las la-2g la-prescription"></i>
+                                                            <div class="badge badge-accent badge-xs">{{ $extra_data->qty }}</div>
+                                                        </div>
+                                                @endswitch
+                                            </td>
+                                            <td class="text-xs">{{ $extra_data->remark }}</td>
+                                            <td class="text-xs">{{ $extra->employee->fullname() }}</td>
+                                            <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
+                                                    onclick="select_rx_item_inactive({{ $extra_data->id }}, '{{ $extra_data->dm->drug_concat() }}', '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')"
+                                                    wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        @endforelse
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <input type="checkbox" id="prescription_lists" class="modal-toggle" />
+                <div class="modal">
+                    <div class="w-11/12 max-w-5xl modal-box">
+                        <label for="prescription_lists" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
+                        <h3 class="text-lg font-bold">Prescriptions</h3>
+                        <table class="w-full rounded-lg shadow-md table-compact">
+                            <thead class="sticky top-0 bg-gray-200 border-b">
                                 <tr>
-                                    <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
+                                    <td class="text-xs">Order at</td>
+                                    <td class="text-xs">Description</td>
+                                    <td class="text-xs">QTY</td>
+                                    <td class="text-xs">Remarks</td>
+                                    <td class="text-xs">Prescribed by</td>
+                                    <td class="text-xs">Status</td>
+                                    <td class="text-xs">Deactivate</td>
                                 </tr>
-                            @endforelse
-                        @empty
-                        @endforelse
-                        @foreach ($extra_prescriptions as $extra)
-                            @forelse($extra->data_active->all() as $extra_data)
-                                <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $extra_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $extra_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $extra_data->id }}, '{{ $extra_data->dm->drug_concat() }}', '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')" --}}
-                                    wire:key="select-rx-item-{{ $loop->iteration }}">
-                                    <td class="text-xs">
-                                        {{ date('Y-m-d', strtotime($extra_data->updated_at)) }}
-                                        {{ date('h:i A', strtotime($extra_data->updated_at)) }}
-                                    </td>
-                                    <td class="text-xs cursor-pointer"
-                                        onclick="select_rx_item({{ $extra_data->id }}, `{{ $extra_data->dm->drug_concat() }}`, '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')">
-                                        {{ $extra_data->dm->drug_concat() }}</td>
-                                    <td class="text-xs">{{ $extra_data->qty }}</td>
-                                    <td class="text-xs">{{ $extra_data->remark }}</td>
-                                    <td class="text-xs">{{ $extra->employee->fullname() }}</td>
-                                    <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
-                                            onclick="select_rx_item_inactive({{ $extra_data->id }}, '{{ $extra_data->dm->drug_concat() }}', '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')"
-                                            wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button>
-                                    </td>
-                                </tr>
-                            @empty
-                            @endforelse
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <input type="checkbox" id="prescription_lists" class="modal-toggle" />
-    <div class="modal">
-        <div class="w-11/12 max-w-5xl modal-box">
-            <label for="prescription_lists" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
-            <h3 class="text-lg font-bold">Prescriptions</h3>
-            <table class="w-full rounded-lg shadow-md table-compact">
-                <thead class="sticky top-0 bg-gray-200 border-b">
-                    <tr>
-                        <td class="text-xs">Order at</td>
-                        <td class="text-xs">Description</td>
-                        <td class="text-xs">QTY</td>
-                        <td class="text-xs">Remarks</td>
-                        <td class="text-xs">Prescribed by</td>
-                        <td class="text-xs">Status</td>
-                        <td class="text-xs">Deactivate</td>
-                    </tr>
-                </thead>
-                <tbody class="bg-white">
-                    @forelse($active_prescription_all as $presc_all)
-                        @forelse($presc_all->data->all() as $presc_all_data)
-                            <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $presc_all_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $presc_all_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $presc_all_data->id }}, '{{ $presc_all_data->dm->drug_concat() }}', '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')" --}}
-                                wire:key="select-rx-item-{{ $loop->iteration }}">
-                                <td class="text-xs">
-                                    {{ date('Y-m-d', strtotime($presc_all_data->updated_at)) }}
-                                    {{ date('h:i A', strtotime($presc_all_data->updated_at)) }}
-                                </td>
-                                <td class="text-xs cursor-pointer"
-                                    onclick="select_rx_item({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')">
-                                    {{ $presc_all_data->dm->drug_concat() }}</td>
-                                <td class="text-xs">{{ $presc_all_data->qty }}</td>
-                                <td class="text-xs">{{ $presc_all_data->remark }}</td>
-                                <td class="text-xs">{{ $presc_all_data->employee->fullname() }}</td>
-                                <td class="text-xs">
-                                    @if ($presc_all_data->stat == 'A')
-                                        <div class="badge badge-primary">{{ $presc_all_data->stat }}</div>
-                                    @else
-                                        <div class="badge badge-error">{{ $presc_all_data->stat }}</div>
-                                    @endif
-                                </td>
-                                <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
-                                        onclick="select_rx_item_inactive({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')"
-                                        wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button></td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
-                            </tr>
-                        @endforelse
-                    @empty
-                    @endforelse
-                    @foreach ($extra_prescriptions_all as $extra_all)
-                        @forelse($extra_all->data->all() as $extra_all_data)
-                            <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $extra_all_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $extra_all_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $extra_all_data->id }}, '{{ $extra_all_data->dm->drug_concat() }}', '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')" --}}
-                                wire:key="select-rx-item-{{ $loop->iteration }}">
-                                <td class="text-xs">
-                                    {{ date('Y-m-d', strtotime($extra_all_data->updated_at)) }}
-                                    {{ date('h:i A', strtotime($extra_all_data->updated_at)) }}
-                                </td>
-                                <td class="text-xs cursor-pointer"
-                                    onclick="select_rx_item({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')">
-                                    {{ $extra_all_data->dm->drug_concat() }}</td>
-                                <td class="text-xs">{{ $extra_all_data->qty }}</td>
-                                <td class="text-xs">{{ $extra_all_data->remark }}</td>
-                                <td class="text-xs">{{ $extra_all->employee->fullname() }}</td>
-                                <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
-                                        onclick="select_rx_item_inactive({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')"
-                                        wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button></td>
-                            </tr>
-                        @empty
-                        @endforelse
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
+                            </thead>
+                            <tbody class="bg-white">
+                                @forelse($active_prescription_all as $presc_all)
+                                    @forelse($presc_all->data->all() as $presc_all_data)
+                                        <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $presc_all_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $presc_all_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $presc_all_data->id }}, '{{ $presc_all_data->dm->drug_concat() }}', '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')" --}}
+                                            wire:key="select-rx-item-{{ $loop->iteration }}">
+                                            <td class="text-xs">
+                                                {{ date('Y-m-d', strtotime($presc_all_data->updated_at)) }}
+                                                {{ date('h:i A', strtotime($presc_all_data->updated_at)) }}
+                                            </td>
+                                            <td class="text-xs cursor-pointer"
+                                                onclick="select_rx_item({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')">
+                                                {{ $presc_all_data->dm->drug_concat() }}</td>
+                                            <td class="text-xs">
+                                                @switch($presc_all_data->order_type)
+                                                    @case('g24')
+                                                    @case('G24')
+                                                        <div class="flex tooltip" data-tip="Good For 24 Hrs"><i
+                                                                class="las la-2g la-hourglass-start"></i>
+                                                            <div class="badge badge-error badge-xs">{{ $presc_all_data->qty }}
+                                                            </div>
+                                                        </div>
+                                                    @break
 
-    <input type="checkbox" id="summary" class="modal-toggle" />
-    <div class="modal" wire:ignore>
-        <div class="w-11/12 max-w-5xl modal-box">
-            <label for="summary" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
-            <h3 class="text-lg font-bold">Summary of Issued Drugs and Meds</h3>
-            <table class="w-full rounded-lg shadow-md table-compact" id="table">
-                <thead class="sticky top-0 bg-gray-200 border-b">
-                    <tr>
-                        <td class="text-xs">Item Description</td>
-                        <td class="text-xs">Qty Issued</td>
-                        <td class="text-xs">Time of last issuance</td>
-                    </tr>
-                </thead>
-                <tbody class="bg-white">
-                    @forelse($summaries as $sum)
-                        <tr class="hover">
-                            <td class="text-xs">{{ $sum->drug_concat }}</td>
-                            <td class="text-xs">{{ $sum->qty_issued }}</td>
-                            <td class="text-xs">{{ $sum->last_issue }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-@push('scripts')
-    <script>
-        function sortTable(n) {
-            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            table = document.getElementById("table");
-            switching = true;
-            // Set the sorting direction to ascending:
-            dir = "asc";
-            /* Make a loop that will continue until
-            no switching has been done: */
-            while (switching) {
-                // Start by saying: no switching is done:
-                switching = false;
-                rows = table.rows;
-                /* Loop through all table rows (except the
-                first, which contains table headers): */
-                for (i = 1; i < (rows.length - 1); i++) {
-                    // Start by saying there should be no switching:
-                    shouldSwitch = false;
-                    /* Get the two elements you want to compare,
-                    one from current row and one from the next: */
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-                    /* Check if the two rows should switch place,
-                    based on the direction, asc or desc: */
-                    if (dir == "asc") {
-                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                            shouldSwitch = true;
-                            break;
-                        }
-                    } else if (dir == "desc") {
-                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                            // If so, mark as a switch and break the loop:
-                            shouldSwitch = true;
-                            break;
-                        }
-                    }
-                }
-                if (shouldSwitch) {
-                    /* If a switch has been marked, make the switch
-                    and mark that a switch has been done: */
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    // Each time a switch is done, increase this count by 1:
-                    switchcount++;
-                } else {
-                    /* If no switching has been done AND the direction is "asc",
-                    set the direction to "desc" and run the while loop again. */
-                    if (switchcount == 0 && dir == "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
-        }
+                                                    @case('or')
+                                                    @case('Or')
 
-        $('input[name="docointkey"]').change(function() {
-            if ($(this).is(':checked')) {
-                $('.' + this.className).prop('checked', true);
-                var myArray = []
-                var value = ''
-                $('input[name="docointkey"]:checked').each(function() {
-                    value = $(this).val();
-                    myArray.push(value)
-                })
-                @this.set('selected_items', myArray);
-            }
-        });
+                                                    @case('OR')
+                                                        <div class="flex tooltip" data-tip="For Operating Use"><i
+                                                                class="las la-2g la-syringe"></i>
+                                                            <div class="badge badge-secondary badge-xs">
+                                                                {{ $presc_all_data->qty }}</div>
+                                                        </div>
+                                                    @break
 
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && e.key == 'c') {
-                e.preventDefault();
-                $('#chrgBtn').click();
-            }
-        });
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && e.key == 'x') {
-                e.preventDefault();
-                $('#delBtn').click();
-            }
-        });
-        document.addEventListener('keydown', e => {
-            if (e.ctrlKey && e.key == 'i') {
-                e.preventDefault();
-                $('#issBtn').click();
-            }
-        });
+                                                    @default
+                                                        <div class="flex tooltip" data-tip="BASIC"><i
+                                                                class="las la-2g la-prescription"></i>
+                                                            <div class="badge badge-accent badge-xs">{{ $presc_all_data->qty }}</div>
+                                                        </div>
+                                                @endswitch
+                                            </td>
+                                            <td class="text-xs">{{ $presc_all_data->remark }}</td>
+                                            <td class="text-xs">{{ $presc_all_data->employee->fullname() }}</td>
+                                            <td class="text-xs">
+                                                @if ($presc_all_data->stat == 'A')
+                                                    <div class="badge badge-primary">{{ $presc_all_data->stat }}</div>
+                                                @else
+                                                    <div class="badge badge-error">{{ $presc_all_data->stat }}</div>
+                                                @endif
+                                            </td>
+                                            <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
+                                                    onclick="select_rx_item_inactive({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')"
+                                                    wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button></td>
+                                        </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
+                                            </tr>
+                                        @endforelse
+                                        @empty
+                                        @endforelse
+                                        @foreach ($extra_prescriptions_all as $extra_all)
+                                            @forelse($extra_all->data->all() as $extra_all_data)
+                                                <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $extra_all_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $extra_all_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $extra_all_data->id }}, '{{ $extra_all_data->dm->drug_concat() }}', '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')" --}}
+                                                    wire:key="select-rx-item-{{ $loop->iteration }}">
+                                                    <td class="text-xs">
+                                                        {{ date('Y-m-d', strtotime($extra_all_data->updated_at)) }}
+                                                        {{ date('h:i A', strtotime($extra_all_data->updated_at)) }}
+                                                    </td>
+                                                    <td class="text-xs cursor-pointer"
+                                                        onclick="select_rx_item({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')">
+                                                        {{ $extra_all_data->dm->drug_concat() }}</td>
+                                                    <td class="text-xs">
+                                                        @switch($extra_all_data->order_type)
+                                                            @case('g24')
+                                                            @case('G24')
+                                                                <div class="flex tooltip" data-tip="Good For 24 Hrs"><i
+                                                                        class="las la-2g la-hourglass-start"></i>
+                                                                    <div class="badge badge-error badge-xs">{{ $extra_all_data->qty }}
+                                                                    </div>
+                                                                </div>
+                                                            @break
 
-        var data;
-        $(document).ready(function() {
-            $("#generic").trigger("change");
+                                                            @case('or')
+                                                            @case('Or')
 
-            $("#generic").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                var value_select = $('#filter_charge_code').select2('val');
+                                                            @case('OR')
+                                                                <div class="flex tooltip" data-tip="For Operating Use"><i
+                                                                        class="las la-2g la-syringe"></i>
+                                                                    <div class="badge badge-secondary badge-xs">
+                                                                        {{ $extra_all_data->qty }}</div>
+                                                                </div>
+                                                            @break
 
-                var myArray = ['DRUMA', 'DRUMAA', 'DRUMAB', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMR',
-                    'DRUMS'
-                ];
-                $.each(value_select, function(index, value_row) {
-                    const myArray_index = myArray.indexOf(value_row);
-                    const x = myArray.splice(myArray_index, 1);
-                });
+                                                            @default
+                                                                <div class="flex tooltip" data-tip="BASIC"><i
+                                                                        class="las la-2g la-prescription"></i>
+                                                                    <div class="badge badge-accent badge-xs">{{ $extra_all_data->qty }}</div>
+                                                                </div>
+                                                        @endswitch
+                                                    </td>
+                                                    <td class="text-xs">{{ $extra_all_data->remark }}</td>
+                                                    <td class="text-xs">{{ $extra_all->employee->fullname() }}</td>
+                                                    <td class="text-xs cursor-pointer"><button class="btn btn-xs btn-error"
+                                                            onclick="select_rx_item_inactive({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')"
+                                                            wire:loading.attr="disabled"><i class="las la-sliders-h"></i></button></td>
+                                                </tr>
+                                                @empty
+                                                @endforelse
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
 
-                $("#stockTableBody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
+                            <input type="checkbox" id="summary" class="modal-toggle" />
+                            <div class="modal" wire:ignore>
+                                <div class="w-11/12 max-w-5xl modal-box">
+                                    <label for="summary" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
+                                    <h3 class="text-lg font-bold">Summary of Issued Drugs and Meds</h3>
+                                    <table class="w-full rounded-lg shadow-md table-compact" id="table">
+                                        <thead class="sticky top-0 bg-gray-200 border-b">
+                                            <tr>
+                                                <td class="text-xs">Item Description</td>
+                                                <td class="text-xs">Qty Issued</td>
+                                                <td class="text-xs">Time of last issuance</td>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white">
+                                            @forelse($summaries as $sum)
+                                                <tr class="hover">
+                                                    <td class="text-xs">{{ $sum->drug_concat }}</td>
+                                                    <td class="text-xs">{{ $sum->qty_issued }}</td>
+                                                    <td class="text-xs">{{ $sum->last_issue }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5"><i class="las la-lg la-ban"></i> No record found!</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        @push('scripts')
+                            <script>
+                                function sortTable(n) {
+                                    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                                    table = document.getElementById("table");
+                                    switching = true;
+                                    // Set the sorting direction to ascending:
+                                    dir = "asc";
+                                    /* Make a loop that will continue until
+                                    no switching has been done: */
+                                    while (switching) {
+                                        // Start by saying: no switching is done:
+                                        switching = false;
+                                        rows = table.rows;
+                                        /* Loop through all table rows (except the
+                                        first, which contains table headers): */
+                                        for (i = 1; i < (rows.length - 1); i++) {
+                                            // Start by saying there should be no switching:
+                                            shouldSwitch = false;
+                                            /* Get the two elements you want to compare,
+                                            one from current row and one from the next: */
+                                            x = rows[i].getElementsByTagName("TD")[n];
+                                            y = rows[i + 1].getElementsByTagName("TD")[n];
+                                            /* Check if the two rows should switch place,
+                                            based on the direction, asc or desc: */
+                                            if (dir == "asc") {
+                                                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                                    // If so, mark as a switch and break the loop:
+                                                    shouldSwitch = true;
+                                                    break;
+                                                }
+                                            } else if (dir == "desc") {
+                                                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                                    // If so, mark as a switch and break the loop:
+                                                    shouldSwitch = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (shouldSwitch) {
+                                            /* If a switch has been marked, make the switch
+                                            and mark that a switch has been done: */
+                                            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                            switching = true;
+                                            // Each time a switch is done, increase this count by 1:
+                                            switchcount++;
+                                        } else {
+                                            /* If no switching has been done AND the direction is "asc",
+                                            set the direction to "desc" and run the while loop again. */
+                                            if (switchcount == 0 && dir == "asc") {
+                                                dir = "desc";
+                                                switching = true;
+                                            }
+                                        }
+                                    }
+                                }
 
-                if (value_select.length === 0) {
-                    myArray = [];
-                }
+                                $('input[name="docointkey"]').change(function() {
+                                    if ($(this).is(':checked')) {
+                                        $('.' + this.className).prop('checked', true);
+                                        var myArray = []
+                                        var value = ''
+                                        $('input[name="docointkey"]:checked').each(function() {
+                                            value = $(this).val();
+                                            myArray.push(value)
+                                        })
+                                        @this.set('selected_items', myArray);
+                                    }
+                                });
 
-                $.each(myArray, function(index, value_row_2) {
-                    $('.' + value_row_2).hide();
-                });
-            });
+                                document.addEventListener('keydown', e => {
+                                    if (e.ctrlKey && e.key == 'c') {
+                                        e.preventDefault();
+                                        $('#chrgBtn').click();
+                                    }
+                                });
+                                document.addEventListener('keydown', e => {
+                                    if (e.ctrlKey && e.key == 'x') {
+                                        e.preventDefault();
+                                        $('#delBtn').click();
+                                    }
+                                });
+                                document.addEventListener('keydown', e => {
+                                    if (e.ctrlKey && e.key == 'i') {
+                                        e.preventDefault();
+                                        $('#issBtn').click();
+                                    }
+                                });
 
-            $("#generic").on("change", function() {
-                if (@this.rx_id) {
-                    @this.rx_id = null;
-                    @this.empid = null;
-                }
-            })
+                                var data;
+                                $(document).ready(function() {
+                                    $("#generic").trigger("change");
 
-            $('#filter_charge_code').on('change', function() {
-                var value = $("#generic").val().toLowerCase();
-                var value_select = $('#filter_charge_code').select2('val');
+                                    $("#generic").on("keyup", function() {
+                                        var value = $(this).val().toLowerCase();
+                                        var value_select = $('#filter_charge_code').select2('val');
 
-                data = $('#filter_charge_code').select2('data');
+                                        var myArray = ['DRUMA', 'DRUMAA', 'DRUMAB', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMR',
+                                            'DRUMS'
+                                        ];
+                                        $.each(value_select, function(index, value_row) {
+                                            const myArray_index = myArray.indexOf(value_row);
+                                            const x = myArray.splice(myArray_index, 1);
+                                        });
 
-                var myArray = ['DRUMA', 'DRUMAA', 'DRUMAB', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMR',
-                    'DRUMS'
-                ];
+                                        $("#stockTableBody tr").filter(function() {
+                                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                                        });
 
-                $.each(value_select, function(index, value_row) {
-                    const myArray_index = myArray.indexOf(value_row);
-                    const x = myArray.splice(myArray_index, 1);
-                });
+                                        if (value_select.length === 0) {
+                                            myArray = [];
+                                        }
 
-                $("#stockTableBody tr").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                });
+                                        $.each(myArray, function(index, value_row_2) {
+                                            $('.' + value_row_2).hide();
+                                        });
+                                    });
 
-                if (value_select.length === 0) {
-                    myArray = [];
-                }
+                                    $("#generic").on("change", function() {
+                                        if (@this.rx_id) {
+                                            @this.rx_id = null;
+                                            @this.empid = null;
+                                        }
+                                    })
 
-                $.each(myArray, function(index, value_row_2) {
-                    $('.' + value_row_2).hide();
-                });
-            });
+                                    $('#filter_charge_code').on('change', function() {
+                                        var value = $("#generic").val().toLowerCase();
+                                        var value_select = $('#filter_charge_code').select2('val');
 
-            grand_total();
-        });
+                                        data = $('#filter_charge_code').select2('data');
 
-        function grand_total() {
-            var sum = 0;
-            $(".total").each(function() {
-                sum += parseFloat($(this).text().replace(',', '').replace(',', ''));
-            });
-            $('#sum').text(number_format(sum, 2, '.', ','));
-        }
+                                        var myArray = ['DRUMA', 'DRUMAA', 'DRUMAB', 'DRUMB', 'DRUMC', 'DRUME', 'DRUMK', 'DRUMR',
+                                            'DRUMS'
+                                        ];
 
-        $('.select2').select2({
-            width: 'resolve',
-            placeholder: 'Fund Source',
-        });
+                                        $.each(value_select, function(index, value_row) {
+                                            const myArray_index = myArray.indexOf(value_row);
+                                            const x = myArray.splice(myArray_index, 1);
+                                        });
 
-        function charge_items() {
-            Swal.fire({
-                title: 'Are you sure?',
-                showCancelButton: true,
-                confirmButtonText: 'Continue',
-                html: `
+                                        $("#stockTableBody tr").filter(function() {
+                                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                                        });
+
+                                        if (value_select.length === 0) {
+                                            myArray = [];
+                                        }
+
+                                        $.each(myArray, function(index, value_row_2) {
+                                            $('.' + value_row_2).hide();
+                                        });
+                                    });
+
+                                    grand_total();
+                                });
+
+                                function grand_total() {
+                                    var sum = 0;
+                                    $(".total").each(function() {
+                                        sum += parseFloat($(this).text().replace(',', '').replace(',', ''));
+                                    });
+                                    $('#sum').text(number_format(sum, 2, '.', ','));
+                                }
+
+                                $('.select2').select2({
+                                    width: 'resolve',
+                                    placeholder: 'Fund Source',
+                                });
+
+                                function charge_items() {
+                                    Swal.fire({
+                                        title: 'Are you sure?',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Continue',
+                                        html: `
                         <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
                         <div class="mt-2 text-slate-500" id="inf">Create charge slip for all pending items. Continue?</div>
                     `,
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    Livewire.emit('charge_items')
-                }
-            })
-        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            Livewire.emit('charge_items')
+                                        }
+                                    })
+                                }
 
-        function delete_item(item_id) {
-            Swal.fire({
-                title: 'Are you sure?',
-                showCancelButton: true,
-                confirmButtonText: 'Continue',
-                html: `
+                                function delete_item(item_id) {
+                                    Swal.fire({
+                                        title: 'Are you sure?',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Continue',
+                                        html: `
                 <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-error"></i>
                 <div class="mt-2 text-slate-500" id="inf">You can only delete pending items. All deleted items cannot be recovered. Continue?</div>
             `,
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    Livewire.emit('delete_item')
-                }
-            })
-        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            Livewire.emit('delete_item')
+                                        }
+                                    })
+                                }
 
-        @if ($toecode == 'OPD' or $toecode == 'WALKN')
-            function issue_order() {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Continue',
-                    html: `
+                                @if ($toecode == 'OPD' or $toecode == 'WALKN')
+                                    function issue_order() {
+                                        Swal.fire({
+                                            title: 'Are you sure?',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Continue',
+                                            html: `
                         <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
                         <div class="mt-2 text-slate-500" id="inf">Issue all charged items. Continue?</div>
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
@@ -799,42 +911,42 @@
                             </div>
                         </div>
                         `,
-                    showCancelButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
+                                            showCancelButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => {
 
-                        const ems = Swal.getHtmlContainer().querySelector('#ems')
-                        const maip = Swal.getHtmlContainer().querySelector('#maip')
-                        const wholesale = Swal.getHtmlContainer().querySelector('#wholesale')
-                        const caf = Swal.getHtmlContainer().querySelector('#caf')
-                        const is_ris = Swal.getHtmlContainer().querySelector('#is_ris')
-                        const remarks = Swal.getHtmlContainer().querySelector('#remarks')
-                        const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
-                        const pcso = Swal.getHtmlContainer().querySelector('#pcso')
-                        const phic = Swal.getHtmlContainer().querySelector('#phic')
-                        const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('ems', ems.checked);
-                        @this.set('maip', maip.checked);
-                        @this.set('wholesale', wholesale.checked);
-                        @this.set('konsulta', konsulta.checked);
-                        @this.set('pcso', pcso.checked);
-                        @this.set('caf', caf.checked);
-                        @this.set('is_ris', is_ris.checked);
-                        @this.set('phic', phic.checked);
-                        @this.set('deptcode', deptcode.value);
-                        Livewire.emit('issue_order')
-                    }
-                })
-            }
+                                                const ems = Swal.getHtmlContainer().querySelector('#ems')
+                                                const maip = Swal.getHtmlContainer().querySelector('#maip')
+                                                const wholesale = Swal.getHtmlContainer().querySelector('#wholesale')
+                                                const caf = Swal.getHtmlContainer().querySelector('#caf')
+                                                const is_ris = Swal.getHtmlContainer().querySelector('#is_ris')
+                                                const remarks = Swal.getHtmlContainer().querySelector('#remarks')
+                                                const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
+                                                const pcso = Swal.getHtmlContainer().querySelector('#pcso')
+                                                const phic = Swal.getHtmlContainer().querySelector('#phic')
+                                                const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
+                                            }
+                                        }).then((result) => {
+                                            /* Read more about isConfirmed, isDenied below */
+                                            if (result.isConfirmed) {
+                                                @this.set('ems', ems.checked);
+                                                @this.set('maip', maip.checked);
+                                                @this.set('wholesale', wholesale.checked);
+                                                @this.set('konsulta', konsulta.checked);
+                                                @this.set('pcso', pcso.checked);
+                                                @this.set('caf', caf.checked);
+                                                @this.set('is_ris', is_ris.checked);
+                                                @this.set('phic', phic.checked);
+                                                @this.set('deptcode', deptcode.value);
+                                                Livewire.emit('issue_order')
+                                            }
+                                        })
+                                    }
 
-            function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
-                exp_date) {
-                Swal.fire({
-                    html: `
+                                    function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
+                                        exp_date) {
+                                        Swal.fire({
+                                            html: `
                         <div class="text-xl font-bold">` + drug + `</div>
                         <div class="flex w-full space-x-3">
                             <div class="w-full mb-3 form-control">
@@ -863,54 +975,54 @@
                             <textarea id="remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                         </div>
                             `,
-                    showCancelButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
-                        const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
-                        const total = Swal.getHtmlContainer().querySelector('#total')
+                                            showCancelButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => {
+                                                const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
+                                                const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
+                                                const total = Swal.getHtmlContainer().querySelector('#total')
 
-                        order_qty.focus();
-                        unit_price.value = up;
-                        total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
+                                                order_qty.focus();
+                                                unit_price.value = up;
+                                                total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
 
-                        order_qty.addEventListener('input', () => {
-                            total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                .value)
-                        })
+                                                order_qty.addEventListener('input', () => {
+                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
+                                                        .value)
+                                                })
 
-                        unit_price.addEventListener('input', () => {
-                            total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                .value)
-                        })
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('unit_price', unit_price.value)
-                        @this.set('order_qty', order_qty.value)
+                                                unit_price.addEventListener('input', () => {
+                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
+                                                        .value)
+                                                })
+                                            }
+                                        }).then((result) => {
+                                            /* Read more about isConfirmed, isDenied below */
+                                            if (result.isConfirmed) {
+                                                @this.set('unit_price', unit_price.value)
+                                                @this.set('order_qty', order_qty.value)
 
-                        @this.set('remarks', remarks.value);
+                                                @this.set('remarks', remarks.value);
 
-                        Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
-                            available, exp_date)
-                    }
-                });
-            }
+                                                Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
+                                                    available, exp_date)
+                                            }
+                                        });
+                                    }
 
-            function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
+                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
 
-                var search = drug.split(",");
-                @this.set('rx_id', rx_id)
-                @this.set('generic', search[0])
-                @this.set('rx_dmdcomb', rx_dmdcomb);
-                @this.set('rx_dmdctr', rx_dmdctr);
-                @this.set('empid', empid);
-                // $("#generic").val(search[0]);
-                // $("#generic").trigger('keyup');
+                                        var search = drug.split(",");
+                                        @this.set('rx_id', rx_id)
+                                        @this.set('generic', search[0])
+                                        @this.set('rx_dmdcomb', rx_dmdcomb);
+                                        @this.set('rx_dmdctr', rx_dmdctr);
+                                        @this.set('empid', empid);
+                                        // $("#generic").val(search[0]);
+                                        // $("#generic").trigger('keyup');
 
-                Swal.fire({
-                    html: `
+                                        Swal.fire({
+                                            html: `
                         <div class="text-xl font-bold">` + drug + `</div>
                         <div class="flex w-full space-x-3">
                             <div class="w-full mb-3 form-control">
@@ -931,65 +1043,65 @@
                             <textarea id="rx_remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                         </div>
                     `,
-                    showCancelButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const rx_order_qty = Swal.getHtmlContainer().querySelector('#rx_order_qty')
-                        const rx_charge_code = Swal.getHtmlContainer().querySelector('#rx_charge_code')
-                        // const rx_sc = Swal.getHtmlContainer().querySelector('#rx_sc')
-                        // const rx_ems = Swal.getHtmlContainer().querySelector('#rx_ems')
-                        // const rx_maip = Swal.getHtmlContainer().querySelector('#rx_maip')
-                        // const rx_wholesale = Swal.getHtmlContainer().querySelector('#rx_wholesale')
-                        // const rx_pay = Swal.getHtmlContainer().querySelector('#rx_pay')
-                        // const rx_medicare = Swal.getHtmlContainer().querySelector('#rx_medicare')
-                        // const rx_service = Swal.getHtmlContainer().querySelector('#rx_service')
-                        // const rx_caf = Swal.getHtmlContainer().querySelector('#rx_caf')
-                        // const rx_govt = Swal.getHtmlContainer().querySelector('#rx_govt')
-                        // const rx_is_ris = Swal.getHtmlContainer().querySelector('#rx_is_ris')
-                        const rx_remarks = Swal.getHtmlContainer().querySelector('#rx_remarks')
+                                            showCancelButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => {
+                                                const rx_order_qty = Swal.getHtmlContainer().querySelector('#rx_order_qty')
+                                                const rx_charge_code = Swal.getHtmlContainer().querySelector('#rx_charge_code')
+                                                // const rx_sc = Swal.getHtmlContainer().querySelector('#rx_sc')
+                                                // const rx_ems = Swal.getHtmlContainer().querySelector('#rx_ems')
+                                                // const rx_maip = Swal.getHtmlContainer().querySelector('#rx_maip')
+                                                // const rx_wholesale = Swal.getHtmlContainer().querySelector('#rx_wholesale')
+                                                // const rx_pay = Swal.getHtmlContainer().querySelector('#rx_pay')
+                                                // const rx_medicare = Swal.getHtmlContainer().querySelector('#rx_medicare')
+                                                // const rx_service = Swal.getHtmlContainer().querySelector('#rx_service')
+                                                // const rx_caf = Swal.getHtmlContainer().querySelector('#rx_caf')
+                                                // const rx_govt = Swal.getHtmlContainer().querySelector('#rx_govt')
+                                                // const rx_is_ris = Swal.getHtmlContainer().querySelector('#rx_is_ris')
+                                                const rx_remarks = Swal.getHtmlContainer().querySelector('#rx_remarks')
 
-                        $.each(data, function(index, value) {
-                            if (index == 0) {
-                                rx_charge_code.options[rx_charge_code.options.length] = new Option(
-                                    value[
-                                        'text'], value['id'], true, true);
-                            } else {
-                                rx_charge_code.options[rx_charge_code.options.length] = new Option(
-                                    value[
-                                        'text'], value['id']);
-                            }
-                        });
-                        rx_order_qty.focus();
-                        rx_order_qty.value = rx_qty;
+                                                $.each(data, function(index, value) {
+                                                    if (index == 0) {
+                                                        rx_charge_code.options[rx_charge_code.options.length] = new Option(
+                                                            value[
+                                                                'text'], value['id'], true, true);
+                                                    } else {
+                                                        rx_charge_code.options[rx_charge_code.options.length] = new Option(
+                                                            value[
+                                                                'text'], value['id']);
+                                                    }
+                                                });
+                                                rx_order_qty.focus();
+                                                rx_order_qty.value = rx_qty;
 
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('order_qty', rx_order_qty.value)
+                                            }
+                                        }).then((result) => {
+                                            /* Read more about isConfirmed, isDenied below */
+                                            if (result.isConfirmed) {
+                                                @this.set('order_qty', rx_order_qty.value)
 
-                        @this.set('rx_charge_code', rx_charge_code.value);
-                        // @this.set('ems', rx_ems.checked);
-                        // @this.set('maip', rx_maip.checked);
-                        // @this.set('wholesale', rx_wholesale.checked);
-                        // @this.set('konsulta', rx_konsulta.checked);
-                        // @this.set('pcso', rx_pcso.checked);
-                        // @this.set('phic', rx_phic.checked);
-                        // @this.set('caf', rx_caf.checked);
-                        // @this.set('is_ris', rx_is_ris.checked);
-                        @this.set('remarks', rx_remarks.value);
+                                                @this.set('rx_charge_code', rx_charge_code.value);
+                                                // @this.set('ems', rx_ems.checked);
+                                                // @this.set('maip', rx_maip.checked);
+                                                // @this.set('wholesale', rx_wholesale.checked);
+                                                // @this.set('konsulta', rx_konsulta.checked);
+                                                // @this.set('pcso', rx_pcso.checked);
+                                                // @this.set('phic', rx_phic.checked);
+                                                // @this.set('caf', rx_caf.checked);
+                                                // @this.set('is_ris', rx_is_ris.checked);
+                                                @this.set('remarks', rx_remarks.value);
 
-                        Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
-                    }
-                });
-            }
-        @else
-            function issue_order() {
-                Swal.fire({
-                    title: 'Are you sure?',
-                    showCancelButton: true,
-                    confirmButtonText: 'Continue',
-                    html: `
+                                                Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
+                                            }
+                                        });
+                                    }
+                                @else
+                                    function issue_order() {
+                                        Swal.fire({
+                                            title: 'Are you sure?',
+                                            showCancelButton: true,
+                                            confirmButtonText: 'Continue',
+                                            html: `
                         <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
                         <div class="mt-2 text-slate-500" id="inf">Issue all charged items. Continue?</div>
                         <div class="grid grid-cols-4 gap-2 px-2 mt-3 gap-y-2">
@@ -1005,26 +1117,26 @@
                             </div>
                         </div>
                     `,
-                    showCancelButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const na = Swal.getHtmlContainer().querySelector('#na')
-                    }
+                                            showCancelButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => {
+                                                const na = Swal.getHtmlContainer().querySelector('#na')
+                                            }
 
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('bnb', na.checked);
-                        Livewire.emit('issue_order')
-                    }
-                })
-            }
+                                        }).then((result) => {
+                                            /* Read more about isConfirmed, isDenied below */
+                                            if (result.isConfirmed) {
+                                                @this.set('bnb', na.checked);
+                                                Livewire.emit('issue_order')
+                                            }
+                                        })
+                                    }
 
-            function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
-                exp_date) {
-                Swal.fire({
-                    input: 'number',
-                    html: `
+                                    function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
+                                        exp_date) {
+                                        Swal.fire({
+                                            input: 'number',
+                                            html: `
                     <div class="text-xl font-bold">` + drug + `</div>
                     <div class="flex w-full space-x-3">
                         <div class="w-full mb-3 form-control">
@@ -1053,104 +1165,104 @@
                         <textarea id="remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                     </div>
                 `,
-                    showCancelButton: true,
-                    showCloseButton: true,
-                    confirmButtonText: `Confirm`,
-                    didOpen: () => {
-                        const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
-                        const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
-                        const total = Swal.getHtmlContainer().querySelector('#total')
+                                            showCancelButton: true,
+                                            showCloseButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => {
+                                                const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
+                                                const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
+                                                const total = Swal.getHtmlContainer().querySelector('#total')
 
-                        order_qty.focus();
-                        unit_price.value = up;
-                        total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
+                                                order_qty.focus();
+                                                unit_price.value = up;
+                                                total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
 
-                        order_qty.addEventListener('input', () => {
-                            total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                .value)
-                        })
+                                                order_qty.addEventListener('input', () => {
+                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
+                                                        .value)
+                                                })
 
-                        unit_price.addEventListener('input', () => {
-                            total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                .value)
-                        })
+                                                unit_price.addEventListener('input', () => {
+                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
+                                                        .value)
+                                                })
 
-                        order_qty.addEventListener("keypress", function(event) {
-                            if (event.key === "Enter") {
-                                event.preventDefault();
-                                @this.set('unit_price', unit_price.value)
-                                @this.set('order_qty', order_qty.value)
-                                @this.set('remarks', remarks.value);
+                                                order_qty.addEventListener("keypress", function(event) {
+                                                    if (event.key === "Enter") {
+                                                        event.preventDefault();
+                                                        @this.set('unit_price', unit_price.value)
+                                                        @this.set('order_qty', order_qty.value)
+                                                        @this.set('remarks', remarks.value);
 
-                                Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte,
-                                    id, available, exp_date)
+                                                        Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte,
+                                                            id, available, exp_date)
 
-                                Swal.close()
+                                                        Swal.close()
 
-                            }
-                        });
-                    }
-                }).then((result) => {
-                    /* Read more about isConfirmed, isDenied below */
-                    if (result.isConfirmed) {
-                        @this.set('unit_price', unit_price.value)
-                        @this.set('order_qty', order_qty.value)
-                        @this.set('remarks', remarks.value);
+                                                    }
+                                                });
+                                            }
+                                        }).then((result) => {
+                                            /* Read more about isConfirmed, isDenied below */
+                                            if (result.isConfirmed) {
+                                                @this.set('unit_price', unit_price.value)
+                                                @this.set('order_qty', order_qty.value)
+                                                @this.set('remarks', remarks.value);
 
-                        Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
-                            available, exp_date)
-                    }
-                });
-            }
+                                                Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
+                                                    available, exp_date)
+                                            }
+                                        });
+                                    }
 
-            function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
+                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
 
-                var search = drug.split(",");
-                @this.set('rx_id', rx_id)
-                @this.set('generic', search[0])
-                @this.set('rx_dmdcomb', rx_dmdcomb);
-                @this.set('rx_dmdctr', rx_dmdctr);
-                @this.set('empid', empid);
-                // $("#generic").val(search[0]);
-                // $("#generic").trigger('keyup');
-            }
-        @endif
+                                        var search = drug.split(",");
+                                        @this.set('rx_id', rx_id)
+                                        @this.set('generic', search[0])
+                                        @this.set('rx_dmdcomb', rx_dmdcomb);
+                                        @this.set('rx_dmdctr', rx_dmdctr);
+                                        @this.set('empid', empid);
+                                        // $("#generic").val(search[0]);
+                                        // $("#generic").trigger('keyup');
+                                    }
+                                @endif
 
-        function select_rx_item_inactive(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
-            var search = drug.split(",");
-            @this.set('rx_id', rx_id)
-            @this.set('generic', search[0])
-            @this.set('rx_dmdcomb', rx_dmdcomb);
-            @this.set('rx_dmdctr', rx_dmdctr);
-            @this.set('empid', empid);
-            // $("#generic").val(search[0]);
-            // $("#generic").trigger('keyup');
+                                function select_rx_item_inactive(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
+                                    var search = drug.split(",");
+                                    @this.set('rx_id', rx_id)
+                                    @this.set('generic', search[0])
+                                    @this.set('rx_dmdcomb', rx_dmdcomb);
+                                    @this.set('rx_dmdctr', rx_dmdctr);
+                                    @this.set('empid', empid);
+                                    // $("#generic").val(search[0]);
+                                    // $("#generic").trigger('keyup');
 
-            Swal.fire({
-                html: `
+                                    Swal.fire({
+                                        html: `
         <div class="text-xl font-bold"> Deactivate ` + drug + `</div>
         <div class="flex w-full space-x-3 bg-slate-300 p=6 px-2 mt-2 form-control">
             <input type="text" class="w-full input-bordered bg-slate-300 input" id="adttl_remarks" />
         </div>
         `,
-                showCancelButton: true,
-                confirmButtonText: `Confirm`,
-                didOpen: () => {
-                    const adttl_remarks = Swal.getHtmlContainer().querySelector('#adttl_remarks')
-                }
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    const remarks = document.getElementById('adttl_remarks').value;
-                    @this.set('adttl_remarks', remarks)
-                    Livewire.emit('deactivate_rx', rx_id);
-                }
-            });
-        }
+                                        showCancelButton: true,
+                                        confirmButtonText: `Confirm`,
+                                        didOpen: () => {
+                                            const adttl_remarks = Swal.getHtmlContainer().querySelector('#adttl_remarks')
+                                        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            const remarks = document.getElementById('adttl_remarks').value;
+                                            @this.set('adttl_remarks', remarks)
+                                            Livewire.emit('deactivate_rx', rx_id);
+                                        }
+                                    });
+                                }
 
-        function return_issued(docointkey, drug, up, or_qty) {
-            Swal.fire({
-                html: `
+                                function return_issued(docointkey, drug, up, or_qty) {
+                                    Swal.fire({
+                                        html: `
                         <div class="text-xl font-bold">` + drug + `</div>
 
                         <div class="w-full px-2 mb-3 form-control">
@@ -1181,47 +1293,47 @@
                             <input id="total" type="number" step="0.01" class="w-full input input-bordered disabled bg-slate-200" readonly tabindex='-1' />
                         </div>
                             `,
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: `Confirm`,
-                didOpen: () => {
-                    const order_qty = Swal.getHtmlContainer().querySelector('#order_qty');
-                    const return_qty = Swal.getHtmlContainer().querySelector('#return_qty');
-                    const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
-                    const total = Swal.getHtmlContainer().querySelector('#total');
-                    order_qty.value = or_qty;
-                    unit_price.value = up;
-                    return_qty.focus();
+                                        showCancelButton: true,
+                                        confirmButtonColor: '#d33',
+                                        confirmButtonText: `Confirm`,
+                                        didOpen: () => {
+                                            const order_qty = Swal.getHtmlContainer().querySelector('#order_qty');
+                                            const return_qty = Swal.getHtmlContainer().querySelector('#return_qty');
+                                            const unit_price = Swal.getHtmlContainer().querySelector('#unit_price');
+                                            const total = Swal.getHtmlContainer().querySelector('#total');
+                                            order_qty.value = or_qty;
+                                            unit_price.value = up;
+                                            return_qty.focus();
 
-                    return_qty.addEventListener('input', () => {
-                        total.value = parseFloat(return_qty.value) * parseFloat(
-                            unit_price
-                            .value);
-                    })
+                                            return_qty.addEventListener('input', () => {
+                                                total.value = parseFloat(return_qty.value) * parseFloat(
+                                                    unit_price
+                                                    .value);
+                                            })
 
-                    unit_price.addEventListener('input', () => {
-                        total.value = parseFloat(return_qty.value) * parseFloat(
-                            unit_price
-                            .value);
-                    })
-                }
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    @this.set('unit_price', unit_price.value);
-                    @this.set('order_qty', or_qty);
-                    @this.set('docointkey', docointkey);
-                    @this.set('return_qty', return_qty.value);
+                                            unit_price.addEventListener('input', () => {
+                                                total.value = parseFloat(return_qty.value) * parseFloat(
+                                                    unit_price
+                                                    .value);
+                                            })
+                                        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            @this.set('unit_price', unit_price.value);
+                                            @this.set('order_qty', or_qty);
+                                            @this.set('docointkey', docointkey);
+                                            @this.set('return_qty', return_qty.value);
 
-                    Livewire.emit('return_issued', docointkey);
-                }
-            });
-        }
+                                            Livewire.emit('return_issued', docointkey);
+                                        }
+                                    });
+                                }
 
-        function update_qty(docointkey, or_qty, up, tot, drug) {
-            Swal.fire({
-                input: 'number',
-                html: `
+                                function update_qty(docointkey, or_qty, up, tot, drug) {
+                                    Swal.fire({
+                                        input: 'number',
+                                        html: `
                     <div class="text-xl font-bold">` + drug + `</div>
                     <div class="flex w-full space-x-3">
                         <div class="w-full mb-3 form-control">
@@ -1247,59 +1359,59 @@
                         </div>
                     </div>
                 `,
-                showCancelButton: true,
-                showCloseButton: true,
-                confirmButtonText: `Confirm`,
-                didOpen: () => {
-                    const up_order_qty = Swal.getHtmlContainer().querySelector('#up_order_qty')
-                    const up_unit_price = Swal.getHtmlContainer().querySelector(
-                        '#up_unit_price')
-                    const total = Swal.getHtmlContainer().querySelector('#up_total')
+                                        showCancelButton: true,
+                                        showCloseButton: true,
+                                        confirmButtonText: `Confirm`,
+                                        didOpen: () => {
+                                            const up_order_qty = Swal.getHtmlContainer().querySelector('#up_order_qty')
+                                            const up_unit_price = Swal.getHtmlContainer().querySelector(
+                                                '#up_unit_price')
+                                            const total = Swal.getHtmlContainer().querySelector('#up_total')
 
-                    up_order_qty.focus();
-                    up_unit_price.value = up;
-                    total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price
-                        .value)
+                                            up_order_qty.focus();
+                                            up_unit_price.value = up;
+                                            total.value = parseFloat(up_order_qty.value) * parseFloat(up_unit_price
+                                                .value)
 
-                    up_order_qty.addEventListener('input', () => {
-                        total.value = parseFloat(up_order_qty.value) * parseFloat(
-                            up_unit_price
-                            .value)
-                    })
+                                            up_order_qty.addEventListener('input', () => {
+                                                total.value = parseFloat(up_order_qty.value) * parseFloat(
+                                                    up_unit_price
+                                                    .value)
+                                            })
 
-                    up_unit_price.addEventListener('input', () => {
-                        total.value = parseFloat(up_order_qty.value) * parseFloat(
-                            up_unit_price
-                            .value)
-                    })
+                                            up_unit_price.addEventListener('input', () => {
+                                                total.value = parseFloat(up_order_qty.value) * parseFloat(
+                                                    up_unit_price
+                                                    .value)
+                                            })
 
-                    up_order_qty.addEventListener("keypress", function(event) {
-                        if (event.key === "Enter") {
-                            event.preventDefault();
-                            @this.set('unit_price', up_unit_price.value)
-                            @this.set('order_qty', up_order_qty.value)
+                                            up_order_qty.addEventListener("keypress", function(event) {
+                                                if (event.key === "Enter") {
+                                                    event.preventDefault();
+                                                    @this.set('unit_price', up_unit_price.value)
+                                                    @this.set('order_qty', up_order_qty.value)
 
-                            Livewire.emit('update_qty', docointkey)
+                                                    Livewire.emit('update_qty', docointkey)
 
-                            Swal.close()
+                                                    Swal.close()
 
-                        }
-                    });
-                }
-            }).then((result) => {
-                /* Read more about isConfirmed, isDenied below */
-                if (result.isConfirmed) {
-                    @this.set('unit_price', up_unit_price.value)
-                    @this.set('order_qty', up_order_qty.value)
+                                                }
+                                            });
+                                        }
+                                    }).then((result) => {
+                                        /* Read more about isConfirmed, isDenied below */
+                                        if (result.isConfirmed) {
+                                            @this.set('unit_price', up_unit_price.value)
+                                            @this.set('order_qty', up_order_qty.value)
 
-                    Livewire.emit('update_qty', docointkey)
-                }
-            });
-        }
+                                            Livewire.emit('update_qty', docointkey)
+                                        }
+                                    });
+                                }
 
-        window.addEventListener('charged', event => {
-            window.open('{{ url('/dispensing/encounter/charge') }}' + '/' +
-                event.detail.pcchrgcod, '_blank');
-        });
-    </script>
-@endpush
+                                window.addEventListener('charged', event => {
+                                    window.open('{{ url('/dispensing/encounter/charge') }}' + '/' +
+                                        event.detail.pcchrgcod, '_blank');
+                                });
+                            </script>
+                        @endpush

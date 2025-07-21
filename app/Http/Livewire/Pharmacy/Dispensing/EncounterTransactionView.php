@@ -146,7 +146,7 @@ class EncounterTransactionView extends Component
                                 "))->first();
 
 
-        $this->active_prescription = Prescription::where('enccode', $enccode)->with('data_active')->has('data_active')->get();
+        $this->active_prescription = Prescription::where('enccode', $enccode)->has('data_active')->get();
         $this->active_prescription_all = Prescription::where('enccode', $enccode)->with('data')->get();
         $past_log = null;
         switch ($encounter->toecode) {
