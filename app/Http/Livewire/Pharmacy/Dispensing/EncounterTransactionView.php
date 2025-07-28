@@ -88,16 +88,15 @@ class EncounterTransactionView extends Component
                                     ORDER BY dodate DESC");
         }
 
-        $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, hdmhdr.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date, hdmhdrprice.acquisition_cost
+        $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date, hdmhdrprice.acquisition_cost
                                 FROM hospital.dbo.pharm_drug_stocks
-                                INNER JOIN hdmhdr ON hdmhdr.dmdcomb = pharm_drug_stocks.dmdcomb AND hdmhdr.dmdctr = pharm_drug_stocks.dmdctr
                                 INNER JOIN hcharge on hcharge.chrgcode = pharm_drug_stocks.chrgcode
                                 INNER JOIN hdmhdrprice on hdmhdrprice.dmdprdte = pharm_drug_stocks.dmdprdte
                                 WHERE loc_code = '" . $this->location_id . "'
-                                AND hdmhdr.drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
+                                AND pharm_drug_stocks.drug_concat LIKE '%" . implode("''", explode("'", $this->generic)) . "%'
                                 AND stock_bal > 0
-                                GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, hdmhdrprice.acquisition_cost, dmselprice, hdmhdr.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
-                                ORDER BY hdmhdr.drug_concat");
+                                GROUP BY pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, hdmhdrprice.acquisition_cost, dmselprice, pharm_drug_stocks.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte
+                                ORDER BY pharm_drug_stocks.drug_concat");
 
 
         $summaries = DB::select("
