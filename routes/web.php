@@ -20,6 +20,7 @@ use App\Http\Livewire\References\ListRisWards;
 use App\Http\Livewire\Pharmacy\Drugs\StockList;
 use App\Http\Livewire\Records\PrescriptionList;
 use App\Http\Livewire\Records\PrescriptionWard;
+use App\Http\Controllers\PrescriptionController;
 use App\Http\Livewire\ManualConsumptionGenerator;
 use App\Http\Livewire\Pharmacy\Drugs\IoTransList;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIotrans;
@@ -65,6 +66,8 @@ use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
+use App\Http\Livewire\Pharmacy\Reports\ConsumptionReportRangeWarehouse;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -94,12 +97,17 @@ Route::middleware([
     Route::get('/patients/for-discharge', PatientsForDischarge::class)->name('patients.fordisc');
     Route::get('/patients/discharged', DischargedPatients::class)->name('patients.discharged');
     Route::get('/patients/register', PatientRegister::class)->name('patients.new');
+
     Route::get('/prescriptions', PrescriptionList::class)->name('rx.list');
 
     Route::name('rx.')->prefix('prescriptions')->group(function () {
         Route::get('/ward', PrescriptionWard::class)->name('ward');
         Route::get('/opd', PrescriptionOpd::class)->name('opd');
         Route::get('/er', PrescriptionEr::class)->name('er');
+
+        Route::get('/view/{id}', [PrescriptionController::class, 'show'])
+            ->where('id', '.*')
+            ->name('view');
     });
 
     Route::name('dmd.')->prefix('drugsandmedicine')->group(function () {
@@ -183,6 +191,7 @@ Route::middleware([
         Route::get('/consumption/manual', ManualConsumptionGenerator::class)->name('consumption.manual');
         Route::get('/consumption/manual/daterange', ConsumptionReportRange::class)->name('consumption.manual-range');
         Route::get('/consumption/warehouse', ConsumptionWarehouseReport::class)->name('consumption.warehouse');
+        Route::get('/consumption/warehouse-new', ConsumptionReportRangeWarehouse::class)->name('consumption.warehouse.new');
         Route::get('/iotrans/issued', IoTransIssuedReport::class)->name('iotrans.issued');
         Route::get('/iotrans/received', IoTransReceivedReport::class)->name('iotrans.received');
         Route::get('/consumption/wards', DrugsIssuedWards::class)->name('consumption.wards');

@@ -21,27 +21,48 @@
 <div class="max-w-screen">
     <div class="flex flex-col w-full px-2 py-5">
         <div class="flex justify-end my-2">
-            @if ($report_id)
-                @if ($ended)
-                    @if (!$generated)
-                        <div class="ml-2 mr-auto">
-                            <button class="btn btn-sm btn-primary" wire:loading.attr='disabled'
-                                wire:click='generate_ending_balance'>Generate</button>
-                        </div>
-                    @endif
-                @else
-                    <div class="ml-2 mr-auto">
-                        <button class="btn btn-sm btn-error" wire:loading.attr='disabled' wire:click='stop_log'>End
-                            Logger</button>
-                    </div>
-                @endif
-            @endif
             <div class="ml-2">
-                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
-                        class="las la-lg la-file-excel"></i> Export</button>
+                <div class="form-control">
+                    <label class="input-group">
+                        <span>From</span>
+                        <input type="date" class="w-full input input-sm input-bordered"
+                            wire:model.lazy="date_from" />
+                    </label>
+                </div>
             </div>
             <div class="ml-2">
-                <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
+                <div class="form-control">
+                    <label class="input-group">
+                        <span>To</span>
+                        <input type="date" class="w-full input input-sm input-bordered" wire:model.lazy="date_to" />
+                    </label>
+                </div>
+            </div>
+            <div class="ml-2">
+                <button type="button" class="btn-sm btn btn-primary" wire:click="generate_ending_balance"
+                    wire:loading.attr="disabled" {{ $processing ? 'disabled' : '' }}>
+                    <span wire:loading.remove>Generate Report</span>
+                    <span wire:loading>Processing...</span>
+                </button>
+            </div>
+            <div class="ml-2">
+                <button type="button" class="btn-sm btn btn-secondary" wire:click="resetForm">
+                    Reset Form
+                </button>
+            </div>
+            <div class="ml-2">
+                @if ($report_id)
+                    <button type="button" class="btn-sm btn btn-warning" wire:click="cleanse">
+                        Clear Data
+                    </button>
+                @endif
+            </div>
+            <div class="ml-auto">
+                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info">
+                    Export</button>
+            </div>
+            <div class="ml-2">
+                <button onclick="printMe()" class="btn btn-sm btn-primary">
                     Print</button>
             </div>
             <div class="ml-2">
@@ -53,8 +74,8 @@
                             @foreach ($cons as $con)
                                 <option value="{{ $con->id }}">
                                     {{ $loop->iteration }}
-                                    [{{ date('Y-m-d g:i A', strtotime($con->consumption_from)) }}] -
-                                    [{{ $con->consumption_to > 0 ? date('Y-m-d g:i A', strtotime($con->consumption_to)) : 'Ongoing' }}]
+                                    [{{ date('Y-m-d', strtotime($con->consumption_from)) }}] -
+                                    [{{ $con->consumption_to > 0 ? date('Y-m-d', strtotime($con->consumption_to)) : 'Ongoing' }}]
                                 </option>
                             @endforeach
                         </select>
@@ -200,7 +221,7 @@
 
                                 $overall_cost = $total_issued * $item->unit_cost;
                                 $overall_sales = $total_issued * $item->unit_price;
-                                $profit = $overall_sales * $overall_cost;
+                                $profit = $overall_sales - $overall_cost;
                                 $end_bal = $for_sale - $total_issued;
                                 $end_amount = $end_bal * $item->unit_cost;
                             @endphp
