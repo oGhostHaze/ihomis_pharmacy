@@ -225,6 +225,7 @@ class ConsumptionWarehouseReport extends Component
                             WHERE
                                 trans.updated_at BETWEEN ? AND ?
                                 AND trans.trans_stat IN('Received', 'Issued')
+                                AND items.from = $location_id
                             GROUP BY loc.description, trans.dmdcomb, trans.dmdctr, items.chrgcode, pri.dmduprice, pri.dmselprice", [
             $from_date,
             $to_date

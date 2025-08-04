@@ -85,25 +85,25 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2">
-                <!-- Generate Report Button -->
-                <button type="button" class="btn btn-sm btn-primary" wire:click="generate_ending_balance"
-                    wire:loading.attr="disabled">
-                    @if ($processing)
-                        <span class="mr-1 loading loading-spinner loading-xs"></span>
-                        Generating...
-                    @else
-                        <i class="mr-1 las la-cog"></i>
-                        Generate Report
-                    @endif
-                </button>
-
-                <!-- Utility Buttons -->
-                <button type="button" class="btn btn-sm btn-secondary" wire:click="resetForm"
-                    wire:loading.attr="disabled">
-                    <i class="mr-1 las la-undo"></i> Reset
-                </button>
-
                 @if ($report_id)
+                    <!-- Generate Report Button -->
+                    <button type="button" class="btn btn-sm btn-primary" wire:click="generate_ending_balance"
+                        wire:loading.attr="disabled">
+                        @if ($processing)
+                            <span class="mr-1 loading loading-spinner loading-xs"></span>
+                            Generating...
+                        @else
+                            <i class="mr-1 las la-cog"></i>
+                            Generate Report
+                        @endif
+                    </button>
+
+                    <!-- Utility Buttons -->
+                    <button type="button" class="btn btn-sm btn-secondary" wire:click="resetForm"
+                        wire:loading.attr="disabled">
+                        <i class="mr-1 las la-undo"></i> Reset
+                    </button>
+
                     <button type="button" class="btn btn-sm btn-warning" wire:click="cleanse"
                         wire:loading.attr="disabled">
                         <i class="mr-1 las la-trash"></i> Clear Data
