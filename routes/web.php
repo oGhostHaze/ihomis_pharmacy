@@ -66,7 +66,6 @@ use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
-use App\Http\Livewire\Pharmacy\Reports\ConsumptionReportRangeWarehouse;
 
 
 /*
@@ -191,7 +190,6 @@ Route::middleware([
         Route::get('/consumption/manual', ManualConsumptionGenerator::class)->name('consumption.manual');
         Route::get('/consumption/manual/daterange', ConsumptionReportRange::class)->name('consumption.manual-range');
         Route::get('/consumption/warehouse', ConsumptionWarehouseReport::class)->name('consumption.warehouse');
-        Route::get('/consumption/warehouse-new', ConsumptionReportRangeWarehouse::class)->name('consumption.warehouse.new');
         Route::get('/iotrans/issued', IoTransIssuedReport::class)->name('iotrans.issued');
         Route::get('/iotrans/received', IoTransReceivedReport::class)->name('iotrans.received');
         Route::get('/consumption/wards', DrugsIssuedWards::class)->name('consumption.wards');

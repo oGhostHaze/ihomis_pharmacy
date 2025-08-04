@@ -2,15 +2,16 @@
 
 namespace App\Http\Livewire\Pharmacy\Reports;
 
-use App\Models\DrugManualLogHeader;
-use App\Models\DrugManualLogItem;
-use App\Models\DrugManualLogWarehouse;
-use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
-use App\Models\Pharmacy\PharmLocation;
-use App\Models\References\ChargeCode;
-use Illuminate\Support\Facades\DB;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
+use Carbon\Carbon;
 use Livewire\Component;
+use App\Models\DrugManualLogItem;
+use Illuminate\Support\Facades\DB;
+use App\Models\DrugManualLogHeader;
+use App\Models\References\ChargeCode;
+use App\Models\DrugManualLogWarehouse;
+use App\Models\Pharmacy\PharmLocation;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
+use App\Models\Pharmacy\Drugs\ConsumptionLogDetail;
 
 class ConsumptionWarehouseReport extends Component
 {
@@ -18,6 +19,10 @@ class ConsumptionWarehouseReport extends Component
 
     public $filter_charge = 'DRUME,Drugs and Medicines (Regular)';
     public $report_id, $ended, $generated = false;
+
+    public $date_from, $date_to;
+    public $location_id;
+    public $processing = false;
 
     public function updatedReportId()
     {
@@ -48,7 +53,7 @@ class ConsumptionWarehouseReport extends Component
                                     GROUP BY pdsl.dmdcomb, pdsl.dmdctr, pdsl.loc_code, pdsl.unit_price, pdsl.unit_cost, drug.drug_concat
                                     ORDER BY drug.drug_concat ASC");
 
-        $cons = ConsumptionLogDetail::where('loc_code', session('pharm_location_id'))->latest()->get();
+        $cons = DrugManualLogHeader::where('loc_code', session('pharm_location_id'))->latest()->get();
 
         return view('livewire.pharmacy.reports.consumption-warehouse-report', [
             'charge_codes' => $charge_codes,
@@ -79,6 +84,69 @@ class ConsumptionWarehouseReport extends Component
         } else {
             $this->alert('warning', 'Logger currently inactive');
         }
+    }
+
+    public function getBeginningBalance()
+    {
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        $from_date = $active_consumption->consumption_from;
+        $to_date = $active_consumption->consumption_to;
+        $location_id = auth()->user()->pharm_location_id;
+        $filter_charge = explode(',', $this->filter_charge);
+        $charge_code = $filter_charge[0];
+
+        $beginnings = DB::select("
+            SELECT
+                first_day_reference as beg_bal,
+                dmdcomb,
+                dmdctr,
+                dmdprdte,
+                chrgcode,
+                drug_concat,
+                acquisition_cost,
+                dmselprice
+            FROM (
+                SELECT
+                    dsc.reference as first_day_reference,
+                    dsc.dmdcomb,
+                    dsc.dmdctr,
+                    dsc.dmdprdte,
+                    dsc.chrgcode,
+                    drug.drug_concat,
+                    price.acquisition_cost,
+                    price.dmselprice,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY dsc.dmdcomb, dsc.dmdctr, dsc.chrgcode, dsc.dmdprdte,
+                                     price.acquisition_cost, price.dmselprice
+                        ORDER BY dsc.stock_date ASC
+                    ) as rn
+                FROM pharm_drug_stock_cards dsc
+                    JOIN hdmhdr drug ON dsc.dmdcomb = drug.dmdcomb AND dsc.dmdctr = drug.dmdctr
+                    JOIN hdmhdrprice price ON dsc.dmdprdte = price.dmdprdte
+                WHERE dsc.stock_date BETWEEN ? AND ?
+                    AND dsc.loc_code = ?
+                    AND dsc.chrgcode = ?
+                    AND dsc.dmdprdte IS NOT NULL
+            ) ranked
+            WHERE rn = 1
+        ", [$from_date, Carbon::parse($to_date)->endOfDay(), $location_id, $charge_code]);
+
+
+        foreach ($beginnings as $row) {
+            $log = DrugManualLogWarehouse::firstOrCreate([
+                'consumption_id' => $active_consumption->id,
+                'loc_code' => $location_id,
+                'dmdcomb' => $row->dmdcomb,
+                'dmdctr' => $row->dmdctr,
+                'chrgcode' => $row->chrgcode,
+                'unit_cost' => $row->acquisition_cost,
+                'unit_price' => $row->dmselprice,
+            ]);
+            $log->beg_bal += $row->beg_bal;
+            $log->save();
+        }
+
+        return;
     }
 
     public function generate_ending_balance()
@@ -195,5 +263,55 @@ class ConsumptionWarehouseReport extends Component
         $active_consumption->save();
 
         $this->alert('success', 'Issuances recorded successfully ' . now());
+    }
+
+    public function createNewReport()
+    {
+        $this->processing = true;
+        try {
+            if (!$this->date_from || !$this->date_to) {
+                $this->alert('error', 'Please select date range');
+                $this->processing = false;
+                return;
+            }
+
+            if (Carbon::parse($this->date_from)->gt(Carbon::parse($this->date_to))) {
+                $this->alert('error', 'From date cannot be later than To date');
+                $this->processing = false;
+                return;
+            }
+
+            $active_consumption = DrugManualLogHeader::create([
+                'consumption_from' => Carbon::parse($this->date_from)->startOfDay(),
+                'consumption_to' => Carbon::parse($this->date_to)->endOfDay(),
+                'status' => 'I',
+                'loc_code' => auth()->user()->pharm_location_id ?? session('pharm_location_id'),
+                'entry_by' => session('user_id'),
+                'generated_status' => false,
+                'is_custom' => true,
+            ]);
+
+            $this->report_id = $active_consumption->id;
+            $this->getBeginningBalance();
+            $this->alert('success', 'New consumption report created. You can now generate the data.');
+        } catch (\Exception $e) {
+            $this->alert('error', 'Error creating report: ' . $e->getMessage());
+        }
+        $this->processing = false;
+    }
+
+    public function cleanse()
+    {
+        $this->processing = true;
+        $active_consumption = DrugManualLogHeader::find($this->report_id);
+        if ($active_consumption) {
+            DrugManualLogWarehouse::where('consumption_id', $active_consumption->id)->delete();
+            $active_consumption->step = 0;
+            $active_consumption->save();
+            $this->alert('success', 'Consumption report has been successfully deleted.');
+        } else {
+            $this->alert('warning', 'No active consumption report to delete.');
+        }
+        $this->processing = false;
     }
 }

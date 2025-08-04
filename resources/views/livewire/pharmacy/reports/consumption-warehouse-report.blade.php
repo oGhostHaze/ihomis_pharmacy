@@ -20,80 +20,110 @@
 
 <div class="max-w-screen">
     <div class="flex flex-col w-full px-2 py-5">
-        <div class="flex justify-end my-2">
-            <div class="ml-2">
+
+
+        <!-- Control Panel -->
+        <div class="p-4 mb-4 bg-white rounded-lg shadow">
+            <!-- Date Range and Fund Source -->
+            <div class="flex flex-wrap gap-3 mb-3">
                 <div class="form-control">
-                    <label class="input-group">
-                        <span>From</span>
-                        <input type="date" class="w-full input input-sm input-bordered"
-                            wire:model.lazy="date_from" />
+                    <label class="input-group input-group-sm">
+                        <span class="bg-gray-100">From</span>
+                        <input type="date" class="flex-1 input input-sm input-bordered" wire:model.lazy="date_from"
+                            {{ $processing ? 'disabled' : '' }} />
+                    </label>
+                </div>
+                <div class="form-control">
+                    <label class="input-group input-group-sm">
+                        <span class="bg-gray-100">To</span>
+                        <input type="date" class="flex-1 input input-sm input-bordered" wire:model.lazy="date_to"
+                            {{ $processing ? 'disabled' : '' }} />
+                    </label>
+                </div>
+                <div class="form-control">
+                    <label class="input-group input-group-sm">
+                        <span class="bg-gray-100">Fund Source</span>
+                        <select class="flex-1 select select-sm select-bordered" wire:model="filter_charge"
+                            {{ $processing ? 'disabled' : '' }}>
+                            <option value="">Select Fund Source</option>
+                            @foreach ($charge_codes as $charge)
+                                <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
+                                    {{ $charge->chrgdesc }}
+                                </option>
+                            @endforeach
+                        </select>
                     </label>
                 </div>
             </div>
-            <div class="ml-2">
-                <div class="form-control">
-                    <label class="input-group">
-                        <span>To</span>
-                        <input type="date" class="w-full input input-sm input-bordered" wire:model.lazy="date_to" />
-                    </label>
-                </div>
-            </div>
-            <div class="ml-2">
-                <button type="button" class="btn-sm btn btn-primary" wire:click="generate_ending_balance"
-                    wire:loading.attr="disabled" {{ $processing ? 'disabled' : '' }}>
-                    <span wire:loading.remove>Generate Report</span>
-                    <span wire:loading>Processing...</span>
-                </button>
-            </div>
-            <div class="ml-2">
-                <button type="button" class="btn-sm btn btn-secondary" wire:click="resetForm">
-                    Reset Form
-                </button>
-            </div>
-            <div class="ml-2">
-                @if ($report_id)
-                    <button type="button" class="btn-sm btn btn-warning" wire:click="cleanse">
-                        Clear Data
-                    </button>
-                @endif
-            </div>
-            <div class="ml-auto">
-                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info">
-                    Export</button>
-            </div>
-            <div class="ml-2">
-                <button onclick="printMe()" class="btn btn-sm btn-primary">
-                    Print</button>
-            </div>
-            <div class="ml-2">
-                <div class="form-control">
-                    <label class="input-group">
-                        <span>Reports</span>
-                        <select class="select select-bordered select-sm" wire:model="report_id">
-                            <option></option>
+
+            <!-- Report Selection -->
+            <div class="flex flex-wrap gap-3 mb-3">
+                <div class="flex-1 form-control">
+                    <label class="input-group input-group-sm">
+                        <span class="bg-gray-100">Existing Reports</span>
+                        <select class="flex-1 select select-sm select-bordered" wire:model="report_id"
+                            {{ $processing ? 'disabled' : '' }}>
+                            <option value="">Select Existing Report</option>
                             @foreach ($cons as $con)
                                 <option value="{{ $con->id }}">
-                                    {{ $loop->iteration }}
-                                    [{{ date('Y-m-d', strtotime($con->consumption_from)) }}] -
-                                    [{{ $con->consumption_to > 0 ? date('Y-m-d', strtotime($con->consumption_to)) : 'Ongoing' }}]
+                                    {{ $loop->iteration }}.
+                                    [{{ date('M d, Y', strtotime($con->consumption_from)) }}] -
+                                    [{{ $con->consumption_to ? date('M d, Y', strtotime($con->consumption_to)) : 'Ongoing' }}]
+                                    @if ($con->generated_status)
+                                        ✓
+                                    @endif
                                 </option>
                             @endforeach
                         </select>
                     </label>
                 </div>
+                <button type="button" class="btn btn-sm btn-primary" wire:click="createNewReport"
+                    wire:loading.attr="disabled">
+                    <i class="mr-1 las la-plus"></i> New Report
+                </button>
             </div>
-            <div class="ml-2">
-                <div class="form-control">
-                    <label class="input-group">
-                        <span>Fund Source</span>
-                        <select class="select select-bordered select-sm" wire:model="filter_charge">
-                            <option></option>
-                            @foreach ($charge_codes as $charge)
-                                <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">{{ $charge->chrgdesc }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </label>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-2">
+                <!-- Generate Report Button -->
+                <button type="button" class="btn btn-sm btn-primary" wire:click="generate_ending_balance"
+                    wire:loading.attr="disabled">
+                    @if ($processing)
+                        <span class="mr-1 loading loading-spinner loading-xs"></span>
+                        Generating...
+                    @else
+                        <i class="mr-1 las la-cog"></i>
+                        Generate Report
+                    @endif
+                </button>
+
+                <!-- Utility Buttons -->
+                <button type="button" class="btn btn-sm btn-secondary" wire:click="resetForm"
+                    wire:loading.attr="disabled">
+                    <i class="mr-1 las la-undo"></i> Reset
+                </button>
+
+                @if ($report_id)
+                    <button type="button" class="btn btn-sm btn-warning" wire:click="cleanse"
+                        wire:loading.attr="disabled">
+                        <i class="mr-1 las la-trash"></i> Clear Data
+                    </button>
+                    <button type="button" class="btn btn-sm btn-info" wire:click="validateData"
+                        wire:loading.attr="disabled">
+                        <i class="mr-1 las la-check"></i> Validate
+                    </button>
+                @endif
+
+                <!-- Export Options -->
+                <div class="flex gap-2 ml-auto">
+                    <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-success"
+                        {{ count($drugs_issued) == 0 || $processing ? 'disabled' : '' }}>
+                        <i class="mr-1 las la-file-excel"></i> Export
+                    </button>
+                    <button onclick="printMe()" class="btn btn-sm btn-primary"
+                        {{ count($drugs_issued) == 0 || $processing ? 'disabled' : '' }}>
+                        <i class="mr-1 las la-print"></i> Print
+                    </button>
                 </div>
             </div>
         </div>
@@ -121,7 +151,8 @@
                         <th colspan="7" class="px-4 py-2 text-xs text-center border border-black">ISSUANCES</th>
                         <th rowspan="3" class="px-4 py-2 text-xs text-center border border-black">TOTAL ISSUANCES
                         </th>
-                        <th rowspan="3" class="px-4 py-2 text-xs text-center border border-black">SELLING PRICE</th>
+                        <th rowspan="3" class="px-4 py-2 text-xs text-center border border-black">SELLING PRICE
+                        </th>
                         <th rowspan="2" colspan="2" class="px-4 py-2 text-xs text-center border border-black">
                             TOTAL SALES
                         </th>
