@@ -35,7 +35,7 @@ return [
         ],
 
         'database' => [
-            'connection' => 'worker',
+            'connection' => 'hospital',
             'driver' => 'database',
             'table' => 'pharm_jobs',
             'queue' => 'default',
@@ -85,18 +85,18 @@ return [
     |
     */
 
-    'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => 'worker',
-        'table' => 'pharm_failed_jobs',
-    ],
-
     // 'failed' => [
     //     'driver' => 'database',
-    //     'connection' => 'worker',
-    //     'database' => 'worker',
+    //     'database' => 'hospital',
     //     'table' => 'pharm_failed_jobs',
     // ],
+
+    'failed' => [
+        'driver' => 'database',
+        'connection' => 'hospital',
+        'database' => 'hospital',
+        'table' => 'pharm_failed_jobs',
+    ],
 
     // 'failed' => [
     //     'driver' => 'database',
