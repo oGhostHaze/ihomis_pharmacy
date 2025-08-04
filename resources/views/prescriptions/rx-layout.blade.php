@@ -258,7 +258,7 @@
             <div class="info-row">
                 <span class="info-label">DOB:</span>
                 <span
-                    class="info-value">{{ $encounter->patbdate ? $encounter->patbdate->format('m/d/Y') : 'Not Indicated' }}</span>
+                    class="info-value">{{ $encounter->patbdate ? date('m/d/Y', strtotime($encounter->patbdate)) . ' (' . \Carbon\Carbon::parse($encounter->patbdate)->age . ' years old)' : 'Not Indicated' }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">Address:</span>
@@ -306,7 +306,8 @@
                     <!-- Directions -->
                     <div class="directions">
                         <strong>DIRECTIONS FOR USE:</strong><br>
-                        {{ $medication->frequency . 'x' }} {{ $medication->remark }} <br>
+                        {{ $medication->qty . 'x ' }} {{ $medication->remark }}
+                        {{ ' for ' . $medication->frequency . ' day/s' }} <br>
                         {{ $medication->addtl_remarks }}
                     </div>
                 @endif
@@ -314,14 +315,13 @@
         @empty
         @endforelse
         <!-- Barcode -->
-        <div class="barcode-placeholder">
+        {{-- <div class="barcode-placeholder">
             ||||| |||| | |||| ||||| || ||||<br>
-            {{ $prescription->rx_number ?? '1234567' }}
-        </div>
+            {{ $prescription->id }}
+        </div> --}}
 
         <!-- Footer -->
         <div class="footer">
-            Thank you for choosing us!<br>
             <small>{{ now()->format('Y-m-d H:i:s') }}</small>
         </div>
     </div>
