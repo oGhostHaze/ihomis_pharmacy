@@ -287,9 +287,9 @@
             <!-- Medication Information -->
             <div class="medication-info">
                 <div class="section-title">Medication</div>
-                <div class="medication-name">
+                {{-- <div class="medication-name">
                     {{ $medication->dm->drug_concat() }}
-                </div>
+                </div> --}}
                 <div class="info-row">
                     <span class="info-label">Generic:</span>
                     <span class="info-value">{{ $medication->dm->generic->gendesc }}</span>
@@ -302,46 +302,15 @@
                     <span class="info-label">Form:</span>
                     <span class="info-value">{{ $medication->dm->formcode }}</span>
                 </div>
+                @if ($medication->remark || $medication->addtl_remarks)
+                    <!-- Directions -->
+                    <div class="directions">
+                        <strong>DIRECTIONS FOR USE:</strong><br>
+                        {{ $medication->frequency . 'x' }} {{ $medication->remark }} <br>
+                        {{ $medication->addtl_remarks }}
+                    </div>
+                @endif
             </div>
-
-            <!-- Directions -->
-            <div class="directions">
-                <strong>DIRECTIONS FOR USE:</strong><br>
-                {{ $prescription->directions ?? 'Take one capsule by mouth three times daily with food for 10 days. Complete entire course even if feeling better.' }}
-            </div>
-
-            <!-- Dispensing Information -->
-            <div class="info-row">
-                <span class="info-label">Qty Dispensed:</span>
-                <span class="info-value">{{ $prescription->quantity_dispensed ?? '30' }}
-                    {{ $medication->form ?? 'capsules' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Days Supply:</span>
-                <span class="info-value">{{ $prescription->days_supply ?? '10' }} days</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Refills Left:</span>
-                <span class="info-value">{{ $prescription->refills_remaining ?? '2' }} of
-                    {{ $prescription->refills_authorized ?? '3' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Date Filled:</span>
-                <span
-                    class="info-value">{{ $prescription->filled_date ? $prescription->filled_date->format('m/d/Y H:i') : now()->format('m/d/Y H:i') }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Pharmacist:</span>
-                <span class="info-value">{{ $pharmacist->name ?? 'RPh. Ana Cruz' }}</span>
-            </div>
-
-            <!-- Warning Box -->
-            @if ($medication->warnings ?? true)
-                <div class="warning-box">
-                    <strong>⚠ IMPORTANT:</strong>
-                    {{ $medication->warning_text ?? 'Take with food. May cause drowsiness. Complete full course.' }}
-                </div>
-            @endif
         @empty
         @endforelse
         <!-- Barcode -->

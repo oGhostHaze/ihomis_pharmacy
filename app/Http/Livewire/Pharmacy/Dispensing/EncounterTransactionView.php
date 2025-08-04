@@ -608,7 +608,7 @@ class EncounterTransactionView extends Component
                     ->update(['stat' => 'I']);
             }
 
-            $this->resetExcept('generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss', 'summaries');
+            $this->resetExcept('code', 'generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss', 'summaries');
             // $this->emit('refresh');
             $this->alert('success', 'Item added.');
             // return redirect(route('dispensing.view.enctr', $this->enccode));
