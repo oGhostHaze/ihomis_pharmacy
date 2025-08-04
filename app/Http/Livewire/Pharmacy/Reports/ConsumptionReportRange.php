@@ -171,6 +171,7 @@ class ConsumptionReportRange extends Component
      */
     public function generateConsumptionHeader()
     {
+        // Create or update the header but still using DrugManualLogHeader for compatibility
         $this->active_consumption = DrugManualLogHeader::updateOrCreate([
             'consumption_from' => Carbon::parse($this->date_from)->startOfDay(),
             'consumption_to' => Carbon::parse($this->date_to)->endOfDay(),
@@ -194,6 +195,7 @@ class ConsumptionReportRange extends Component
         $this->cleanse();
         $active_consumption = $this->generateConsumptionHeader();
 
+        // Store common variables
         $from_date = $active_consumption->consumption_from;
         $to_date = $active_consumption->consumption_to;
         $location_id = auth()->user()->pharm_location_id;

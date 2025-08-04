@@ -472,11 +472,7 @@
                 <div class="modal">
                     <div class="w-11/12 max-w-5xl modal-box">
                         <label for="prescription_lists" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
-                        <div class="flex justify-between mt-6 mb-2">
-                            <h3 class="text-lg font-bold">Prescriptions</h3>
-                            <a href="{{ route('rx.view', ['id' => urlencode($code)]) }}" target="_blank"
-                                class="btn btn-primary btn-sm"><i class="las la-print"></i> Print</a>
-                        </div>
+                        <h3 class="text-lg font-bold">Prescriptions</h3>
                         <table class="w-full rounded-lg shadow-md table-compact">
                             <thead class="sticky top-0 bg-gray-200 border-b">
                                 <tr>
