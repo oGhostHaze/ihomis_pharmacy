@@ -215,7 +215,7 @@ class ConsumptionWarehouseReport extends Component
             $log->save();
         }
 
-        $sat = DB::select("SELECT loc.description, trans.dmdcomb, trans.dmdctr, SUM(trans.issued_qty) issued_qty, items.chrgcode, pri.dmduprice, pri.dmselprice FROM pharm_io_trans trans
+        $sat = DB::select('SELECT loc.description, trans.dmdcomb, trans.dmdctr, SUM(trans.issued_qty) issued_qty, items.chrgcode, pri.dmduprice, pri.dmselprice FROM pharm_io_trans trans
                             JOIN pharm_locations loc
                                 ON loc.id = trans.loc_code
                             JOIN pharm_io_trans_items items
@@ -224,11 +224,14 @@ class ConsumptionWarehouseReport extends Component
                                 ON items.dmdprdte = pri.dmdprdte
                             WHERE
                                 trans.updated_at BETWEEN ? AND ?
-                                AND trans.trans_stat IN('Received', 'Issued')
-                                AND items.from = $location_id
-                            GROUP BY loc.description, trans.dmdcomb, trans.dmdctr, items.chrgcode, pri.dmduprice, pri.dmselprice", [
+                                AND trans.trans_stat IN(?, ?)
+                                AND items."from" = ?
+                            GROUP BY loc.description, trans.dmdcomb, trans.dmdctr, items.chrgcode, pri.dmduprice, pri.dmselprice', [
             $from_date,
-            $to_date
+            $to_date,
+            'Received',
+            'Issued',
+            $location_id
         ]);
 
         foreach ($sat as $row) {

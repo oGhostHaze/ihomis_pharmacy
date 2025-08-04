@@ -97,21 +97,6 @@
                             Generate Report
                         @endif
                     </button>
-
-                    <!-- Utility Buttons -->
-                    <button type="button" class="btn btn-sm btn-secondary" wire:click="resetForm"
-                        wire:loading.attr="disabled">
-                        <i class="mr-1 las la-undo"></i> Reset
-                    </button>
-
-                    <button type="button" class="btn btn-sm btn-warning" wire:click="cleanse"
-                        wire:loading.attr="disabled">
-                        <i class="mr-1 las la-trash"></i> Clear Data
-                    </button>
-                    <button type="button" class="btn btn-sm btn-info" wire:click="validateData"
-                        wire:loading.attr="disabled">
-                        <i class="mr-1 las la-check"></i> Validate
-                    </button>
                 @endif
 
                 <!-- Export Options -->
