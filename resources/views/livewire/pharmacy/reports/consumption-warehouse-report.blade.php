@@ -54,6 +54,10 @@
                         </select>
                     </label>
                 </div>
+                <button type="button" class="btn btn-sm btn-primary" wire:click="createNewReport"
+                    wire:loading.attr="disabled">
+                    <i class="mr-1 las la-plus"></i> New Report
+                </button>
             </div>
 
             <!-- Report Selection -->
@@ -77,10 +81,6 @@
                         </select>
                     </label>
                 </div>
-                <button type="button" class="btn btn-sm btn-primary" wire:click="createNewReport"
-                    wire:loading.attr="disabled">
-                    <i class="mr-1 las la-plus"></i> New Report
-                </button>
             </div>
 
             <!-- Action Buttons -->
