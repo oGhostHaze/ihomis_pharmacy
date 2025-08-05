@@ -2,25 +2,26 @@
 
 namespace App\Http\Livewire\Pharmacy\Dispensing;
 
-use App\Jobs\LogDrugStockIssue;
-use App\Models\Hospital\Department;
-use App\Models\Pharmacy\Dispensing\DrugOrder;
-use App\Models\Pharmacy\Dispensing\OrderChargeCode;
+use Carbon\Carbon;
+use Livewire\Component;
 use App\Models\Pharmacy\Drug;
+use App\Jobs\LogDrugStockIssue;
+use Illuminate\Support\Facades\DB;
+use App\Models\Hospital\Department;
+use App\Models\References\ChargeCode;
+use Illuminate\Support\Facades\Crypt;
 use App\Models\Pharmacy\Drugs\DrugStock;
-use App\Models\Pharmacy\Drugs\DrugStockCard;
-use App\Models\Pharmacy\Drugs\DrugStockIssue;
 use App\Models\Pharmacy\Drugs\DrugStockLog;
+use App\Models\Pharmacy\Drugs\DrugStockCard;
+use App\Models\Pharmacy\Dispensing\DrugOrder;
+use App\Models\Pharmacy\Drugs\DrugStockIssue;
+use Jantinnerezo\LivewireAlert\LivewireAlert;
 use App\Models\Record\Encounters\EncounterLog;
 use App\Models\Record\Prescriptions\Prescription;
+use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
+use App\Models\Pharmacy\Dispensing\OrderChargeCode;
 use App\Models\Record\Prescriptions\PrescriptionData;
 use App\Models\Record\Prescriptions\PrescriptionDataIssued;
-use App\Models\References\ChargeCode;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\DB;
-use Jantinnerezo\LivewireAlert\LivewireAlert;
-use Livewire\Component;
 
 class EncounterTransactionView extends Component
 {
@@ -638,10 +639,12 @@ class EncounterTransactionView extends Component
             'docointkey' => 'required',
         ]);
         // $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
+        $isReturned = DrugOrderReturn::where('docointkey', $this->docointkey)
+            ->exists();
 
         //RECORD RETURN ITEM TO hrxoreturn table
-
-        DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
+        if (!$isReturned) {
+            DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
                 docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
                 status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
                 returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup, loc_code)
@@ -673,85 +676,88 @@ class EncounterTransactionView extends Component
             )
         ");
 
-        //DEDUCT QTYISSUED FROM hrxo and DrugStockIssue table
-        $item->pcchrgamt = $item->pchrgup * ($item->qtyissued - $this->return_qty);
-        $item->qtyissued -= $this->return_qty;
-        $item->save();
+            //DEDUCT QTYISSUED FROM hrxo and DrugStockIssue table
+            $item->pcchrgamt = $item->pchrgup * ($item->qtyissued - $this->return_qty);
+            $item->qtyissued -= $this->return_qty;
+            $item->save();
 
-        $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->with('stock')->latest()->get();
-        $qty_to_return = $this->return_qty;
-        foreach ($issued_items as $stock_issued) {
-            if ($qty_to_return > $stock_issued->qty) {
-                $returned_qty = $stock_issued->qty;
-                $qty_to_return -= $stock_issued->qty;
-                $stock_issued->returned_qty = $stock_issued->qty;
-                $stock_issued->qty = 0;
-            } else {
-                $returned_qty = $qty_to_return;
-                $stock_issued->qty -= $qty_to_return;
-                $stock_issued->returned_qty = $qty_to_return;
-                $qty_to_return = 0;
-                $stock_issued->qty = 0;
+            $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->with('stock')->latest()->get();
+            $qty_to_return = $this->return_qty;
+            foreach ($issued_items as $stock_issued) {
+                if ($qty_to_return > $stock_issued->qty) {
+                    $returned_qty = $stock_issued->qty;
+                    $qty_to_return -= $stock_issued->qty;
+                    $stock_issued->returned_qty = $stock_issued->qty;
+                    $stock_issued->qty = 0;
+                } else {
+                    $returned_qty = $qty_to_return;
+                    $stock_issued->qty -= $qty_to_return;
+                    $stock_issued->returned_qty = $qty_to_return;
+                    $qty_to_return = 0;
+                    $stock_issued->qty = 0;
+                }
+                //Return QTY to DrugStock table
+                $stock = DrugStock::firstOrCreate([
+                    'dmdcomb' => $item->dmdcomb,
+                    'dmdctr' => $item->dmdctr,
+                    'loc_code' =>  $this->location_id,
+                    'chrgcode' => $stock_issued->chrgcode,
+                    'exp_date' => $stock_issued->exp_date,
+                    'retail_price' => $item->pchrgup,
+                    'drug_concat' => $stock_issued->stock->drug_concat,
+                    'dmdnost' => $stock_issued->stock->dmdnost,
+                    'strecode' => $stock_issued->stock->strecode,
+                    'formcode' => $stock_issued->stock->formcode,
+                    'rtecode' => $stock_issued->stock->rtecode,
+                    'brandname' => $stock_issued->stock->brandname,
+                    'dmdrem' => $stock_issued->stock->dmdrem,
+                    'dmdrxot' => $stock_issued->stock->dmdrxot,
+                    'gencode' => $stock_issued->stock->gencode,
+                    'dmdprdte' => $stock_issued->stock->dmdprdte,
+                ]);
+                $stock->stock_bal = $stock->stock_bal + $this->return_qty;
+                $date = Carbon::parse(now())->format('Y-m-d');
+
+                $log = DrugStockLog::firstOrNew([
+                    'loc_code' => $this->location_id,
+                    'dmdcomb' => $stock_issued->stock->dmdcomb,
+                    'dmdctr' => $stock_issued->stock->dmdctr,
+                    'chrgcode' => $stock_issued->stock->chrgcode,
+                    'unit_cost' => $stock_issued->stock->current_price ? $stock_issued->stock->current_price->acquisition_cost : 0,
+                    'unit_price' => $stock_issued->stock->retail_price,
+                    'consumption_id' => session('active_consumption'),
+                ]);
+                $log->return_qty += $returned_qty;
+
+
+                $drug_concat = '';
+                $drug_concat = implode("", explode('_', $stock_issued->stock->drug_concat));
+                $card = DrugStockCard::firstOrNew([
+                    'chrgcode' => $log->chrgcode,
+                    'loc_code' => $log->loc_code,
+                    'dmdcomb' => $log->dmdcomb,
+                    'dmdctr' => $log->dmdctr,
+                    'exp_date' => $stock_issued->stock->exp_date,
+                    'stock_date' => $date,
+                    'drug_concat' => $drug_concat,
+                    'dmdprdte' => $stock_issued->stock->dmdprdte,
+                    'io_trans_ref_no' => $item->pcchrgcod,
+                ]);
+                $card->rec += $returned_qty;
+                $card->bal += $returned_qty;
+
+
+                $card->save();
+                $log->save();
+                $stock->save();
+                $stock_issued->save();
             }
-            //Return QTY to DrugStock table
-            $stock = DrugStock::firstOrCreate([
-                'dmdcomb' => $item->dmdcomb,
-                'dmdctr' => $item->dmdctr,
-                'loc_code' =>  $this->location_id,
-                'chrgcode' => $stock_issued->chrgcode,
-                'exp_date' => $stock_issued->exp_date,
-                'retail_price' => $item->pchrgup,
-                'drug_concat' => $stock_issued->stock->drug_concat,
-                'dmdnost' => $stock_issued->stock->dmdnost,
-                'strecode' => $stock_issued->stock->strecode,
-                'formcode' => $stock_issued->stock->formcode,
-                'rtecode' => $stock_issued->stock->rtecode,
-                'brandname' => $stock_issued->stock->brandname,
-                'dmdrem' => $stock_issued->stock->dmdrem,
-                'dmdrxot' => $stock_issued->stock->dmdrxot,
-                'gencode' => $stock_issued->stock->gencode,
-                'dmdprdte' => $stock_issued->stock->dmdprdte,
-            ]);
-            $stock->stock_bal = $stock->stock_bal + $this->return_qty;
-            $date = Carbon::parse(now())->format('Y-m-d');
 
-            $log = DrugStockLog::firstOrNew([
-                'loc_code' => $this->location_id,
-                'dmdcomb' => $stock_issued->stock->dmdcomb,
-                'dmdctr' => $stock_issued->stock->dmdctr,
-                'chrgcode' => $stock_issued->stock->chrgcode,
-                'unit_cost' => $stock_issued->stock->current_price ? $stock_issued->stock->current_price->acquisition_cost : 0,
-                'unit_price' => $stock_issued->stock->retail_price,
-                'consumption_id' => session('active_consumption'),
-            ]);
-            $log->return_qty += $returned_qty;
-
-
-            $drug_concat = '';
-            $drug_concat = implode("", explode('_', $stock_issued->stock->drug_concat));
-            $card = DrugStockCard::firstOrNew([
-                'chrgcode' => $log->chrgcode,
-                'loc_code' => $log->loc_code,
-                'dmdcomb' => $log->dmdcomb,
-                'dmdctr' => $log->dmdctr,
-                'exp_date' => $stock_issued->stock->exp_date,
-                'stock_date' => $date,
-                'drug_concat' => $drug_concat,
-                'dmdprdte' => $stock_issued->stock->dmdprdte,
-                'io_trans_ref_no' => $item->pcchrgcod,
-            ]);
-            $card->rec += $returned_qty;
-            $card->bal += $returned_qty;
-
-
-            $card->save();
-            $log->save();
-            $stock->save();
-            $stock_issued->save();
+            $this->emit('refresh');
+            $this->alert('success', 'Item returned.');
+        } else {
+            $this->alert('error', 'Item already returned.');
         }
-
-        $this->emit('refresh');
-        $this->alert('success', 'Item returned.');
     }
 
     public function add_prescribed_item($dmdcomb, $dmdctr)
