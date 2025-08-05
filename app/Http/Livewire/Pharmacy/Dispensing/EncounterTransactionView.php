@@ -640,7 +640,7 @@ class EncounterTransactionView extends Component
         ]);
         // $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
         $isReturned = DrugOrderReturn::where('docointkey', $this->docointkey)
-            ->exists();
+            ->count();
 
         //RECORD RETURN ITEM TO hrxoreturn table
         if (!$isReturned) {
