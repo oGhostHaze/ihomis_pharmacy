@@ -474,8 +474,6 @@
                         <label for="prescription_lists" class="absolute btn btn-sm btn-circle right-2 top-2">✕</label>
                         <div class="flex justify-between mt-6 mb-2">
                             <h3 class="text-lg font-bold">Prescriptions</h3>
-                            <a href="{{ route('rx.view', [urlencode($code)]) }}" target="_blank"
-                                class="btn btn-primary btn-sm"><i class="las la-print"></i> Print</a>
                         </div>
                         <table class="w-full rounded-lg shadow-md table-compact">
                             <thead class="sticky top-0 bg-gray-200 border-b">
@@ -491,6 +489,13 @@
                             </thead>
                             <tbody class="bg-white">
                                 @forelse($active_prescription_all as $presc_all)
+                                    <tr>
+                                        <td colspan="7">
+                                            <a href="{{ route('rx.view', [urlencode($presc_all->id)]) }}" target="_blank"
+                                                class="btn btn-primary btn-sm"><i class="las la-print"></i> VIEW
+                                                {{ $presc_all->id }}</a>
+                                        </td>
+                                    </tr>
                                     @forelse($presc_all->data->all() as $presc_all_data)
                                         <tr class="hover" {{-- wire:click.prefetch="$set('generic', '{{ $presc_all_data->dm->generic->gendesc }}')" --}} {{-- wire:click.prefetch="add_item({{ $presc_all_data->dm->generic->gendesc }})" --}} {{-- ondblclick="select_rx_item_inactive({{ $presc_all_data->id }}, '{{ $presc_all_data->dm->drug_concat() }}', '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')" --}}
                                             wire:key="select-rx-item-{{ $loop->iteration }}">

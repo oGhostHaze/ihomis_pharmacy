@@ -48,15 +48,15 @@ class PrescriptionController extends Controller
      */
     public function show($id)
     {
-        $encounter = EncounterLog::where('enccode', $id)
-            ->select('henctr.enccode', 'hperson.hpercode', 'hperson.patfirst', 'hperson.patmiddle', 'hperson.patlast', 'hperson.patsuffix', 'hperson.patbdate', DB::raw("(SELECT dbo.sfn_les_get_patient_address(henctr.hpercode)) AS address"))
-            ->join('hperson', 'henctr.hpercode', '=', 'hperson.hpercode')
-            ->first();
-
-        $prescription = Prescription::where('enccode', $id)
+        $prescription = Prescription::where('id', $id)
             ->with(['data' => function ($query) {
                 $query->with('dm');
             }])
+            ->first();
+
+        $encounter = EncounterLog::where('enccode', $prescription->enccode)
+            ->select('henctr.enccode', 'hperson.hpercode', 'hperson.patfirst', 'hperson.patmiddle', 'hperson.patlast', 'hperson.patsuffix', 'hperson.patbdate', DB::raw("(SELECT dbo.sfn_les_get_patient_address(henctr.hpercode)) AS address"))
+            ->join('hperson', 'henctr.hpercode', '=', 'hperson.hpercode')
             ->first();
 
         $prescriber = DB::table('hpersonal')
