@@ -225,6 +225,7 @@ class IoTransListRequestor extends Component
                     'retail_price' => $item->retail_price,
                     'dmdprdte' => $item->dmdprdte,
                     'drug_concat' => $item->dm->drug_concat,
+                    'lot_no' => $item->from_stock->lot_no,
                 ]);
                 $stock->stock_bal += $item->qty;
                 $stock->beg_bal += $item->qty;
