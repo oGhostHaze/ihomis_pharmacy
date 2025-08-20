@@ -71,7 +71,8 @@
                         </p>
                     </div>
                 </a>
-                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder') }}" target="_blank">
+                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder2') }}"
+                    target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Near Reorder Level</h2>
                         <p class="text-xl text-center whitespace-nowrap text-warning">
@@ -82,7 +83,8 @@
                         </p>
                     </div>
                 </a>
-                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder') }}" target="_blank">
+                <a class="w-full h-40 shadow-xl card bg-base-100" href="{{ route('dmd.stk.reorder2') }}"
+                    target="_blank">
                     <div class="card-body">
                         <h2 class="text-lg text-center">Critical Stock</h2>
                         <p class="text-xl text-center text-error whitespace-nowrap">
