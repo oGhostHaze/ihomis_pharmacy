@@ -66,7 +66,7 @@ use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
 use App\Http\Livewire\Pharmacy\Deliveries\DeliveryListDonations;
 use App\Http\Livewire\Pharmacy\Reports\ConsumptionWarehouseReport;
 use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
-
+use App\Http\Livewire\Pharmacy\Drugs\ReorderLevelVersion2;
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +113,7 @@ Route::middleware([
         Route::get('/stocks', StockList::class)->name('stk');
         Route::get('/stocks/summary', StockSummary::class)->name('stk.sum');
         Route::get('/stocks/reorder-levels', ReorderLevel::class)->name('stk.reorder');
+        Route::get('/stocks/reorder-levels-2', ReorderLevelVersion2::class)->name('stk.reorder2');
         Route::get('/stocks/for-pull-out', StockPullOutList::class)->name('stk.pullout');
         Route::get('/stocks/ris', WardRisTrans::class)->name('stk.ris');
         Route::get('/stocks/ris/view/referenceno/{reference_no}', ViewWardRisRef::class)->name('view.ris.ref');

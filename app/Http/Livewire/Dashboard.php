@@ -38,35 +38,75 @@ class Dashboard extends Component
             ->where('stock_bal', '>', 0)
             ->count();
 
-        $near_reorder = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
-                                (SELECT reorder_point
-                                    FROM pharm_drug_stock_reorder_levels as level
-                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
-                                    pds.dmdcomb, pds.dmdctr
-                                FROM pharm_drug_stocks as pds
-                                WHERE pds.loc_code = " . $this->location_id . "
-                                    AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
-                                                AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
-                                                AND reorder_point > 0
-                                                AND level.reorder_point < stock_bal
-                                                AND level.reorder_point < (stock_bal - (stock_bal * 0.3)))
-                                GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
-                        "));
+        // $near_reorder = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+        //                         (SELECT reorder_point
+        //                             FROM pharm_drug_stock_reorder_levels as level
+        //                             WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
+        //                             pds.dmdcomb, pds.dmdctr
+        //                         FROM pharm_drug_stocks as pds
+        //                         WHERE pds.loc_code = " . $this->location_id . "
+        //                             AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
+        //                                         AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
+        //                                         AND reorder_point > 0
+        //                                         AND level.reorder_point < stock_bal
+        //                                         AND level.reorder_point < (stock_bal - (stock_bal * 0.3)))
+        //                         GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
+        //                 "));
 
-        $critical = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
-                                (SELECT reorder_point
-                                    FROM pharm_drug_stock_reorder_levels as level
-                                    WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
-                                    pds.dmdcomb, pds.dmdctr
-                                FROM pharm_drug_stocks as pds
-                                WHERE pds.loc_code = " . $this->location_id . "
-                                    AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
-                                                AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
-                                                AND reorder_point > 0
-                                                AND level.reorder_point >= stock_bal)
-                                GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
-                                        "));
+        // $critical = count(DB::select("SELECT pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
+        //                         (SELECT reorder_point
+        //                             FROM pharm_drug_stock_reorder_levels as level
+        //                             WHERE pds.dmdcomb = level.dmdcomb AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code) as reorder_point,
+        //                             pds.dmdcomb, pds.dmdctr
+        //                         FROM pharm_drug_stocks as pds
+        //                         WHERE pds.loc_code = " . $this->location_id . "
+        //                             AND EXISTS (SELECT id FROM pharm_drug_stock_reorder_levels level WHERE pds.dmdcomb = level.dmdcomb
+        //                                         AND pds.dmdctr = level.dmdctr AND pds.loc_code = level.loc_code
+        //                                         AND reorder_point > 0
+        //                                         AND level.reorder_point >= stock_bal)
+        //                         GROUP BY pds.drug_concat, pds.loc_code, pds.dmdcomb, pds.dmdctr
+        //                                 "));
 
+        $levels = DB::select(";WITH DrugAgg AS (
+                                    SELECT
+                                        pds.drug_concat,
+                                        SUM(pds.stock_bal) AS stock_bal,
+                                        ROUND(AVG(card.iss), 0) AS avg_iss
+                                    FROM pharm_drug_stocks pds
+                                    LEFT JOIN pharm_drug_stock_reorder_levels level
+                                        ON pds.dmdcomb = level.dmdcomb
+                                    AND pds.dmdctr = level.dmdctr
+                                    AND pds.loc_code = level.loc_code
+                                    LEFT JOIN pharm_drug_stock_cards card
+                                        ON card.dmdcomb = pds.dmdcomb
+                                    AND card.dmdctr = pds.dmdctr
+                                    AND card.loc_code = pds.loc_code
+                                    AND card.iss > 0
+                                    AND card.stock_date BETWEEN DATEADD(DAY, -14, GETDATE()) AND GETDATE()
+                                    WHERE pds.loc_code = $this->location_id
+                                    GROUP BY pds.drug_concat
+                                )
+                                SELECT
+                                    CASE
+                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.2, 0) THEN 'NEAR CRITICAL'
+                                        WHEN (ROUND(avg_iss * 1.5, 0) - stock_bal) > 0 THEN 'CRITICAL'
+                                        ELSE 'NORMAL'
+                                    END AS status,
+                                    COUNT(*) AS total_drugs,
+                                    SUM(stock_bal) AS total_stock,
+                                    ROUND(AVG(avg_iss), 0) AS avg_issuance
+                                FROM DrugAgg
+                                GROUP BY
+                                    CASE
+                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.2, 0) THEN 'NEAR CRITICAL'
+                                        WHEN (ROUND(avg_iss * 1.5, 0) - stock_bal) > 0 THEN 'CRITICAL'
+                                        ELSE 'NORMAL'
+                                    END
+                                ORDER BY status;
+                                ");
+
+        $critical = $levels[0]->total_drugs ?? 0;
+        $near_reorder = $levels[1]->total_drugs ?? 0;
         $date_from = Carbon::parse(now())->startOfDay()->format('Y-m-d H:i:s');
         $date_to = Carbon::parse(now())->endOfDay()->format('Y-m-d H:i:s');
 
