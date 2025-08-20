@@ -82,13 +82,13 @@ class Dashboard extends Component
                                     AND card.dmdctr = pds.dmdctr
                                     AND card.loc_code = pds.loc_code
                                     AND card.iss > 0
-                                    AND card.stock_date BETWEEN DATEADD(DAY, -14, GETDATE()) AND GETDATE()
+                                    AND card.stock_date BETWEEN DATEADD(DAY, -30, GETDATE()) AND GETDATE()
                                     WHERE pds.loc_code = $this->location_id
                                     GROUP BY pds.drug_concat
                                 )
                                 SELECT
                                     CASE
-                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.2, 0) THEN 'NEAR CRITICAL'
+                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.3, 0) THEN 'NEAR CRITICAL'
                                         WHEN (ROUND(avg_iss * 1.5, 0) - stock_bal) > 0 THEN 'CRITICAL'
                                         ELSE 'NORMAL'
                                     END AS status,
@@ -98,7 +98,7 @@ class Dashboard extends Component
                                 FROM DrugAgg
                                 GROUP BY
                                     CASE
-                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.2, 0) THEN 'NEAR CRITICAL'
+                                        WHEN stock_bal <= ROUND(avg_iss * 1.5 * 0.3, 0) THEN 'NEAR CRITICAL'
                                         WHEN (ROUND(avg_iss * 1.5, 0) - stock_bal) > 0 THEN 'CRITICAL'
                                         ELSE 'NORMAL'
                                     END
