@@ -213,6 +213,7 @@ class EncounterTransactionView extends Component
         $charge_code = OrderChargeCode::create([
             'charge_desc' => 'a',
         ]);
+        $cnt = 0;
         $pcchrgcod = 'P' . date('y') . '-' . sprintf('%07d', $charge_code->id);
         foreach ($this->selected_items as $docointkey) {
             $cnt = DB::update(
