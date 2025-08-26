@@ -124,7 +124,7 @@ class IoTransList extends Component
     {
         $dm = explode(',', $this->stock_id);
         $dmdcomb = $dm[0];
-        $dmdctr = $dm[1] ?? '1';
+        $dmdctr = $dm[1] ?? 1;
 
         $this->validate([
             'requested_qty' => ['required', 'numeric', 'min:1'],
