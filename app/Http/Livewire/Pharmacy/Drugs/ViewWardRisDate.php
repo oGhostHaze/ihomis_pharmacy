@@ -72,6 +72,7 @@ class ViewWardRisDate extends Component
                 'stock_date' => date('Y-m-d'),
                 'drug_concat' => $drug->drug_concat(),
                 'dmdprdte' => $drug->dmdprdte,
+                'io_trans_ref_no' => 'RIS-' . $item->trans_no
             ]);
             $card->rec += $item->issued_qty;
             $card->save();

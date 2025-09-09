@@ -374,6 +374,7 @@ class ViewIoTransDate extends Component
             'stock_date' => $trans_date,
             'drug_concat' => $drug_concat,
             'dmdprdte' => $dmdprdte,
+            'io_trans_ref_no' => $this->selected_request->trans_no
         ]);
         $card->iss += $qty;
         $card->bal -= $qty;

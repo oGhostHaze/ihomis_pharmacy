@@ -144,6 +144,7 @@ class WardRisTrans extends Component
                         'stock_date' => date('Y-m-d'),
                         'drug_concat' => $stock->drug_concat(),
                         'dmdprdte' => $stock->dmdprdte,
+                        'io_trans_ref_no' => 'RIS-' . $this->reference_no
                     ]);
                     $card->iss += $issued_qty;
                     $card->bal -= $issued_qty;

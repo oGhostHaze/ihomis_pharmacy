@@ -69,6 +69,8 @@
                 <tr>
                     <th>Source of Fund</th>
                     <th>Generic</th>
+                    <th>Lot No</th>
+                    <th>Expiration Date</th>
                     <th class="text-end">Remaining</th>
                 </tr>
             </thead>
@@ -77,6 +79,8 @@
                     <tr class="cursor-pointer hover">
                         <th>{{ $stk->chrgdesc }}</th>
                         <td class="font-bold">{{ $stk->drug_concat }}</td>
+                        <td>{{ $stk->lot_no }}</td>
+                        <td>{{ $stk->exp_date }}</td>
                         <td class="text-end">{{ number_format($stk->stock_bal, 0) }}</td>
                     </tr>
                 @empty

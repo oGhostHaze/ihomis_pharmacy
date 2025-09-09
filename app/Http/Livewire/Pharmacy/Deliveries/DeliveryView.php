@@ -317,6 +317,7 @@ class DeliveryView extends Component
         $date = Carbon::parse($date)->format('Y-m-d');
 
         $card = DrugStockCard::firstOrNew([
+            'io_trans_ref_no' => $this->details->si_no,
             'chrgcode' => $chrgcode,
             'loc_code' => $pharm_location_id,
             'dmdcomb' => $dmdcomb,
