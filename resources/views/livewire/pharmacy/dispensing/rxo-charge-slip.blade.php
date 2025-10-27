@@ -24,7 +24,7 @@
                 </div>
                 <div class="flex flex-col text-left whitespace-nowrap">
                     <div>Dep't./Section: <span class="font-semibold">
-                            {{ $rxo[0]->prescription_data ? ($rxo[0]->prescription_data->employee->dept ? $rxo[0]->prescription_data->employee->dept->deptname : '') : '' }}</span>
+                            {{ $rxo_header->prescription_data ? ($rxo_header->prescription_data->employee->dept ? $rxo_header->prescription_data->employee->dept->deptname : '') : '' }}</span>
                     </div>
                     <div>Date/Time: <span
                             class="font-semibold">{{ date('F j, Y h:i A', strtotime($rxo_header->dodate)) }}</span>
@@ -38,10 +38,10 @@
                     </div>
 
                     <div>Ordering Physician: <span
-                            class="font-semibold">{{ $prescription && $prescription->adm_pat_room ? 'Dr. ' . ($rxo[0]->prescription_data ? $rxo[0]->prescription_data->employee->fullname() : '') : 'N/A' }}</span>
+                            class="font-semibold">{{ $prescription && $prescription->adm_pat_room ? 'Dr. ' . ($rxo_header->prescription_data ? $rxo_header->prescription_data->employee->fullname() : '') : 'N/A' }}</span>
                     </div>
                     <div>Date/Time Ordered: <span
-                            class="font-semibold">{{ $rxo[0]->prescription_data ? date('F j, Y h:i A', strtotime($rxo[0]->prescription_data->created_at)) : 'N/A' }}</span>
+                            class="font-semibold">{{ $rxo_header->prescription_data ? date('F j, Y h:i A', strtotime($rxo_header->prescription_data->created_at)) : 'N/A' }}</span>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($rxo as $item)
+                    @forelse ($rxo as $item)
                         @php
                             $amount =
                                 $item->pcchrgamt + ($view_returns ? $item->pchrgup * $item->returns->sum('qty') : 0);
@@ -80,7 +80,11 @@
                         @php
                             $total_issued++;
                         @endphp
-                    @endforeach
+                    @empty
+                        <tr class="border-b border-black border-x">
+                            <td colspan="{{ $view_returns ? 5 : 4 }}" class="text-center">No issued items found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
                 <tfoot>
                     <tr align="right" class="font-bold border border-t-2 border-black">

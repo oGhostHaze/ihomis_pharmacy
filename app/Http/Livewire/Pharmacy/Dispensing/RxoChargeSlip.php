@@ -22,7 +22,7 @@ class RxoChargeSlip extends Component
     public function render()
     {
         $pcchrgcod = $this->pcchrgcod;
-
+        $header = [];
         $rxo = DrugOrder::where('pcchrgcod', $pcchrgcod)
             ->with('dm')->with('patient')
             ->with('prescriptions');
@@ -31,16 +31,18 @@ class RxoChargeSlip extends Component
             $this->returned_qty = DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->count();
         } else {
             $rxo = $rxo->whereDoesntHave('returns');
+            $header = DrugOrder::where('pcchrgcod', $pcchrgcod)
+                ->first();
         }
 
         $rxo = $rxo->latest('dodate')->get();
 
-        $rxo_header = $rxo[0];
+        $rxo_header = $header ?: $rxo[0];
         $prescription = $rxo_header->prescriptions->first();
 
-        $this->toecode = $rxo[0]->enctr->toecode;
+        $this->toecode = $rxo_header->enctr->toecode;
 
-        $patient_room = PatientRoom::where('enccode', $rxo[0]->enccode)->latest('hprdate')->first();
+        $patient_room = PatientRoom::where('enccode', $rxo_header->enccode)->latest('hprdate')->first();
         // $patient_room = PatientRoom::where('enccode', $rxo[0]->enccode)->where('patrmstat', 'A')->first();
         if ($patient_room) {
             $this->wardname = Ward::select('wardname')->where('wardcode', $patient_room->wardcode)->first();
