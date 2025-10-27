@@ -25,14 +25,15 @@ class RxoChargeSlip extends Component
 
         $rxo = DrugOrder::where('pcchrgcod', $pcchrgcod)
             ->with('dm')->with('patient')
-            ->with('prescriptions')
-            ->latest('dodate');
+            ->with('prescriptions');
 
         if ($this->view_returns) {
             $this->returned_qty = DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->count();
+        } else {
+            $rxo = $rxo->whereDoesntHave('returns');
         }
 
-        $rxo = $rxo->get();
+        $rxo = $rxo->latest('dodate')->get();
 
         $rxo_header = $rxo[0];
         $prescription = $rxo_header->prescriptions->first();
