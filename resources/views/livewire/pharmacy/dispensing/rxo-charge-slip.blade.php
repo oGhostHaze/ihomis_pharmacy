@@ -73,13 +73,13 @@
                         </tr>
                         <tr class="border-b border-black border-x">
                             @if ($view_returns)
-                                <td class="text-right" colspan="2">{{ $item->pchrgqty }}</td>
-                                <td class="text-right">{{ $item->returns->sum('qty') }}</td>
+                                <td class="text-right" colspan="2">{{ number_format($item->pchrgqty, 0) }}</td>
+                                <td class="text-right">{{ number_format($item->returns->sum('qty'), 0) }}</td>
                             @else
                                 <td class="text-right" colspan="2">
                                     {{ number_format($item->qtyissued ?? $item->pchrgqty, 0) }}</td>
                             @endif
-                            <td class="text-right">{{ $item->pchrgup }}</td>
+                            <td class="text-right">{{ number_format($item->pchrgup, 2) }}</td>
                             <td class="text-right">{{ number_format($amount, 2) }}</td>
                         </tr>
                         @php
