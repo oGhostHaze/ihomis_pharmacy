@@ -50,9 +50,11 @@
                     <tr class="border-b-2 border-b-black">
                         <th class="text-left">ITEM</th>
                         @if ($view_returns)
-                            <th class="text-left">R. QTY</th>
+                            <th class="w-20 text-right">CHARGED QTY</th>
+                            <th class="text-right">R. QTY</th>
+                        @else
+                            <th class="w-20 text-right">QTY</th>
                         @endif
-                        <th class="w-20 text-right">QTY</th>
                         <th class="w-20 text-right">UNIT COST</th>
                         <th class="w-20 text-right">AMOUNT</th>
                     </tr>
@@ -70,10 +72,12 @@
                         </tr>
                         <tr class="border-b border-black border-x">
                             @if ($view_returns)
+                                <td class="text-right">{{ $item->pchrgqty }}</td>
                                 <td class="text-right">{{ $item->returns->sum('qty') }}</td>
+                            @else
+                                <td class="text-right" colspan="2">
+                                    {{ number_format($item->qtyissued ?? $item->pchrgqty, 0) }}</td>
                             @endif
-                            <td class="text-right" colspan="2">
-                                {{ number_format($item->qtyissued ?? $item->pchrgqty, 0) }}</td>
                             <td class="text-right">{{ $item->pchrgup }}</td>
                             <td class="text-right">{{ number_format($amount, 2) }}</td>
                         </tr>
