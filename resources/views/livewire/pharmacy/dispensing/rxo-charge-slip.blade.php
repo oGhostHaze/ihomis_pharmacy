@@ -73,7 +73,7 @@
                         </tr>
                         <tr class="border-b border-black border-x">
                             @if ($view_returns)
-                                <td class="text-right">{{ $item->pchrgqty }}</td>
+                                <td class="text-right" colspan="2">{{ $item->pchrgqty }}</td>
                                 <td class="text-right">{{ $item->returns->sum('qty') }}</td>
                             @else
                                 <td class="text-right" colspan="2">
