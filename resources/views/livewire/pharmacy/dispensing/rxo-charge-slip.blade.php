@@ -50,7 +50,7 @@
                     <tr class="border-b-2 border-b-black">
                         <th class="text-left">ITEM</th>
                         @if ($view_returns)
-                            <th class="w-20 text-right">CHARGED QTY</th>
+                            <th class="w-20 text-right">O. QTY</th>
                             <th class="text-right">R. QTY</th>
                         @else
                             <th class="w-20 text-right">QTY</th>
@@ -68,7 +68,8 @@
                             $concat = implode(',', explode('_,', $item->dm->drug_concat));
                         @endphp
                         <tr class="border-t border-black border-x">
-                            <td class="!text-2xs font-semibold text-wrap" colspan="4">{{ $concat }}</td>
+                            <td class="!text-2xs font-semibold text-wrap" colspan="{{ $view_returns ? 6 : 4 }}">
+                                {{ $concat }}</td>
                         </tr>
                         <tr class="border-b border-black border-x">
                             @if ($view_returns)
@@ -86,14 +87,14 @@
                         @endphp
                     @empty
                         <tr class="border-b border-black border-x">
-                            <td colspan="{{ $view_returns ? 5 : 4 }}" class="text-center">No issued items found.</td>
+                            <td colspan="{{ $view_returns ? 6 : 4 }}" class="text-center">No issued items found.</td>
                         </tr>
                     @endforelse
                 </tbody>
                 <tfoot>
                     <tr align="right" class="font-bold border border-t-2 border-black">
                         @if ($view_returns)
-                            <td class="text-right ">{{ $returned_qty }} Item/s Returned</td>
+                            <td class="text-right " colspan="2">{{ $returned_qty }} Item/s Returned</td>
                         @endif
                         <td colspan="2">{{ number_format($total_issued) }}
                             ITEMS</td>
