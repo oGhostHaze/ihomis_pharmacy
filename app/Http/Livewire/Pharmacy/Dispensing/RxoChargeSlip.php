@@ -30,7 +30,6 @@ class RxoChargeSlip extends Component
         if ($this->view_returns) {
             $this->returned_qty = DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->count();
         } else {
-            $rxo = $rxo->whereDoesntHave('returns');
             $header = DrugOrder::where('pcchrgcod', $pcchrgcod)
                 ->first();
         }
