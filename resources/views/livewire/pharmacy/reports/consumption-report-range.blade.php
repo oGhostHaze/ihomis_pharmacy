@@ -57,9 +57,9 @@
                     wire:click='generate_ending_balance'>Generate</button>
             </div>
             <div class="ml-2">
-                <button class="btn btn-sm {{ $editMode ? 'btn-error' : 'btn-secondary' }}" wire:click="toggleEditMode">
+                {{-- <button class="btn btn-sm {{ $editMode ? 'btn-error' : 'btn-secondary' }}" wire:click="toggleEditMode">
                     {{ $editMode ? 'Exit Edit Mode' : 'Edit Quantities' }}
-                </button>
+                </button> --}}
             </div>
             <div class="ml-2">
                 <div class="form-control">
