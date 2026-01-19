@@ -190,7 +190,12 @@ class DeliveryView extends Component
 
         // Add compounding fee if applicable
         if ($this->has_compounding) {
-            $retail_price = $retail_price + $this->compounding_fee;
+
+            if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA') {
+                $retail_price = 0;
+            } else {
+                $retail_price = $retail_price + $this->compounding_fee;
+            }
         }
 
         // Update the lot number, expiry date, and retail price
