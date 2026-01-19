@@ -991,6 +991,10 @@ class ShowRis extends Component
                         $markup_price = 0;
                     }
 
+                    if ($delivery->charge_code == 'DRUMAN' or $delivery->charge_code == 'DRUMAA') {
+                        $retail_price = 0;
+                    }
+
                     // Create new delivery item
                     $deliveryItem = new DeliveryItems();
                     $deliveryItem->delivery_id = $delivery->id;
