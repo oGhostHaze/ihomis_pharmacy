@@ -191,7 +191,7 @@ class DeliveryView extends Component
         // Add compounding fee if applicable
         if ($this->has_compounding) {
 
-            if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA') {
+            if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA' or $this->details->charge_code == 'DRUMAN') {
                 $retail_price = $this->compounding_fee;
             } else {
                 $retail_price = $retail_price + $this->compounding_fee;
