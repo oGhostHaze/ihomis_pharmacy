@@ -84,6 +84,10 @@ class DeliveryView extends Component
             $markup_price = 0;
         }
 
+        if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA' or $this->details->charge_code == 'DRUMAN') {
+            $retail_price = 0;
+        }
+
         if ($this->has_compounding) {
 
             $this->validate([
@@ -188,14 +192,12 @@ class DeliveryView extends Component
             $retail_price = 0;
         }
 
+        if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA' or $this->details->charge_code == 'DRUMAN') {
+            $retail_price = 0;
+        }
         // Add compounding fee if applicable
         if ($this->has_compounding) {
-
-            if ($this->details->charge_code == 'DRUMAN' or $this->details->charge_code == 'DRUMAA' or $this->details->charge_code == 'DRUMAN') {
-                $retail_price = $this->compounding_fee;
-            } else {
-                $retail_price = $retail_price + $this->compounding_fee;
-            }
+            $retail_price = $retail_price + $this->compounding_fee;
         }
 
         // Update the lot number, expiry date, and retail price

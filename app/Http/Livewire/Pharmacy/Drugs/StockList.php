@@ -138,6 +138,10 @@ class StockList extends Component
             $retail_price = $unit_cost + $markup_price;
         }
 
+        if ($this->chrgcode == 'DRUMAN' or $this->chrgcode == 'DRUMAA' or $this->chrgcode == 'DRUMAN') {
+            $retail_price = 0;
+        }
+
         if ($this->has_compounding) {
             $this->validate([
                 'compounding_fee' => ['required', 'numeric', 'min:0'],
