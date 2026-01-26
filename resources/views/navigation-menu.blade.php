@@ -270,6 +270,9 @@
                         <x-jet-dropdown-link href="{{ route('ref.wards') }}">
                             {{ __('Manage RIS Wards') }}
                         </x-jet-dropdown-link>
+                        <x-jet-dropdown-link href="{{ route('non-pnf-drugs.index') }}">
+                            {{ __('Non-PNF Drugs') }}
+                        </x-jet-dropdown-link>
 
                     </x-slot>
                 </x-jet-dropdown>
