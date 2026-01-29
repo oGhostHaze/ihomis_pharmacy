@@ -393,6 +393,7 @@
                                             <span class="font-semibold">Drug:</span> {{ $detail->pdims_drugdesc }}
                                         </div>
                                         <button wire:click="removeDrugAssociation({{ $detail->itemID }})"
+                                            wire:key="item-{{ $detail->itemID }}-{{ $loop->iteration }}"
                                             class="px-2 py-1 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50">
                                             Remove Association
                                         </button>
