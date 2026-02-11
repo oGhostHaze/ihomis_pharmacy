@@ -83,13 +83,13 @@ class ShowRis extends Component
         $this->loadRis();
     }
 
-    // public function hydrate()
-    // {
-    //     // If we have essential data but the full objects are null, reload them
-    //     if ($this->dataLoaded && ($this->ris === null || $this->risDetails === null)) {
-    //         $this->loadRisData();
-    //     }
-    // }
+    public function hydrate()
+    {
+        // If we have essential data but the full objects are null, reload them
+        if ($this->dataLoaded && ($this->ris === null || $this->risDetails === null)) {
+            $this->loadRisData();
+        }
+    }
 
 
     protected function loadRelatedDeliveries()
