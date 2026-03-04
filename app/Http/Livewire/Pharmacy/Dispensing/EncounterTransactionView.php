@@ -641,41 +641,42 @@ class EncounterTransactionView extends Component
         ]);
         // $issued_items = DrugStockIssue::where('docointkey', $this->docointkey)->latest()->with('stock')->get();
         $isReturned = DrugOrderReturn::where('docointkey', $this->docointkey)
+            ->where('returndate', Carbon::today())
             ->count();
 
         //RECORD RETURN ITEM TO hrxoreturn table
         if (!$isReturned) {
             DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
-                docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
-                status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
-                returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup, loc_code)
-            VALUES(
-            '" . $item->docointkey . "',
-            '" . $item->enccode . "',
-            '" . $item->hpercode . "',
-            '" . $item->dmdcomb . "',
-            '" . now() . "',
-            '" . now() . "',
-            '" . $this->return_qty . "',
-            '" . session('employeeid') . "',
-            'A',
-            'N',
-            'N',
-            'N',
-            '" . session('employeeid') . "',
-            '" . $item->locacode . "',
-            '" . $item->dmdctr . "',
-            '" . $item->dmdprdte . "',
-            '" . $item->remarks . "',
-            '" . $item->orderfrom . "',
-            '" . $item->orderfrom . "',
-            '" . $item->pcchrgcod . "',
-            '',
-            '" . $item->pchrgup . "',
-            '" . $item->pchrgup . "',
-            '" . $this->location_id . "'
-            )
-        ");
+                    docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
+                    status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
+                    returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup, loc_code)
+                VALUES(
+                '" . $item->docointkey . "',
+                '" . $item->enccode . "',
+                '" . $item->hpercode . "',
+                '" . $item->dmdcomb . "',
+                '" . now() . "',
+                '" . now() . "',
+                '" . $this->return_qty . "',
+                '" . session('employeeid') . "',
+                'A',
+                'N',
+                'N',
+                'N',
+                '" . session('employeeid') . "',
+                '" . $item->locacode . "',
+                '" . $item->dmdctr . "',
+                '" . $item->dmdprdte . "',
+                '" . $item->remarks . "',
+                '" . $item->orderfrom . "',
+                '" . $item->orderfrom . "',
+                '" . $item->pcchrgcod . "',
+                '',
+                '" . $item->pchrgup . "',
+                '" . $item->pchrgup . "',
+                '" . $this->location_id . "'
+                )
+            ");
 
             //DEDUCT QTYISSUED FROM hrxo and DrugStockIssue table
             $item->pcchrgamt = $item->pchrgup * ($item->qtyissued - $this->return_qty);
