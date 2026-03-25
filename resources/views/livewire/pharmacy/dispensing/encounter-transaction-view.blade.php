@@ -30,7 +30,7 @@
                         <a href="{{ route('dispensing.rxo.return.sum', $hpercode) }}" target="_blank"
                             class="btn btn-sm btn-outline">Issued with Return</a>
                     </div>
-                    @if ($billstat != '02' and $billstat != '03')
+                    @if ($is_walkin_linked_encounter || ($billstat != '02' and $billstat != '03'))
                         @if (session('active_consumption'))
                             <div class="flex ml-auto">
                                 <div class="flex flex-col text-center">
@@ -303,7 +303,7 @@
                                 $drug = implode('', $concat);
                             @endphp
                             <tr class="cursor-pointer hover content {{ $stock->chrgcode }}"
-                                @if ($billstat != '02' and $billstat != '03') onclick="select_item('{{ $stock->id }}', `{{ $drug }}`, '{{ $stock->dmselprice }}', '{{ $stock->dmdcomb }}', '{{ $stock->dmdctr }}', '{{ $stock->chrgcode }}', '{{ $stock->loc_code }}', '{{ $stock->dmdprdte }}', '{{ $stock->id }}', {{ $stock->stock_bal }}, '{{ $stock->exp_date }}')" @else
+                                @if ($is_walkin_linked_encounter || ($billstat != '02' and $billstat != '03')) onclick="select_item('{{ $stock->id }}', `{{ $drug }}`, '{{ $stock->dmselprice }}', '{{ $stock->dmdcomb }}', '{{ $stock->dmdctr }}', '{{ $stock->chrgcode }}', '{{ $stock->loc_code }}', '{{ $stock->dmdprdte }}', '{{ $stock->id }}', {{ $stock->stock_bal }}, '{{ $stock->exp_date }}')" @else
                                     onclick="alert('Patient already billed! You cannot add any more item in this encounter.')" @endif>
                                 <td class="break-words">
                                     <div>

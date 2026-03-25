@@ -64,7 +64,7 @@ class EncounterTransactionView extends Component
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
 
     public $stock_changes = false;
-    public $is_discharge_encounter = false;
+    public $is_walkin_linked_encounter = false;
     public $resolved_walkin_enccode;
 
 
@@ -191,8 +191,6 @@ class EncounterTransactionView extends Component
             $this->hpercode = $encounter->hpercode;
             $this->toecode = $encounter->toecode;
         }
-        $this->is_discharge_encounter = $this->isDischargeEncounter($enccode);
-        $this->resolved_walkin_enccode = $this->is_discharge_encounter ? $this->getLatestWalkInEncounter() : null;
         $this->mssikey = $encounter->mssikey;
         $this->encounter = $encounter;
         $this->code  = $encounter->enccode;
@@ -204,6 +202,8 @@ class EncounterTransactionView extends Component
         $this->wardname = $encounter->wardname;
         $this->rmname = $encounter->rmname;
         $this->billstat = $encounter->billstat;
+        $this->is_walkin_linked_encounter = $this->shouldUseWalkInLinkedProcess($enccode, $encounter->toecode, $encounter->billstat);
+        $this->resolved_walkin_enccode = $this->is_walkin_linked_encounter ? $this->getLatestWalkInEncounter() : null;
         if (!$this->charges) {
             $this->charges = ChargeCode::where('bentypcod', 'DRUME')
                 ->where('chrgstat', 'A')
@@ -223,6 +223,19 @@ class EncounterTransactionView extends Component
             ->where('ord.orcode', 'DISCH')
             ->whereNull('adm.disdate')
             ->exists();
+    }
+
+    protected function shouldUseWalkInLinkedProcess($enccode, $toecode, $billstat)
+    {
+        if (!in_array($toecode, ['ADM', 'OPDAD', 'ERADM'])) {
+            return false;
+        }
+
+        if ($this->isDischargeEncounter($enccode)) {
+            return true;
+        }
+
+        return $billstat != '02' && $billstat != '03';
     }
 
     protected function getLatestWalkInEncounter()
@@ -650,7 +663,7 @@ class EncounterTransactionView extends Component
 
         if ($this->is_ris or $available >= $total_deduct) {
             $originalEnccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
-            $targetEnccode = $this->is_discharge_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
+            $targetEnccode = $this->is_walkin_linked_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
             $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
             $docointkey = '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $chrgcode . $dmdcomb . $dmdctr;
 
@@ -857,7 +870,7 @@ class EncounterTransactionView extends Component
 
         if ($dm) {
             $originalEnccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
-            $targetEnccode = $this->is_discharge_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
+            $targetEnccode = $this->is_walkin_linked_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
             $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
 
             DrugOrder::create([
