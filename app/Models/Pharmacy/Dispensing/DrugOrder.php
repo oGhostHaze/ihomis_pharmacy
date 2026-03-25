@@ -41,6 +41,7 @@ class DrugOrder extends Model
         'prescribed_by',
         'remarks',
         'deptcode',
+        'original_enccode',
     ];
 
     public function department()

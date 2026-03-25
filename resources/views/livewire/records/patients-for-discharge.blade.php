@@ -5,7 +5,7 @@
                 <i class="mr-1 las la-map-marked la-lg"></i> {{ session('pharm_location_name') }}
             </li>
             <li>
-                <i class="mr-1 las la-user-alt la-lg"></i> Patients for Discharge
+                <i class="mr-1 las la-user-alt la-lg"></i> May Go Home
             </li>
         </ul>
     </div>
@@ -27,6 +27,7 @@
                         <th class="w-3/12">Department</th>
                         <th class="w-3/12">Condition/Status</th>
                         <th class="w-2/12">MSS Classification</th>
+                        <th class="w-2/12">Order Type</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -106,10 +107,43 @@
                                     echo $class;
                                 @endphp
                             </td>
+                            <td>
+                                @php
+                                    $basic = $patient->basic;
+                                    $g24 = $patient->g24;
+                                    $or = $patient->or_count;
+                                @endphp
+                                <ul class="text-sm rounded-md menu menu-horizontal bg-base-200">
+                                    @if ($basic)
+                                        <li>
+                                            <div class="tooltip" data-tip="BASIC"><i
+                                                    class="las la-2g la-prescription"></i>
+                                                <div class="badge badge-accent badge-xs">{{ $basic }}</div>
+                                            </div>
+                                        </li>
+                                    @endif
+                                    @if ($g24)
+                                        <li>
+                                            <div class="tooltip" data-tip="Good For 24 Hrs"><i
+                                                    class="las la-2g la-hourglass-start"></i>
+                                                <div class="badge badge-error badge-xs">{{ $g24 }}</div>
+                                            </div>
+                                        </li>
+                                    @endif
+                                    @if ($or)
+                                        <li>
+                                            <div class="tooltip" data-tip="For Operating Use"><i
+                                                    class="las la-2g la-syringe"></i>
+                                                <div class="badge badge-secondary badge-xs">{{ $or }}</div>
+                                            </div>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7">No record found</td>
+                            <td colspan="8">No record found</td>
                         </tr>
                     @endforelse
                 </tbody>

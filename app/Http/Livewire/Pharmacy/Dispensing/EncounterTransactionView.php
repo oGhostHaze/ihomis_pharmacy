@@ -64,6 +64,8 @@ class EncounterTransactionView extends Component
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
 
     public $stock_changes = false;
+    public $is_discharge_encounter = false;
+    public $resolved_walkin_enccode;
 
 
     public function render()
@@ -80,12 +82,13 @@ class EncounterTransactionView extends Component
                                     WHERE hrxo.hpercode = '" . $this->hpercode . "' AND enctr.toecode = 'WALKN'
                                     ORDER BY dodate DESC");
         } else {
-            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
+            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, original_enccode
                                     FROM hospital.dbo.hrxo
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
                                     INNER JOIN hcharge ON orderfrom = chrgcode
                                     LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
                                     WHERE hrxo.enccode = '" . $enccode . "'
+                                        OR hrxo.original_enccode = '" . $enccode . "'
                                     ORDER BY dodate DESC");
         }
 
@@ -104,7 +107,7 @@ class EncounterTransactionView extends Component
             SELECT drug_concat, SUM(qtyissued) qty_issued, MAX(dodtepost) last_issue
                 FROM hrxo
             JOIN hdmhdr ON hrxo.dmdcomb = hdmhdr.dmdcomb AND hrxo.dmdctr = hdmhdr.dmdctr
-                WHERE enccode = '" . $enccode . "' AND estatus = 'S'
+                WHERE (enccode = '" . $enccode . "' OR original_enccode = '" . $enccode . "') AND estatus = 'S'
             GROUP BY drug_concat
         ");
 
@@ -188,6 +191,8 @@ class EncounterTransactionView extends Component
             $this->hpercode = $encounter->hpercode;
             $this->toecode = $encounter->toecode;
         }
+        $this->is_discharge_encounter = $this->isDischargeEncounter($enccode);
+        $this->resolved_walkin_enccode = $this->is_discharge_encounter ? $this->getLatestWalkInEncounter() : null;
         $this->mssikey = $encounter->mssikey;
         $this->encounter = $encounter;
         $this->code  = $encounter->enccode;
@@ -206,6 +211,58 @@ class EncounterTransactionView extends Component
                 ->get();
         }
         // $this->departments = Department::where('deptstat', 'A')->get();
+    }
+
+    protected function isDischargeEncounter($enccode)
+    {
+        return DB::table('hospital.dbo.henctr as enctr')
+            ->join('hospital.dbo.hadmlog as adm', 'enctr.enccode', '=', 'adm.enccode')
+            ->join('hospital.dbo.hdocord as ord', 'enctr.enccode', '=', 'ord.enccode')
+            ->where('enctr.enccode', $enccode)
+            ->whereIn('enctr.toecode', ['ADM', 'OPDAD', 'ERADM'])
+            ->where('ord.orcode', 'DISCH')
+            ->whereNull('adm.disdate')
+            ->exists();
+    }
+
+    protected function getLatestWalkInEncounter()
+    {
+        $walkIn = EncounterLog::where('encstat', 'W')
+            ->where('toecode', 'WALKN')
+            ->where('hpercode', $this->hpercode)
+            ->latest('encdate')
+            ->first();
+
+        if ($walkIn) {
+            return $walkIn->enccode;
+        }
+
+        return null;
+    }
+
+    protected function resolveLatestWalkInEncounter()
+    {
+        $walkInEnccode = $this->getLatestWalkInEncounter();
+
+        if ($walkInEnccode) {
+            return $walkInEnccode;
+        }
+
+        $newEnccode = '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now()));
+
+        EncounterLog::create([
+            'enccode' => $newEnccode,
+            'fhud' => '0000040',
+            'hpercode' => $this->hpercode,
+            'encdate' => now(),
+            'enctime' => now(),
+            'toecode' => 'WALKN',
+            'sopcode1' => 'SELPA',
+            'encstat' => 'W',
+            'confdl' => 'N',
+        ]);
+
+        return $newEnccode;
     }
 
     public function charge_items()
@@ -592,17 +649,19 @@ class EncounterTransactionView extends Component
         }
 
         if ($this->is_ris or $available >= $total_deduct) {
-            $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
+            $originalEnccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
+            $targetEnccode = $this->is_discharge_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
+            $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
             $docointkey = '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $chrgcode . $dmdcomb . $dmdctr;
 
             DB::insert("INSERT INTO hospital.dbo.hrxo(docointkey, enccode, hpercode, rxooccid, rxoref, dmdcomb, repdayno1, rxostatus,
                             rxolock, rxoupsw, rxoconfd, dmdctr, estatus, entryby, ordcon, orderupd, locacode, orderfrom, issuetype,
-                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by )
-                        VALUES ( '" . $docointkey . "', '" . $enccode . "', '" . $this->hpercode . "', '1', '1', '" . $dmdcomb . "', '1', 'A',
+                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by, original_enccode )
+                        VALUES ( '" . $docointkey . "', '" . $targetEnccode . "', '" . $this->hpercode . "', '1', '1', '" . $dmdcomb . "', '1', 'A',
                             'N', 'N', 'N', '" . $dmdctr . "', 'U', '" . session('employeeid') . "', 'NEWOR', 'ACTIV', 'PHARM', '" . $chrgcode . "', 'c',
                             '" . ($this->type ? true : false) . "', '" . $this->type . "', '" . ($this->is_ris ? true : false) . "', '" . $this->order_qty . "', '" . $this->unit_price . "',
                             '" . $this->order_qty * $this->unit_price . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . $dmdprdte . "', '" . $exp_date . "',
-                            '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "' )");
+                            '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "', " . ($originalLinkEnccode ? "'" . $originalLinkEnccode . "'" : "NULL") . " )");
 
             if ($with_rx) {
                 DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -797,11 +856,13 @@ class EncounterTransactionView extends Component
             ->first();
 
         if ($dm) {
-            $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
+            $originalEnccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
+            $targetEnccode = $this->is_discharge_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
+            $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
 
             DrugOrder::create([
                 'docointkey' => '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $dm->chrgcode . $dm->dmdcomb . $dm->dmdctr,
-                'enccode' => $enccode,
+                'enccode' => $targetEnccode,
                 'hpercode' => $this->hpercode,
                 'rxooccid' => '1',
                 'rxoref' => '1',
@@ -836,6 +897,7 @@ class EncounterTransactionView extends Component
                 'remarks' => $this->remarks, //added
                 'prescription_data_id' => $rx_id,
                 'prescribed_by' => $empid,
+                'original_enccode' => $originalLinkEnccode,
             ]);
             DB::connection('webapp')->table('webapp.dbo.prescription_data')
                 ->where('id', $rx_id)

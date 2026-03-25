@@ -11,7 +11,34 @@ class PatientsForDischarge extends Component
     public function render()
     {
         $patients = DB::select("
-            SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname, mss.mssikey, serv.tsdesc, adm.condcode
+            SELECT enctr.enccode, adm.admdate, enctr.hpercode, pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix, room.rmname, ward.wardname, mss.mssikey, serv.tsdesc, adm.condcode,
+                (
+                    SELECT COUNT(data.qty)
+                    FROM webapp.dbo.prescription rx
+                    INNER JOIN webapp.dbo.prescription_data data ON rx.id = data.presc_id
+                    WHERE rx.enccode = enctr.enccode
+                        AND rx.stat = 'A'
+                        AND data.stat = 'A'
+                        AND (data.order_type = '' OR data.order_type IS NULL)
+                ) AS basic,
+                (
+                    SELECT COUNT(data.qty)
+                    FROM webapp.dbo.prescription rx
+                    INNER JOIN webapp.dbo.prescription_data data ON rx.id = data.presc_id
+                    WHERE rx.enccode = enctr.enccode
+                        AND rx.stat = 'A'
+                        AND data.stat = 'A'
+                        AND data.order_type = 'G24'
+                ) AS g24,
+                (
+                    SELECT COUNT(data.qty)
+                    FROM webapp.dbo.prescription rx
+                    INNER JOIN webapp.dbo.prescription_data data ON rx.id = data.presc_id
+                    WHERE rx.enccode = enctr.enccode
+                        AND rx.stat = 'A'
+                        AND data.stat = 'A'
+                        AND data.order_type = 'OR'
+                ) AS or_count
             FROM hospital.dbo.henctr enctr
                 LEFT JOIN hospital.dbo.hadmlog adm ON enctr.enccode = adm.enccode
                 RIGHT JOIN hospital.dbo.hpatroom pat_room ON enctr.enccode = pat_room.enccode
