@@ -231,11 +231,7 @@ class EncounterTransactionView extends Component
             return false;
         }
 
-        if ($this->isDischargeEncounter($enccode)) {
-            return true;
-        }
-
-        return $billstat != '02' && $billstat != '03';
+        return $billstat == '02' || $billstat == '03';
     }
 
     protected function getLatestWalkInEncounter()
