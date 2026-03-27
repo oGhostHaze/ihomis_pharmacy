@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>May Go Home Updates</title>
+    <style>
+        :root {
+            --bg: #f4efe8;
+            --paper: #fffaf3;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #e5d6c3;
+            --accent: #b45309;
+            --accent-soft: #f59e0b;
+            --green: #166534;
+            --green-soft: #dcfce7;
+            --blue: #1d4ed8;
+            --blue-soft: #dbeafe;
+            --rose: #be123c;
+            --rose-soft: #ffe4e6;
+            --shadow: 0 20px 50px rgba(93, 64, 24, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at top left, rgba(245, 158, 11, 0.15), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(29, 78, 216, 0.12), transparent 30%),
+                var(--bg);
+        }
+
+        .wrap {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 48px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffffff 55%, #eff6ff 100%);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            padding: 36px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: auto -80px -80px auto;
+            width: 240px;
+            height: 240px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.28), transparent 65%);
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #fff;
+            border: 1px solid var(--line);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 16px 0 12px;
+            font-size: clamp(34px, 5vw, 62px);
+            line-height: 0.98;
+        }
+
+        .hero p {
+            max-width: 760px;
+            margin: 0;
+            font-size: clamp(16px, 2vw, 21px);
+            color: var(--muted);
+        }
+
+        .hero-grid,
+        .card-grid,
+        .flow-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            margin-top: 26px;
+        }
+
+        .stat,
+        .card,
+        .flow,
+        .faq,
+        .timeline {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat {
+            padding: 20px;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .section {
+            margin-top: 26px;
+        }
+
+        .section-title {
+            margin: 0 0 14px;
+            font-size: 28px;
+        }
+
+        .section-subtitle {
+            margin: 0 0 18px;
+            color: var(--muted);
+            font-size: 16px;
+        }
+
+        .card-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .card {
+            padding: 22px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tag.orange { background: #ffedd5; color: #9a3412; }
+        .tag.blue { background: var(--blue-soft); color: var(--blue); }
+        .tag.green { background: var(--green-soft); color: var(--green); }
+        .tag.rose { background: var(--rose-soft); color: var(--rose); }
+
+        .card h3,
+        .flow h3,
+        .faq h3,
+        .timeline h3 {
+            margin: 0 0 10px;
+            font-size: 22px;
+        }
+
+        .card p,
+        .flow p,
+        .faq p,
+        .timeline p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .flow-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .flow {
+            padding: 24px;
+            position: relative;
+        }
+
+        .step {
+            width: 44px;
+            height: 44px;
+            display: inline-grid;
+            place-items: center;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f59e0b, #b45309);
+            color: #fff;
+            font-weight: 800;
+            margin-bottom: 14px;
+        }
+
+        .flow ul,
+        .faq ul {
+            margin: 14px 0 0;
+            padding-left: 18px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .timeline {
+            padding: 24px;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 16px;
+            padding: 16px 0;
+            border-top: 1px dashed var(--line);
+        }
+
+        .timeline-item:first-of-type {
+            border-top: none;
+            padding-top: 6px;
+        }
+
+        .timeline-label {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .faq {
+            padding: 24px;
+        }
+
+        .footer-note {
+            margin-top: 22px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: #fff;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            text-align: center;
+        }
+
+        @media (max-width: 760px) {
+            .hero {
+                padding: 24px;
+            }
+
+            .timeline-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <section class="hero">
+            <span class="eyebrow">Pharmacy System Update</span>
+            <h1>May Go Home and Walk-In Process Updates</h1>
+            <p>
+                This guide explains what changed, what staff will see on screen, and what will happen when adding
+                medicines for patients under the updated pharmacy workflow.
+            </p>
+
+            <div class="hero-grid">
+                <div class="stat">
+                    <strong>1</strong>
+                    Main menu label changed from <b>For Discharge</b> to <b>May Go Home</b>.
+                </div>
+                <div class="stat">
+                    <strong>2</strong>
+                    The <b>Order Type</b> display was added to the May Go Home list.
+                </div>
+                <div class="stat">
+                    <strong>3</strong>
+                    Some added items may now be saved under the patient's latest <b>Walk-In</b> encounter.
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">What Users Will Notice</h2>
+            <p class="section-subtitle">The experience stays familiar, but a few screens now show clearer information and follow updated saving rules.</p>
+            <div class="card-grid">
+                <article class="card">
+                    <span class="tag orange">Navigation</span>
+                    <h3>New Name in the Menu</h3>
+                    <p>
+                        The menu item formerly called <b>For Discharge</b> is now called <b>May Go Home</b>.
+                        This is only a label change to make the purpose easier to understand.
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="tag blue">Patient List</span>
+                    <h3>Order Type is Visible</h3>
+                    <p>
+                        The May Go Home table now shows the same order-type indicators used in Prescription Ward:
+                        <b>Basic</b>, <b>G24</b>, and <b>OR</b>.
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="tag green">Item Adding</span>
+                    <h3>Items Can Still Be Added</h3>
+                    <p>
+                        Staff can continue adding items. The system now decides whether the item stays on the current
+                        encounter or is routed through the latest Walk-In encounter.
+                    </p>
+                </article>
+                <article class="card">
+                    <span class="tag rose">Behind the Scenes</span>
+                    <h3>Original Encounter is Remembered</h3>
+                    <p>
+                        Even when an item is saved under Walk-In, the system still remembers the original encounter so
+                        users can track where the request came from.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">How the Updated Saving Rule Works</h2>
+            <p class="section-subtitle">This is the main workflow change for end users.</p>
+            <div class="flow-grid">
+                <article class="flow">
+                    <div class="step">1</div>
+                    <h3>User opens a patient</h3>
+                    <p>
+                        The user can open the patient from the <b>May Go Home</b> list or from the usual encounter
+                        transaction screen.
+                    </p>
+                </article>
+                <article class="flow">
+                    <div class="step">2</div>
+                    <h3>User adds an item</h3>
+                    <p>
+                        The user adds a drug or medicine just like before. No extra step is needed from the user.
+                    </p>
+                </article>
+                <article class="flow">
+                    <div class="step">3</div>
+                    <h3>System checks the bill status</h3>
+                    <p>
+                        If the encounter's <b>bill status is 02 or 03</b>, the item is saved under the patient's
+                        latest <b>Walk-In</b> encounter.
+                    </p>
+                    <ul>
+                        <li>The original encounter is still linked for reference.</li>
+                        <li>The item can still be seen from the original screen.</li>
+                    </ul>
+                </article>
+                <article class="flow">
+                    <div class="step">4</div>
+                    <h3>If bill status is not 02 or 03</h3>
+                    <p>
+                        The item stays on the current encounter, but the user is still allowed to add the item.
+                    </p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="timeline">
+                <h3>Quick Before and After</h3>
+                <div class="timeline-item">
+                    <div class="timeline-label">Before</div>
+                    <div>
+                        <p>
+                            If the patient's encounter was already billed with bill status <b>02</b> or <b>03</b>,
+                            users could no longer add items in that encounter. To continue, they had to manually open
+                            the patient's <b>Walk-In</b> encounter, or create a new one, just to add another item.
+                            Also, prescribed items did not appear under the Walk-In encounter, which made the workflow
+                            harder to follow.
+                        </p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-label">After</div>
+                    <div>
+                        <p>
+                            When bill status is <b>02</b> or <b>03</b>, the system now automatically uses the latest
+                            <b>Walk-In</b> encounter in the background when adding items. Users no longer need to
+                            manually switch encounters just to continue adding medicines, and prescribed items can now
+                            be handled properly in this updated flow.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="faq">
+                <h3>Simple Scenarios</h3>
+                <ul>
+                    <li>If a patient appears under <b>May Go Home</b>, users will now see the order-type indicators in that list.</li>
+                    <li>If a user adds an item and the bill status is <b>02</b> or <b>03</b>, the item goes to the latest Walk-In encounter.</li>
+                    <li>If a user adds an item and the bill status is anything else, the item stays on the current encounter.</li>
+                    <li>Users do not need to manually decide where the item goes. The system handles that automatically.</li>
+                </ul>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
