@@ -24,11 +24,10 @@ class RxoChargeSlip extends Component
         $pcchrgcod = $this->pcchrgcod;
         $header = [];
         $rxo = DrugOrder::where('pcchrgcod', $pcchrgcod)
-            ->with('dm')->with('patient')
-            ->with('prescriptions');
+            ->with('dm')->with('patient')->with('prescriptions')->with('returns');
 
         if ($this->view_returns) {
-            $this->returned_qty = DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->count();
+            $this->returned_qty = (float) DrugOrderReturn::where('pcchrgcod', $pcchrgcod)->sum('qty');
         } else {
             $header = DrugOrder::where('pcchrgcod', $pcchrgcod)
                 ->first();
@@ -60,3 +59,4 @@ class RxoChargeSlip extends Component
         $this->pcchrgcod = $pcchrgcod;
     }
 }
+
