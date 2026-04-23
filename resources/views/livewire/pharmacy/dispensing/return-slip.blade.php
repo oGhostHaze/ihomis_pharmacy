@@ -23,18 +23,11 @@
                             class="font-semibold">{{ $patient[0]->patlast . ', ' . $patient[0]->patfirst . ' ' . $patient[0]->patsuffix . ' ' . $patient[0]->patmiddle }}</span>
                     </div>
                     <div>Hosp Number: <span class="font-semibold">{{ $patient[0]->hpercode }}</span></div>
-                    {{-- <div>Ward:
+                    <div>Ward:
                         <span class="font-semibold">{{ $wardname ? $wardname->wardname : '' }}</span>
                         <span class="font-semibold">{{ $room_name ? $room_name->rmname : '' }}
-                            / {{ $toecode }}</span>
+                            {{ $toecode ? '/ ' . $toecode : '' }}</span>
                     </div>
-
-                    <div>Ordering Physician: <span
-                            class="font-semibold">{{ $prescription && $prescription->adm_pat_room ? 'Dr. ' . ($rxo[0]->prescription_data ? $rxo[0]->prescription_data->employee->fullname() : '') : 'N/A' }}</span>
-                    </div>
-                    <div>Date/Time Ordered: <span
-                            class="font-semibold">{{ $rxo[0]->prescription_data ? date('F j, Y h:i A', strtotime($rxo[0]->prescription_data->created_at)) : 'N/A' }}</span>
-                    </div> --}}
                 </div>
             </div>
             <table class="w-full text-xs/4">
