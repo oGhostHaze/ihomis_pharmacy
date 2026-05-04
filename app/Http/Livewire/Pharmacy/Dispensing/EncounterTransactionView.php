@@ -277,6 +277,30 @@ class EncounterTransactionView extends Component
         return $newEnccode;
     }
 
+    protected function encounterStateProperties()
+    {
+        return [
+            'code',
+            'enccode',
+            'location_id',
+            'encounter',
+            'hpercode',
+            'toecode',
+            'mssikey',
+            'encdate',
+            'diagtext',
+            'patlast',
+            'patfirst',
+            'patmiddle',
+            'wardname',
+            'rmname',
+            'billstat',
+            'is_walkin_linked_encounter',
+            'resolved_walkin_enccode',
+            'take_home_mgh_label',
+        ];
+    }
+
     public function charge_items()
     {
         $charge_code = OrderChargeCode::create([
@@ -681,7 +705,24 @@ class EncounterTransactionView extends Component
                     ->update(['stat' => 'I']);
             }
 
-            $this->resetExcept('code', 'generic', 'rx_dmdcomb', 'rx_dmdctr', 'rx_id', 'empid', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'mss', 'summaries');
+            $this->resetExcept(array_merge($this->encounterStateProperties(), [
+                'generic',
+                'rx_dmdcomb',
+                'rx_dmdctr',
+                'rx_id',
+                'empid',
+                'stocks',
+                'charges',
+                'selected_items',
+                'patient',
+                'active_prescription',
+                'active_prescription_all',
+                'extra_prescriptions',
+                'extra_prescriptions_all',
+                'adm',
+                'mss',
+                'summaries',
+            ]));
             // $this->emit('refresh');
             $this->alert('success', 'Item added.');
             // return redirect(route('dispensing.view.enctr', $this->enccode));
@@ -915,7 +956,19 @@ class EncounterTransactionView extends Component
                 ->where('id', $rx_id)
                 ->update(['stat' => 'I']);
 
-            $this->resetExcept('generic', 'stocks', 'enccode', 'location_id', 'encounter', 'charges', 'hpercode', 'toecode', 'selected_items', 'patient', 'active_prescription', 'adm', 'wardname', 'rmname', 'summaries');
+            $this->resetExcept(array_merge($this->encounterStateProperties(), [
+                'generic',
+                'stocks',
+                'charges',
+                'selected_items',
+                'patient',
+                'active_prescription',
+                'active_prescription_all',
+                'extra_prescriptions',
+                'extra_prescriptions_all',
+                'adm',
+                'summaries',
+            ]));
             $this->emit('refresh');
             $this->alert('success', 'Item added.');
         } else {
