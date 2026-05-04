@@ -23,6 +23,22 @@
                         <i class="mr-2 las la-lg la-exclamation-triangle"></i> {{ $errors->first() }}
                     </div>
                 @endif
+                @if ($is_walkin_linked_encounter)
+                    <div class="mb-3 border shadow-sm alert alert-warning">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="badge badge-sm badge-error">{{ $take_home_mgh_label }}</span>
+                                <span class="font-bold">Items added in this transaction will be marked as MGH.</span>
+                            </div>
+                            <div class="text-xs">
+                                These items will be recorded under Walk-IN and linked back to this encounter.
+                                @if ($resolved_walkin_enccode)
+                                    Walk-IN encounter: <span class="font-semibold">{{ $resolved_walkin_enccode }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
                 <div class="flex justify-between mb-3">
                     <div class="flex space-x-3">
                         <label for="prescription_lists" class="btn btn-sm">Prescription</label>
@@ -186,7 +202,12 @@
                                                     href="{{ route('dispensing.rxo.chargeslip', $rxo->pcchrgcod) }}"
                                                     target="_blank">{{ $rxo->pcchrgcod }}</a>
                                             @endif
-                                            <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                <span>{{ $rxo->tx_type }} {!! $rxo->prescription_data_id ? '<i class="las la-prescription"></i>' : '' !!}</span>
+                                                @if ($rxo->is_mgh_item)
+                                                    <span class="badge badge-xs badge-error">MGH</span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="text-xs align-center whitespace-nowrap w-min">
@@ -261,7 +282,14 @@
                                             $badge = '<span class="badge badge-sm badge-success">Issued</span>';
                                         }
                                     @endphp
-                                    <td class="text-xs text-center w-min">{!! $badge !!}</td>
+                                    <td class="text-xs text-center w-min">
+                                        <div class="flex flex-col items-center gap-1">
+                                            {!! $badge !!}
+                                            @if ($rxo->is_mgh_item)
+                                                <span class="badge badge-xs badge-error">MGH</span>
+                                            @endif
+                                        </div>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>

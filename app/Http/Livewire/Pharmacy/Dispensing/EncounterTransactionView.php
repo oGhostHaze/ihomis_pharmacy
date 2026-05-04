@@ -66,6 +66,7 @@ class EncounterTransactionView extends Component
     public $stock_changes = false;
     public $is_walkin_linked_encounter = false;
     public $resolved_walkin_enccode;
+    public $take_home_mgh_label = 'Take Home / MGH';
 
 
     public function render()
@@ -73,7 +74,8 @@ class EncounterTransactionView extends Component
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
 
         if ($this->toecode == 'WALKN') {
-            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id
+            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
+                                        CASE WHEN hrxo.original_enccode IS NULL THEN 0 ELSE 1 END AS is_mgh_item
                                     FROM henctr enctr
                                     INNER JOIN hospital.dbo.hrxo ON enctr.enccode = hrxo.enccode
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
@@ -82,7 +84,8 @@ class EncounterTransactionView extends Component
                                     WHERE hrxo.hpercode = '" . $this->hpercode . "' AND enctr.toecode = 'WALKN'
                                     ORDER BY dodate DESC");
         } else {
-            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, original_enccode
+            $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
+                                        CASE WHEN hrxo.original_enccode = '" . $enccode . "' THEN 1 ELSE 0 END AS is_mgh_item
                                     FROM hospital.dbo.hrxo
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
                                     INNER JOIN hcharge ON orderfrom = chrgcode
