@@ -26,7 +26,7 @@
                     <div>Ward:
                         <span class="font-semibold">{{ $wardname ? $wardname->wardname : '' }}</span>
                         <span class="font-semibold">{{ $room_name ? $room_name->rmname : '' }}
-                            {{ $toecode ? '/ ' . $toecode : '' }}</span>
+                            {{ $toecode ? '/ ' . $toecode : '' }}{{ $encounter_suffix ? ' / ' . $encounter_suffix : '' }}</span>
                     </div>
                 </div>
             </div>

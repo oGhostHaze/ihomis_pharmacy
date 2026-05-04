@@ -18,6 +18,7 @@ class ReturnSlip extends Component
     public $wardname;
     public $room_name;
     public $toecode;
+    public $encounter_suffix;
 
     public function render()
     {
@@ -37,6 +38,7 @@ class ReturnSlip extends Component
             ->first();
 
         $displayEnccode = $latestReturnedOrder?->original_enccode ?: $latestReturnedOrder?->enccode;
+        $this->encounter_suffix = $latestReturnedOrder?->original_enccode ? 'MGH' : null;
         $displayEncounter = $displayEnccode
             ? EncounterLog::select('enccode', 'toecode')->where('enccode', $displayEnccode)->first()
             : null;

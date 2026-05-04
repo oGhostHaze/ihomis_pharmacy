@@ -13,7 +13,7 @@ use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
 class RxoChargeSlip extends Component
 {
     public $pcchrgcod, $view_returns = false, $returned_qty = 0;
-    public $wardname, $room_name, $toecode;
+    public $wardname, $room_name, $toecode, $encounter_suffix;
 
     public function updatedViewReturns()
     {
@@ -38,6 +38,7 @@ class RxoChargeSlip extends Component
 
         $rxo_header = $header ?: $rxo[0];
         $displayEnccode = $rxo_header->original_enccode ?: $rxo_header->enccode;
+        $this->encounter_suffix = $rxo_header->original_enccode ? 'MGH' : null;
         $displayEncounter = EncounterLog::select('enccode', 'toecode')
             ->where('enccode', $displayEnccode)
             ->first();
