@@ -51,8 +51,7 @@
                 </div>
             </div>
 
-            <!-- Add this after the Drug Association Status section -->
-            @if (isset($associationStatus) && $associationStatus['allAssociated'])
+            @if (isset($associationStatus))
                 @if (isset($ris->transferred_to_pdims) && $ris->transferred_to_pdims)
                     <!-- Related Deliveries Section with Toggle -->
                     @if (isset($relatedDeliveries) && count($relatedDeliveries) > 0)
@@ -226,7 +225,9 @@
                             </div>
                         </div>
                     @endif
-                @else
+                @endif
+
+                @if (($associationStatus['transferable'] ?? 0) > 0 && ($associationStatus['allTransferableAssociated'] ?? false))
                     <div class="flex justify-end mt-4">
                         <button wire:click="openTransferModal" class="flex items-center btn btn-success">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
@@ -236,6 +237,12 @@
                             </svg>
                             Transfer to Pharmacy Delivery
                         </button>
+                    </div>
+                @elseif (($associationStatus['transferable'] ?? 0) === 0 && ($associationStatus['total'] ?? 0) > 0)
+                    <div class="flex justify-end mt-4">
+                        <span class="px-3 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-md">
+                            All RIS items transferred
+                        </span>
                     </div>
                 @endif
             @endif
@@ -311,6 +318,8 @@
                             Requisition</td>
                         <td colspan="6" class="p-2 font-bold text-center bg-gray-100 border-b border-gray-300">
                             Issuance</td>
+                        <td class="p-2 font-bold text-center bg-gray-100 border-b border-r border-gray-300">
+                            Status</td>
                         <td class="p-2 font-bold text-center bg-gray-100 border-b border-gray-300">
                             Actions</td>
 
@@ -326,6 +335,7 @@
                         <td class="w-20 p-2 font-bold text-center border-r border-gray-300">Unit Price</td>
                         <td class="w-24 p-2 font-bold text-center border-r border-gray-300">Total Amount</td>
                         <td class="p-2 font-bold text-center border-r border-gray-300">Fund Source</td>
+                        <td class="w-32 p-2 font-bold text-center border-r border-gray-300">Transfer Status</td>
                         <td class="w-40 p-2 font-bold text-center">Drug Association</td>
                     </tr>
 
@@ -383,6 +393,25 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </td>
+                            <td class="p-2 text-center border-r border-gray-300">
+                                @if (!is_null($detail->detail_transferred_to_pdims))
+                                    <div class="flex flex-col items-center">
+                                        <span
+                                            class="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded">
+                                            Transferred
+                                        </span>
+                                        <a target="_blank"
+                                            href="{{ route('delivery.view', $detail->detail_transferred_to_pdims) }}"
+                                            class="mt-1 text-xs text-blue-600 hover:underline">
+                                            Delivery #{{ $detail->detail_transferred_to_pdims }}
+                                        </a>
+                                    </div>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded">
+                                        Not Transferred
+                                    </span>
+                                @endif
+                            </td>
                             <td class="p-2 text-center">
                                 @if (isset($detail->pdims_itemcode) && $detail->pdims_itemcode)
                                     <div class="flex flex-col items-center">
@@ -408,14 +437,14 @@
                         </tr>
                     @empty
                         <tr class="border-b border-gray-300">
-                            <td colspan="11" class="p-2 text-center">No items found</td>
+                            <td colspan="12" class="p-2 text-center">No items found</td>
                         </tr>
                     @endforelse
 
                     <!-- Purpose row -->
                     <tr class="border-b border-gray-300">
                         <td class="p-2 font-bold border-r border-gray-300">Purpose:</td>
-                        <td colspan="9" class="p-2">{{ $ris->purpose ?? ($purpose ?? 'N/A') }}</td>
+                        <td colspan="11" class="p-2">{{ $ris->purpose ?? ($purpose ?? 'N/A') }}</td>
                     </tr>
 
                     <!-- Grand Total row -->
@@ -436,7 +465,7 @@
                             @endphp
                             ₱{{ number_format($grandTotal, 2) }}
                         </td>
-                        <td colspan="2" class="p-2"></td>
+                        <td colspan="3" class="p-2"></td>
                     </tr>
                 </table>
             </div>
@@ -646,7 +675,7 @@
                         <span class="font-medium">Date:</span> {{ $ris->formatted_risdate ?? ($risDate ?? 'N/A') }}
                     </p>
                     <p class="mt-1 text-sm text-blue-800">
-                        <span class="font-medium">Items to transfer:</span> {{ $associationStatus['total'] ?? 0 }}
+                        <span class="font-medium">Items to transfer:</span> {{ $associationStatus['transferable'] ?? 0 }}
                     </p>
                     <p class="mt-1 text-sm text-blue-800">
                         <span class="font-medium">Transfer as PO #:</span> {{ $ris->risno ?? ($risNo ?? 'N/A') }}

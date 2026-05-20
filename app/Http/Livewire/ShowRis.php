@@ -39,7 +39,12 @@ class ShowRis extends Component
         'total' => 0,
         'associated' => 0,
         'percentage' => 0,
-        'allAssociated' => false
+        'allAssociated' => false,
+        'transferred' => 0,
+        'transferable' => 0,
+        'transferableAssociated' => 0,
+        'transferablePercentage' => 0,
+        'allTransferableAssociated' => false
     ];
 
     // Protected properties for complex objects
@@ -290,6 +295,8 @@ class ShowRis extends Component
                 'tbl_ris_details.stockno',
                 'tbl_ris_details.onhand',
                 'tbl_ris_details.itmqty',
+                'tbl_ris_details.transferred_to_pdims AS detail_transferred_to_pdims',
+                'tbl_ris_details.transferred_at AS detail_transferred_at',
                 'tbl_items.itemID',
                 'tbl_items.description',
                 'tbl_items.unit',
@@ -394,28 +401,64 @@ class ShowRis extends Component
                 'total' => 0,
                 'associated' => 0,
                 'percentage' => 0,
-                'allAssociated' => false
+                'allAssociated' => false,
+                'transferred' => 0,
+                'transferable' => 0,
+                'transferableAssociated' => 0,
+                'transferablePercentage' => 0,
+                'allTransferableAssociated' => false
             ];
             return;
         }
 
         $total = count($this->risDetails);
         $associated = 0;
+        $transferred = 0;
+        $transferable = 0;
+        $transferableAssociated = 0;
 
         foreach ($this->risDetails as $detail) {
             if (!empty($detail->pdims_itemcode)) {
                 $associated++;
             }
+
+            if (!is_null($detail->detail_transferred_to_pdims)) {
+                $transferred++;
+                continue;
+            }
+
+            $transferable++;
+
+            if (!empty($detail->pdims_itemcode)) {
+                $transferableAssociated++;
+            }
         }
 
         $percentage = $total > 0 ? round(($associated / $total) * 100) : 0;
+        $transferablePercentage = $transferable > 0 ? round(($transferableAssociated / $transferable) * 100) : 0;
 
         $this->associationStatus = [
             'total' => $total,
             'associated' => $associated,
             'percentage' => $percentage,
-            'allAssociated' => ($total > 0 && $associated === $total)
+            'allAssociated' => ($total > 0 && $associated === $total),
+            'transferred' => $transferred,
+            'transferable' => $transferable,
+            'transferableAssociated' => $transferableAssociated,
+            'transferablePercentage' => $transferablePercentage,
+            'allTransferableAssociated' => ($transferable > 0 && $transferableAssociated === $transferable)
         ];
+    }
+
+    protected function getTransferableRisDetails()
+    {
+        if (!$this->risDetails) {
+            return collect();
+        }
+
+        return collect($this->risDetails)->filter(function ($detail) {
+            return is_null($detail->detail_transferred_to_pdims);
+        });
     }
 
     /**
@@ -429,7 +472,7 @@ class ShowRis extends Component
 
         return collect($this->risDetails)
             ->filter(function ($detail) {
-                return empty($detail->pdims_itemcode);
+                return is_null($detail->detail_transferred_to_pdims) && empty($detail->pdims_itemcode);
             })
             ->values()
             ->all();
@@ -682,15 +725,14 @@ class ShowRis extends Component
      */
     public function openTransferModal()
     {
-        // Check if RIS is already transferred
-        if ($this->ris && $this->ris->transferred_to_pdims) {
-            session()->flash('error', 'This RIS has already been transferred to delivery system.');
+        if ($this->associationStatus['transferable'] === 0) {
+            session()->flash('error', 'All RIS items have already been transferred to the delivery system.');
             return;
         }
 
-        // Check if all items are associated with drugs
-        if (!$this->associationStatus['allAssociated']) {
-            session()->flash('error', 'All items must be linked to drugs before transfer.');
+        // Check if all remaining transferable items are associated with drugs
+        if (!$this->associationStatus['allTransferableAssociated']) {
+            session()->flash('error', 'All untransferred items must be linked to drugs before transfer.');
             return;
         }
 
@@ -720,17 +762,21 @@ class ShowRis extends Component
      */
     public function transferToDelivery()
     {
-        // Group RIS details by invoice number
-        $itemsByInvoice = collect($this->risDetails)->groupBy(function ($detail) {
-            return $detail->invoiceno ?? 'NO_INVOICE';
-        });
         $this->validate();
 
         try {
             DB::beginTransaction();
 
-            // Group RIS details by invoice number
-            $itemsByInvoice = collect($this->risDetails)->groupBy(function ($detail) {
+            $transferableItems = $this->getTransferableRisDetails();
+
+            if ($transferableItems->isEmpty()) {
+                DB::rollBack();
+                session()->flash('error', 'All RIS items have already been transferred to the delivery system.');
+                return;
+            }
+
+            // Group untransferred RIS details by invoice number
+            $itemsByInvoice = $transferableItems->groupBy(function ($detail) {
                 return $detail->invoiceno ?? 'NO_INVOICE';
             });
 
@@ -738,9 +784,9 @@ class ShowRis extends Component
             $transferredItemsCount = 0;
 
             foreach ($itemsByInvoice as $invoiceNo => $invoiceItems) {
-                // Skip items without drug association
+                // Skip items without drug association or items already transferred in another request
                 $validItems = $invoiceItems->filter(function ($detail) {
-                    return !empty($detail->pdims_itemcode);
+                    return is_null($detail->detail_transferred_to_pdims) && !empty($detail->pdims_itemcode);
                 });
 
                 if ($validItems->isEmpty()) {
@@ -873,6 +919,7 @@ class ShowRis extends Component
                         DB::connection('pims')
                             ->table('tbl_ris_details')
                             ->where('risdetid', $detail->risdetid)
+                            ->whereNull('transferred_to_pdims')
                             ->update([
                                 'transferred_to_pdims' => $delivery->id,
                                 'transferred_at' => now()
@@ -887,7 +934,7 @@ class ShowRis extends Component
             // Use the first delivery ID as the primary reference
             $primaryDeliveryId = !empty($createdDeliveries) ? $createdDeliveries[0]->id : null;
 
-            if ($primaryDeliveryId) {
+            if ($primaryDeliveryId && empty($this->ris->transferred_to_pdims)) {
                 $risHeaderInfo = DB::connection('pims')
                     ->table('tbl_ris')
                     ->select('risid')
@@ -903,6 +950,12 @@ class ShowRis extends Component
                             'transferred_at' => now()
                         ]);
                 }
+            }
+
+            if (empty($createdDeliveries)) {
+                DB::rollBack();
+                session()->flash('error', 'No untransferred RIS items are ready for delivery transfer.');
+                return;
             }
 
             DB::commit();
