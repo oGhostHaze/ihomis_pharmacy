@@ -32,7 +32,7 @@ class LogDrugStockIssue implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption = null, $unit_cost)
+    public function __construct($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption, $unit_cost)
     {
         $this->onQueue('rx_issue_logger');
         $this->stock_id = $stock_id;
@@ -98,6 +98,7 @@ class LogDrugStockIssue implements ShouldQueue
             'konsulta' => $this->tag == 'konsulta' ? $this->trans_qty : false,
             'pcso' => $this->tag == 'pcso' ? $this->trans_qty : false,
             'phic' => $this->tag == 'phic' ? $this->trans_qty : false,
+            'gamot' => $this->tag == 'gamot' ? $this->trans_qty : false,
 
             'dmdprdte' => $this->dmdprdte,
         ]);
@@ -128,6 +129,7 @@ class LogDrugStockIssue implements ShouldQueue
         $log->konsulta += $issued_drug->konsulta;
         $log->pcso += $issued_drug->pcso;
         $log->phic += $issued_drug->phic;
+        $log->gamot += $issued_drug->gamot;
 
         $log->save();
 

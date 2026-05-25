@@ -50,6 +50,7 @@ class DrugStockIssue extends Model
         'phic',
         'opdpay',
         'doh_free',
+        'gamot',
         'dmdprdte',
     ];
 

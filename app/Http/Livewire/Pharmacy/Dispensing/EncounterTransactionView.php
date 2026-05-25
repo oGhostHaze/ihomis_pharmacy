@@ -34,7 +34,7 @@ class EncounterTransactionView extends Component
 
     public $order_qty, $unit_price, $return_qty, $docointkey;
     public $item_id;
-    public $ems, $maip, $wholesale, $caf, $type, $konsulta, $pcso, $phic, $pay, $service, $doh_free, $bnb = false;
+    public $ems, $maip, $wholesale, $caf, $type, $konsulta, $pcso, $phic, $pay, $service, $doh_free, $gamot, $bnb = false;
 
     public $is_ris = false;
     public $remarks;
@@ -382,6 +382,8 @@ class EncounterTransactionView extends Component
                 $this->type = 'konsulta';
             } else if ($this->doh_free) {
                 $this->type = 'doh_free';
+            } else if ($this->gamot) {
+                $this->type = 'gamot';
             } else {
                 $this->type = 'opdpay';
             }
@@ -530,7 +532,7 @@ class EncounterTransactionView extends Component
         // ]);
     }
 
-    public function log_stock_issue($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption = null, $unit_cost)
+    public function log_stock_issue($stock_id, $docointkey, $dmdcomb, $dmdctr, $loc_code, $chrgcode, $exp_date, $trans_qty, $unit_price, $pcchrgamt, $user_id, $hpercode, $enccode, $toecode, $pcchrgcod, $tag, $ris, $dmdprdte, $retail_price, $concat, $stock_date, $date, $active_consumption, $unit_cost)
     {
         $issued_drug = DrugStockIssue::create([
             'stock_id' => $stock_id,
@@ -563,6 +565,7 @@ class EncounterTransactionView extends Component
             'pcso' => $tag == 'pcso' ? $trans_qty : false,
             'phic' => $tag == 'phic' ? $trans_qty : false,
             'doh_free' => $tag == 'doh_free' ? $trans_qty : false,
+            'gamot' => $tag == 'gamot' ? $trans_qty : false,
 
             'dmdprdte' => $dmdprdte,
         ]);
@@ -595,6 +598,7 @@ class EncounterTransactionView extends Component
         $log->phic += $issued_drug->phic;
         $log->opdpay += $issued_drug->opdpay;
         $log->doh_free += $issued_drug->doh_free;
+        $log->gamot += $issued_drug->gamot;
 
         $log->save();
 
@@ -679,6 +683,8 @@ class EncounterTransactionView extends Component
                 $this->type = 'konsulta';
             } else if ($this->doh_free) {
                 $this->type = 'doh_free';
+            } else if ($this->gamot) {
+                $this->type = 'gamot';
             } else {
                 $this->type = 'opdpay';
             }

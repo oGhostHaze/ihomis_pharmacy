@@ -935,6 +935,12 @@
                                     <span class="label-text">PHIC</span>
                                 </label>
                             </div>
+                            <div class="col-span-2">
+                                <input class="toggle toggle-success" type="radio" id="gamot" name="radio">
+                                <label class="cursor-pointer" for="gamot">
+                                    <span class="label-text">GAMOT</span>
+                                </label>
+                            </div>
                         </div>
                         <div class="grid grid-cols-4 gap-2 px-2 text-left gap-y-2">
                             <div class="col-span-4 font-bold">Department</div>
@@ -961,6 +967,7 @@
                                                 const konsulta = Swal.getHtmlContainer().querySelector('#konsulta')
                                                 const pcso = Swal.getHtmlContainer().querySelector('#pcso')
                                                 const phic = Swal.getHtmlContainer().querySelector('#phic')
+                                                const gamot = Swal.getHtmlContainer().querySelector('#gamot')
                                                 const deptcode = Swal.getHtmlContainer().querySelector('#deptcode')
                                             }
                                         }).then((result) => {
@@ -974,6 +981,7 @@
                                                 @this.set('caf', caf.checked);
                                                 @this.set('is_ris', is_ris.checked);
                                                 @this.set('phic', phic.checked);
+                                                @this.set('gamot', gamot.checked);
                                                 @this.set('deptcode', deptcode.value);
                                                 Livewire.emit('issue_order')
                                             }

@@ -53,6 +53,7 @@ class DrugStockLog extends Model
         'pcso',
         'opdpay',
         'doh_free',
+        'gamot',
         'pullout_qty',
 
         // 'sc_pwd', //nullable()->default(0);
