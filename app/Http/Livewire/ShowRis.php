@@ -6,6 +6,7 @@ use App\Helpers\DateHelper;
 use App\Models\Pharmacy\DeliveryDetail;
 use App\Models\Pharmacy\DeliveryItems;
 use App\Models\Pharmacy\Drug;
+use App\Models\Pharmacy\DrugPrice;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\References\ChargeCode;
 use App\Models\References\Supplier;
@@ -459,6 +460,202 @@ class ShowRis extends Component
         return collect($this->risDetails)->filter(function ($detail) {
             return is_null($detail->detail_transferred_to_pdims);
         });
+    }
+
+    public function revertRisDetailTransfer($risDetailId)
+    {
+        $result = $this->revertTransferredRisDetails([$risDetailId]);
+
+        if ($result['reverted'] > 0) {
+            session()->flash('message', 'RIS item transfer reverted successfully.');
+        }
+
+        if (!empty($result['errors'])) {
+            session()->flash('error', implode(' ', $result['errors']));
+        }
+
+        $this->loadRis();
+    }
+
+    public function revertAllRisTransfers()
+    {
+        $risDetailIds = DB::connection('pims')
+            ->table('tbl_ris_details')
+            ->where('risid', $this->risId)
+            ->where('status', 'A')
+            ->whereNotNull('transferred_to_pdims')
+            ->pluck('risdetid')
+            ->all();
+
+        if (empty($risDetailIds)) {
+            session()->flash('error', 'There are no transferred RIS items to revert.');
+            return;
+        }
+
+        $result = $this->revertTransferredRisDetails($risDetailIds);
+
+        if ($result['reverted'] > 0) {
+            session()->flash('message', "{$result['reverted']} RIS item transfer(s) reverted successfully.");
+        }
+
+        if (!empty($result['errors'])) {
+            session()->flash('error', implode(' ', $result['errors']));
+        }
+
+        $this->loadRis();
+    }
+
+    protected function revertTransferredRisDetails(array $risDetailIds)
+    {
+        $reverted = 0;
+        $errors = [];
+
+        DB::connection('hospital')->beginTransaction();
+        DB::connection('pims')->beginTransaction();
+
+        try {
+            foreach ($risDetailIds as $risDetailId) {
+                $detail = $this->getRisDetailForRevert($risDetailId);
+
+                if (!$detail || empty($detail->detail_transferred_to_pdims)) {
+                    $errors[] = "RIS detail #{$risDetailId} is not currently transferred.";
+                    continue;
+                }
+
+                $expectedPoNo = $this->ris->poNo ?? $this->risNo;
+
+                $delivery = DeliveryDetail::where('id', $detail->detail_transferred_to_pdims)
+                    ->where('delivery_type', 'RIS')
+                    ->where('po_no', $expectedPoNo)
+                    ->first();
+
+                if (!$delivery) {
+                    $errors[] = "Delivery #{$detail->detail_transferred_to_pdims} could not be matched to this RIS.";
+                    continue;
+                }
+
+                $deliveryItem = $this->findDeliveryItemForRisDetail($delivery->id, $detail);
+
+                if (!$deliveryItem) {
+                    $errors[] = "No pending delivery item could be matched for RIS detail #{$risDetailId}.";
+                    continue;
+                }
+
+                if ($deliveryItem->status === 'delivered') {
+                    $errors[] = "Delivery item #{$deliveryItem->id} has already been delivered to stock and cannot be reverted here.";
+                    continue;
+                }
+
+                DrugPrice::where('stock_id', $deliveryItem->id)->delete();
+                $deliveryItem->delete();
+
+                DB::connection('pims')
+                    ->table('tbl_ris_details')
+                    ->where('risdetid', $risDetailId)
+                    ->where('risid', $this->risId)
+                    ->update([
+                        'transferred_to_pdims' => null,
+                        'transferred_at' => null
+                    ]);
+
+                if (DeliveryItems::where('delivery_id', $delivery->id)->count() === 0) {
+                    $delivery->delete();
+                }
+
+                $reverted++;
+            }
+
+            $this->syncRisHeaderTransferReference();
+
+            DB::connection('pims')->commit();
+            DB::connection('hospital')->commit();
+        } catch (\Exception $e) {
+            DB::connection('pims')->rollBack();
+            DB::connection('hospital')->rollBack();
+
+            \Log::error('RIS transfer revert error: ' . $e->getMessage(), [
+                'ris_id' => $this->risId,
+                'ris_detail_ids' => $risDetailIds,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            $errors[] = 'Error reverting RIS transfer: ' . $e->getMessage();
+        }
+
+        return [
+            'reverted' => $reverted,
+            'errors' => $errors
+        ];
+    }
+
+    protected function getRisDetailForRevert($risDetailId)
+    {
+        $detail = collect($this->risDetails ?? [])->firstWhere('risdetid', $risDetailId);
+
+        if ($detail) {
+            return $detail;
+        }
+
+        return DB::connection('pims')
+            ->table('tbl_ris_details')
+            ->join(DB::raw('tbl_items'), 'tbl_items.itemID', '=', 'tbl_ris_details.itemID')
+            ->select([
+                'tbl_ris_details.risdetid',
+                'tbl_ris_details.itmqty',
+                'tbl_ris_details.transferred_to_pdims AS detail_transferred_to_pdims',
+                'tbl_items.pdims_itemcode'
+            ])
+            ->where('tbl_ris_details.risid', $this->risId)
+            ->where('tbl_ris_details.risdetid', $risDetailId)
+            ->where('tbl_ris_details.status', 'A')
+            ->first();
+    }
+
+    protected function findDeliveryItemForRisDetail($deliveryId, $detail)
+    {
+        if (empty($detail->pdims_itemcode) || strpos($detail->pdims_itemcode, '.') === false) {
+            return null;
+        }
+
+        list($dmdcomb, $dmdctr) = explode('.', $detail->pdims_itemcode, 2);
+
+        $query = DeliveryItems::where('delivery_id', $deliveryId)
+            ->where('dmdcomb', $dmdcomb)
+            ->where('dmdctr', $dmdctr)
+            ->where('qty', $detail->itmqty)
+            ->where(function ($query) {
+                $query->whereNull('status')
+                    ->orWhere('status', '!=', 'delivered');
+            });
+
+        if (!empty($detail->batch_no)) {
+            $query->where('lot_no', $detail->batch_no);
+        }
+
+        if (!empty($detail->sql_formatted_expire_date)) {
+            $query->whereDate('expiry_date', $detail->sql_formatted_expire_date);
+        }
+
+        return $query->orderByDesc('id')->first();
+    }
+
+    protected function syncRisHeaderTransferReference()
+    {
+        $remainingDeliveryId = DB::connection('pims')
+            ->table('tbl_ris_details')
+            ->where('risid', $this->risId)
+            ->where('status', 'A')
+            ->whereNotNull('transferred_to_pdims')
+            ->orderBy('risdetid')
+            ->value('transferred_to_pdims');
+
+        DB::connection('pims')
+            ->table('tbl_ris')
+            ->where('risid', $this->risId)
+            ->update([
+                'transferred_to_pdims' => $remainingDeliveryId,
+                'transferred_at' => $remainingDeliveryId ? now() : null
+            ]);
     }
 
     /**

@@ -239,10 +239,16 @@
                         </button>
                     </div>
                 @elseif (($associationStatus['transferable'] ?? 0) === 0 && ($associationStatus['total'] ?? 0) > 0)
-                    <div class="flex justify-end mt-4">
+                    <div class="flex justify-end mt-4 space-x-2">
                         <span class="px-3 py-2 text-sm font-medium text-green-700 bg-green-100 rounded-md">
                             All RIS items transferred
                         </span>
+                        <button type="button" wire:click="revertAllRisTransfers"
+                            onclick="return confirm('Revert all RIS transfers and remove the generated pending delivery items?')"
+                            wire:loading.attr="disabled"
+                            class="px-3 py-2 text-sm font-medium text-red-700 border border-red-300 rounded-md hover:bg-red-50 disabled:opacity-50">
+                            Revert All Transfers
+                        </button>
                     </div>
                 @endif
             @endif
@@ -405,6 +411,13 @@
                                             class="mt-1 text-xs text-blue-600 hover:underline">
                                             Delivery #{{ $detail->detail_transferred_to_pdims }}
                                         </a>
+                                        <button type="button"
+                                            wire:click="revertRisDetailTransfer({{ $detail->risdetid }})"
+                                            onclick="return confirm('Revert this RIS item transfer and remove its generated pending delivery item?')"
+                                            wire:loading.attr="disabled"
+                                            class="px-2 py-1 mt-2 text-xs text-red-600 border border-red-300 rounded hover:bg-red-50 disabled:opacity-50">
+                                            Revert
+                                        </button>
                                     </div>
                                 @else
                                     <span class="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded">
