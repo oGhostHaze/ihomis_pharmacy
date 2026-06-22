@@ -37,6 +37,7 @@
                         <label class="input-group">
                             <span>Location</span>
                             <select class="text-sm select select-bordered select-sm" wire:model="location_id">
+                                <option value="">All</option>
                                 @foreach ($locations as $loc)
                                     <option value="{{ $loc->id }}">{{ $loc->description }}</option>
                                 @endforeach

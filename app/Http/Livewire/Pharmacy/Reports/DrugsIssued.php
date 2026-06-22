@@ -18,7 +18,7 @@ class DrugsIssued extends Component
 {
     use WithPagination;
 
-    public $filter_charge = 'DRUMB,*Drugs and Meds (Revolving) Satellite';
+    public $filter_charge = 'All';
     public $date_from, $date_to, $location_id, $dmdcomb, $dmdctr;
 
     public function updatedSelectedDrug()
@@ -48,6 +48,10 @@ class DrugsIssued extends Component
             ->whereIn('chrgcode', app('chargetable'))
             ->get();
 
+        if ($this->filter_charge == 'All') {
+            $this->filter_charge = '%%,All';
+        }
+
         $filter_charge = explode(',', $this->filter_charge);
 
         $drugs_issued = DB::select("SELECT rxi.enccode, rxi.qty, rxi.hpercode, rxo.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename
@@ -59,16 +63,16 @@ class DrugsIssued extends Component
         INNER JOIN hospital.dbo.hdmhdr hdr ON rxo.dmdcomb = hdr.dmdcomb AND rxo.dmdctr = hdr.dmdctr
         LEFT JOIN hward ward ON (SELECT TOP(1) wardcode FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = ward.wardcode
         LEFT JOIN hroom room ON (SELECT TOP(1) rmintkey FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = room.rmintkey
-        WHERE issuedfrom = ?
-        AND rxo.loc_code = ?
+        WHERE issuedfrom LIKE ?
+        AND (? IS NULL OR ? = '' OR rxo.loc_code = ?)
         AND issuedte BETWEEN ? AND ?
         AND rxo.pcchrgcod IS NOT NULL
-        ORDER BY hdr.drug_concat ASC, rxi.issuedte DESC", [$filter_charge[0], $this->location_id, $date_from, $date_to]);
+        ORDER BY hdr.drug_concat ASC, rxi.issuedte DESC", [isset($filter_charge[0]) ? $filter_charge[0] : '%%', $this->location_id, $this->location_id, $this->location_id, $date_from, $date_to]);
         $locations = PharmLocation::all();
 
         return view('livewire.pharmacy.reports.drugs-issued', [
             'charge_codes' => $charge_codes,
-            'current_charge' => $filter_charge[1],
+            'current_charge' => isset($filter_charge[1]) ? $filter_charge[1] : 'All',
             'drugs_issued' => $drugs_issued,
             'locations' => $locations,
         ]);
