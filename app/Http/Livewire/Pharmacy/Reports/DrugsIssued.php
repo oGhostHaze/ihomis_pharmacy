@@ -63,9 +63,9 @@ class DrugsIssued extends Component
         LEFT JOIN hroom room ON (SELECT TOP(1) rmintkey FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = room.rmintkey
         WHERE issuedfrom LIKE ?
         AND (? IS NULL OR ? = '' OR rxo.loc_code = ?)
-        AND TRY_CONVERT(datetime, rxi.issuedte) BETWEEN ? AND ?
+        AND CONVERT(varchar(19), rxi.issuedte, 120) BETWEEN ? AND ?
         AND rxo.pcchrgcod IS NOT NULL
-        ORDER BY hdr.drug_concat ASC, TRY_CONVERT(datetime, rxi.issuedte) DESC", [$charge_code, $this->location_id, $this->location_id, $this->location_id, $date_from, $date_to]);
+        ORDER BY hdr.drug_concat ASC, CONVERT(varchar(19), rxi.issuedte, 120) DESC", [$charge_code, $this->location_id, $this->location_id, $this->location_id, $date_from, $date_to]);
         $locations = PharmLocation::all();
 
         return view('livewire.pharmacy.reports.drugs-issued', [
