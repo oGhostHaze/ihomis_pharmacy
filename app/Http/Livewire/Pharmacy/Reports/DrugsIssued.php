@@ -27,33 +27,6 @@ class DrugsIssued extends Component
         $this->dmdctr = $selected_drug[1] ?? null;
     }
 
-    public function updatingFilterCharge()
-    {
-        $this->resetDrugFilter();
-    }
-
-    public function updatingLocationId()
-    {
-        $this->resetDrugFilter();
-    }
-
-    public function updatingDateFrom()
-    {
-        $this->resetDrugFilter();
-    }
-
-    public function updatingDateTo()
-    {
-        $this->resetDrugFilter();
-    }
-
-    private function resetDrugFilter()
-    {
-        $this->selected_drug = null;
-        $this->dmdcomb = null;
-        $this->dmdctr = null;
-    }
-
     public function render()
     {
         $date_from = Carbon::parse($this->date_from)->format('Y-m-d H:i:s');
@@ -86,6 +59,20 @@ class DrugsIssued extends Component
             ->distinct()
             ->orderBy('hdr.drug_concat')
             ->get();
+
+        if ($this->dmdcomb && $this->dmdctr && !$issued_drugs->contains(function ($drug) {
+            return $drug->dmdcomb == $this->dmdcomb && $drug->dmdctr == $this->dmdctr;
+        })) {
+            $selected_drug = DB::table('hospital.dbo.hdmhdr')
+                ->select('dmdcomb', 'dmdctr', 'drug_concat')
+                ->where('dmdcomb', $this->dmdcomb)
+                ->where('dmdctr', $this->dmdctr)
+                ->first();
+
+            if ($selected_drug) {
+                $issued_drugs->prepend($selected_drug);
+            }
+        }
 
         $drugs_issued = $issued_drugs_query
             ->selectRaw("rxi.enccode, rxi.qty, rxi.hpercode, rxo.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename")
