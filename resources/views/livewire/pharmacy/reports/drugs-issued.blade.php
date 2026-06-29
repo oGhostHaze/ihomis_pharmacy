@@ -77,6 +77,20 @@
                         </label>
                     </div>
                 </div>
+                <div class="ml-2">
+                    <div class="form-control">
+                        <label class="input-group">
+                            <span>Drug</span>
+                            <select class="select select-bordered select-sm" wire:model="selected_drug">
+                                <option value="">All Drugs</option>
+                                @foreach ($issued_drugs as $drug)
+                                    <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">
+                                        {{ implode(',', explode('_,', $drug->drug_concat)) }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="print" class="w-full">
@@ -131,7 +145,6 @@
             </table>
         </div>
         <div class="mt-2">
-            {{-- {{ $drugs_issued->links() }} --}}
         </div>
     </div>
 </div>
@@ -152,41 +165,6 @@
                 }) :
                 XLSX.writeFile(wb, fn || ('Ward Consumption Report.' + (type || 'xlsx')));
         }
-
-        $('#table').dataTable({
-            "bPaginate": false,
-            "searching": false,
-            "pageLength": 1000000,
-            "bInfo": false,
-            "columns": [{
-                    "width": "5%"
-                },
-                {
-                    "width": "20%"
-                },
-                {
-                    "width": "5%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "20%"
-                },
-                {
-                    "width": "10%"
-                },
-                {
-                    "width": "10%"
-                }
-            ]
-        });
 
         function printMe() {
             var printContents = document.getElementById('print').innerHTML;
