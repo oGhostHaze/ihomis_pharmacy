@@ -18,7 +18,7 @@ class DrugsIssued extends Component
 {
     use WithPagination;
 
-    public $filter_charge = 'All';
+    public $filter_charge = '%%,All';
     public $date_from, $date_to, $location_id, $dmdcomb, $dmdctr;
 
     public function updatedSelectedDrug()
@@ -48,11 +48,9 @@ class DrugsIssued extends Component
             ->whereIn('chrgcode', app('chargetable'))
             ->get();
 
-        if ($this->filter_charge == 'All') {
-            $this->filter_charge = '%%,All';
-        }
-
-        $filter_charge = explode(',', $this->filter_charge);
+        $filter_charge = explode(',', $this->filter_charge ?: '%%,All', 2);
+        $charge_code = $filter_charge[0] ?: '%%';
+        $charge_label = $filter_charge[1] ?? 'All';
 
         $drugs_issued = DB::select("SELECT rxi.enccode, rxi.qty, rxi.hpercode, rxo.pcchrgcod, rxi.issuedte, hdr.drug_concat, ward.wardname, room.rmname, pat.patlast, pat.patfirst, pat.patmiddle, emp2.name, emp.firstname, emp.lastname, emp.middlename
         FROM hrxoissue rxi
@@ -65,14 +63,14 @@ class DrugsIssued extends Component
         LEFT JOIN hroom room ON (SELECT TOP(1) rmintkey FROM hpatroom WHERE enccode = rxi.enccode ORDER BY hprtime DESC) = room.rmintkey
         WHERE issuedfrom LIKE ?
         AND (? IS NULL OR ? = '' OR rxo.loc_code = ?)
-        AND issuedte BETWEEN ? AND ?
+        AND TRY_CONVERT(datetime, rxi.issuedte) BETWEEN ? AND ?
         AND rxo.pcchrgcod IS NOT NULL
-        ORDER BY hdr.drug_concat ASC, rxi.issuedte DESC", [isset($filter_charge[0]) ? $filter_charge[0] : '%%', $this->location_id, $this->location_id, $this->location_id, $date_from, $date_to]);
+        ORDER BY hdr.drug_concat ASC, TRY_CONVERT(datetime, rxi.issuedte) DESC", [$charge_code, $this->location_id, $this->location_id, $this->location_id, $date_from, $date_to]);
         $locations = PharmLocation::all();
 
         return view('livewire.pharmacy.reports.drugs-issued', [
             'charge_codes' => $charge_codes,
-            'current_charge' => isset($filter_charge[1]) ? $filter_charge[1] : 'All',
+            'current_charge' => $charge_label,
             'drugs_issued' => $drugs_issued,
             'locations' => $locations,
         ]);
@@ -81,7 +79,7 @@ class DrugsIssued extends Component
     public function mount()
     {
         $this->location_id = session('pharm_location_id');
-        $this->date_from = Carbon::parse(now())->startOfWeek()->format('Y-m-d H:i:s');
-        $this->date_to = Carbon::parse(now())->endOfWeek()->format('Y-m-d H:i:s');
+        $this->date_from = Carbon::parse(now())->startOfWeek()->format('Y-m-d\TH:i');
+        $this->date_to = Carbon::parse(now())->endOfWeek()->format('Y-m-d\TH:i');
     }
 }
