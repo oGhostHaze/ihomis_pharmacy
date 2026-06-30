@@ -16,12 +16,47 @@
 
 @push('head')
     <script type="text/javascript" src="https://unpkg.com/xlsx@0.15.1/dist/xlsx.full.min.js"></script>
+    <style>
+        .issuance-filter-bar {
+            display: grid;
+            grid-template-columns: auto minmax(220px, 260px) minmax(220px, 260px) minmax(220px, 260px) minmax(170px, 220px) minmax(320px, 1fr);
+            gap: 0.5rem;
+            align-items: end;
+        }
+
+        .issuance-filter-actions {
+            display: flex;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .issuance-filter-field .label {
+            min-height: 0;
+            padding: 0 0 0.125rem;
+        }
+
+        .issuance-filter-field .label-text {
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        @media (max-width: 1400px) {
+            .issuance-filter-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .issuance-filter-actions,
+            .issuance-filter-drug {
+                grid-column: 1 / -1;
+            }
+        }
+    </style>
 @endpush
 
 <div class="max-w-screen">
     <div class="flex flex-col px-5 py-5 overflow-auto">
-        <div class="grid items-end grid-cols-1 gap-2 my-2 md:grid-cols-2 xl:grid-cols-12">
-            <div class="flex gap-2 xl:col-span-2">
+        <div class="my-2 issuance-filter-bar">
+            <div class="issuance-filter-actions">
                 <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info">
                     <i class="las la-lg la-file-excel"></i> Export
                 </button>
@@ -30,7 +65,7 @@
                 </button>
             </div>
 
-            <div class="form-control xl:col-span-2">
+            <div class="form-control issuance-filter-field">
                 <label class="py-0 label">
                     <span class="label-text">Location</span>
                 </label>
@@ -42,7 +77,7 @@
                 </select>
             </div>
 
-            <div class="form-control xl:col-span-3">
+            <div class="form-control issuance-filter-field">
                 <label class="py-0 label">
                     <span class="label-text">From</span>
                 </label>
@@ -50,7 +85,7 @@
                     wire:model.lazy="date_from" />
             </div>
 
-            <div class="form-control xl:col-span-3">
+            <div class="form-control issuance-filter-field">
                 <label class="py-0 label">
                     <span class="label-text">To</span>
                 </label>
@@ -58,7 +93,7 @@
                     wire:model.lazy="date_to" />
             </div>
 
-            <div class="form-control xl:col-span-2">
+            <div class="form-control issuance-filter-field">
                 <label class="py-0 label">
                     <span class="label-text">Fund Source</span>
                 </label>
@@ -71,7 +106,7 @@
                 </select>
             </div>
 
-            <div class="form-control md:col-span-2 xl:col-span-12">
+            <div class="form-control issuance-filter-field issuance-filter-drug">
                 <label class="py-0 label">
                     <span class="label-text">Drug</span>
                 </label>
