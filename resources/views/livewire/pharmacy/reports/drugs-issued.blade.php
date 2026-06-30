@@ -20,76 +20,69 @@
 
 <div class="max-w-screen">
     <div class="flex flex-col px-5 py-5 overflow-auto">
-        <div class="flex justify-between my-2">
-            <div class="flex justify-between">
+        <div class="flex flex-wrap items-end gap-2 my-2">
+            <div class="flex gap-2">
+                <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info">
+                    <i class="las la-lg la-file-excel"></i> Export
+                </button>
+                <button onclick="printMe()" class="btn btn-sm btn-primary">
+                    <i class="las la-lg la-print"></i> Print
+                </button>
             </div>
-            <div class="flex justify-end">
-                <div class="ml-2">
-                    <button onclick="ExportToExcel('xlsx')" class="btn btn-sm btn-info"><i
-                            class="las la-lg la-file-excel"></i> Export</button>
+
+            <div class="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-12">
+                <div class="form-control lg:col-span-2">
+                    <label class="w-full input-group">
+                        <span class="flex-none w-24">Location</span>
+                        <select class="w-full text-sm select select-bordered select-sm" wire:model="location_id">
+                            <option value="">All</option>
+                            @foreach ($locations as $loc)
+                                <option value="{{ $loc->id }}">{{ $loc->description }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                 </div>
-                <div class="ml-2">
-                    <button onclick="printMe()" class="btn btn-sm btn-primary"><i class="las la-lg la-print"></i>
-                        Print</button>
+
+                <div class="form-control lg:col-span-2">
+                    <label class="w-full input-group">
+                        <span class="flex-none w-16">From</span>
+                        <input type="datetime-local" class="w-full input input-sm input-bordered"
+                            max="{{ $date_to }}" wire:model.lazy="date_from" />
+                    </label>
                 </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>Location</span>
-                            <select class="text-sm select select-bordered select-sm" wire:model="location_id">
-                                <option value="">All</option>
-                                @foreach ($locations as $loc)
-                                    <option value="{{ $loc->id }}">{{ $loc->description }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
+
+                <div class="form-control lg:col-span-2">
+                    <label class="w-full input-group">
+                        <span class="flex-none w-16">To</span>
+                        <input type="datetime-local" class="w-full input input-sm input-bordered"
+                            min="{{ $date_from }}" wire:model.lazy="date_to" />
+                    </label>
                 </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>From</span>
-                            <input type="datetime-local" class="w-full input input-sm input-bordered"
-                                max="{{ $date_to }}" wire:model.lazy="date_from" />
-                        </label>
-                    </div>
+
+                <div class="form-control lg:col-span-2">
+                    <label class="w-full input-group">
+                        <span class="flex-none w-24">Fund Source</span>
+                        <select class="w-full select select-bordered select-sm" wire:model="filter_charge">
+                            <option value="%%,All">All</option>
+                            @foreach ($charge_codes as $charge)
+                                <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
+                                    {{ $charge->chrgdesc }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                 </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>To</span>
-                            <input type="datetime-local" class="w-full input input-sm input-bordered"
-                                min="{{ $date_from }}" wire:model.lazy="date_to" />
-                        </label>
-                    </div>
-                </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>Fund Source</span>
-                            <select class="select select-bordered select-sm" wire:model="filter_charge">
-                                <option value="%%,All">All</option>
-                                @foreach ($charge_codes as $charge)
-                                    <option value="{{ $charge->chrgcode }},{{ $charge->chrgdesc }}">
-                                        {{ $charge->chrgdesc }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
-                </div>
-                <div class="ml-2">
-                    <div class="form-control">
-                        <label class="input-group">
-                            <span>Drug</span>
-                            <select class="select select-bordered select-sm" wire:model="selected_drug">
-                                <option value="">All Drugs</option>
-                                @foreach ($issued_drugs as $drug)
-                                    <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">
-                                        {{ implode(',', explode('_,', $drug->drug_concat)) }}</option>
-                                @endforeach
-                            </select>
-                        </label>
-                    </div>
+
+                <div class="form-control sm:col-span-2 lg:col-span-4">
+                    <label class="w-full input-group">
+                        <span class="flex-none w-16">Drug</span>
+                        <select class="w-full select select-bordered select-sm" wire:model="selected_drug">
+                            <option value="">All Drugs</option>
+                            @foreach ($issued_drugs as $drug)
+                                <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">
+                                    {{ implode(',', explode('_,', $drug->drug_concat)) }}</option>
+                            @endforeach
+                        </select>
+                    </label>
                 </div>
             </div>
         </div>
@@ -144,10 +137,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="mt-2">
-        </div>
     </div>
-</div>
 </div>
 
 @push('scripts')
