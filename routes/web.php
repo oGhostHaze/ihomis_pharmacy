@@ -49,6 +49,7 @@ use App\Http\Livewire\Pharmacy\Reports\IoTransIssuedReport;
 use App\Http\Livewire\Pharmacy\Reports\IoTransReceivedReport;
 use App\Http\Livewire\Pharmacy\Reports\ItemsExpiredOverview;
 use App\Http\Livewire\Pharmacy\Reports\ItemsNearExpiryOverview;
+use App\Http\Livewire\Pharmacy\Reports\PrescriptionIssuance;
 use App\Http\Livewire\Pharmacy\Reports\TotalDrugsIssued;
 use App\Http\Livewire\Pusher;
 use App\Http\Livewire\Records\DischargedPatients;
@@ -188,6 +189,7 @@ Route::middleware([
         Route::get('/issuance/consolidated-location', DrugsIssuedAllLocation::class)->name('issuance.consol.loc');
         Route::get('/issuance/log', DrugsTransactionLog::class)->name('issuance.log');
         Route::get('/issuance/all', DrugsIssued::class)->name('issuance.all');
+        Route::get('/issuance/prescriptions', PrescriptionIssuance::class)->name('issuance.prescriptions');
         Route::get('/issuance/total', TotalDrugsIssued::class)->name('issuance.total');
         Route::get('/issuance/returns', DrugsReturned::class)->name('issuance.returns');
         Route::get('/issuance/returns-summary', DrugsReturnedSummary::class)->name('issuance.returns.summary');

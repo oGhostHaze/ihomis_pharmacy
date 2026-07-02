@@ -185,6 +185,9 @@
                         <x-jet-dropdown-link href="{{ route('reports.issuance.all') }}">
                             {{ __('Drug Issuance') }}
                         </x-jet-dropdown-link>
+                        <x-jet-dropdown-link href="{{ route('reports.issuance.prescriptions') }}">
+                            {{ __('Prescription Issuance') }}
+                        </x-jet-dropdown-link>
                         <div class="border-t border-gray-100"></div>
                         <x-jet-dropdown-link href="{{ route('reports.issuance.total') }}">
                             {{ __('Total Drugs Issued') }}
