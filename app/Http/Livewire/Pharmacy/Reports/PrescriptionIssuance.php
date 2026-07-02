@@ -68,14 +68,8 @@ class PrescriptionIssuance extends Component
             NULLIF(pd.entry_by, '')
         )";
 
-        $issued_drugs_query = DB::table('hrxoissue as rxi')
+        $issued_drugs = DB::table('hrxoissue as rxi')
             ->join('hrxo as rxo', 'rxi.docointkey', '=', 'rxo.docointkey')
-            ->when($location_id, function ($query) use ($location_id) {
-                $query->where('rxo.loc_code', $location_id);
-            })
-            ->whereBetween(DB::raw('CONVERT(varchar(19), rxi.issuedte, 120)'), [$date_from, $date_to]);
-
-        $issued_drugs = (clone $issued_drugs_query)
             ->join('hospital.dbo.hdmhdr as hdr', function ($join) {
                 $join->on('rxo.dmdcomb', '=', 'hdr.dmdcomb')
                     ->on('rxo.dmdctr', '=', 'hdr.dmdctr');
@@ -96,10 +90,17 @@ class PrescriptionIssuance extends Component
             }
         }
 
+        $issued_prescriptions_query = DB::table('hrxoissue as rxi')
+            ->join('hrxo as rxo', 'rxi.docointkey', '=', 'rxo.docointkey')
+            ->when($location_id, function ($query) use ($location_id) {
+                $query->where('rxo.loc_code', $location_id);
+            })
+            ->whereBetween(DB::raw('CONVERT(varchar(19), rxi.issuedte, 120)'), [$date_from, $date_to]);
+
         $issued_prescriptions = collect();
 
         if ($this->filter_dmdcomb && $this->filter_dmdctr) {
-            $issued_prescriptions = $issued_drugs_query
+            $issued_prescriptions = $issued_prescriptions_query
                 ->join('hperson as pat', 'rxi.hpercode', '=', 'pat.hpercode')
                 ->leftJoin('webapp.dbo.prescription_data as pd', function ($join) {
                     $join->on('pd.id', '=', DB::raw("COALESCE(rxi.prescription_data_id, rxo.prescription_data_id)"));
