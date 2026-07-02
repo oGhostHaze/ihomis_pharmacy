@@ -45,6 +45,19 @@
 
                 <div class="form-control">
                     <label class="py-0 label">
+                        <span class="label-text">Drug</span>
+                    </label>
+                    <select class="w-full text-sm select select-bordered select-sm" wire:model="selected_drug">
+                        <option value="">Select Drug</option>
+                        @foreach ($issued_drugs as $drug)
+                            <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">
+                                {{ implode(',', explode('_,', $drug->drug_concat)) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="py-0 label">
                         <span class="label-text">From</span>
                     </label>
                     <input type="datetime-local" class="w-full input input-sm input-bordered" max="{{ $date_to }}"
@@ -97,7 +110,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-4 text-sm text-center border">No issued prescriptions found.</td>
+                            <td colspan="5" class="py-4 text-sm text-center border">
+                                {{ $selected_drug ? 'No issued prescriptions found.' : 'Select a drug to generate the report.' }}
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
