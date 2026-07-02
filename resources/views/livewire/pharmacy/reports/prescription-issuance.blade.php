@@ -81,6 +81,7 @@
                         <td class="text-sm uppercase border">#</td>
                         <td class="text-sm border">Date Issued</td>
                         <td class="text-sm text-right border">Qty Issued</td>
+                        <td class="text-sm border">Toecode</td>
                         <td class="text-sm border">Patient Name</td>
                         <td class="text-sm border">Prescribing Doctor</td>
                     </tr>
@@ -105,12 +106,13 @@
                             <td class="text-sm text-right border">{{ $loop->iteration }}</td>
                             <td class="text-sm border">{{ date('Y-m-d h:i A', strtotime($issued->issuedte)) }}</td>
                             <td class="text-sm text-right border">{{ number_format($issued->qty) }}</td>
+                            <td class="text-sm border">{{ $issued->toecode }}</td>
                             <td class="text-sm border">{{ $patientName }}</td>
                             <td class="text-sm border">{{ $doctorName }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-4 text-sm text-center border">
+                            <td colspan="6" class="py-4 text-sm text-center border">
                                 {{ $selected_drug ? 'No issued prescriptions found.' : 'Select a drug to generate the report.' }}
                             </td>
                         </tr>

@@ -73,12 +73,14 @@ class PrescriptionIssuance extends Component
                 ->leftJoin('webapp.dbo.prescription_data as pd', function ($join) {
                     $join->on('pd.id', '=', DB::raw("COALESCE(rxi.prescription_data_id, rxo.prescription_data_id)"));
                 })
+                ->leftJoin('henctr as enctr', 'enctr.enccode', '=', 'rxi.enccode')
                 ->leftJoin('hpersonal as doc', 'doc.employeeid', '=', DB::raw($prescribingDoctor))
                 ->where('rxo.dmdcomb', $this->dmdcomb)
                 ->where('rxo.dmdctr', $this->dmdctr)
                 ->selectRaw("
                     rxi.issuedte,
                     rxi.qty,
+                    enctr.toecode,
                     pat.patlast,
                     pat.patfirst,
                     pat.patmiddle,
