@@ -15,11 +15,20 @@ class PrescriptionIssuance extends Component
     public $selected_drug;
     public $dmdcomb;
     public $dmdctr;
+    public $toecode = '';
     public $filter_date_from;
     public $filter_date_to;
     public $filter_location_id;
     public $filter_dmdcomb;
     public $filter_dmdctr;
+    public $filter_toecode;
+
+    public $toecode_labels = [
+        'ADM' => 'Admitted',
+        'OPD' => 'Outpatient',
+        'ER' => 'Emergency Room',
+        'WALKN' => 'Walk-in',
+    ];
 
     public function mount()
     {
@@ -44,6 +53,7 @@ class PrescriptionIssuance extends Component
         $this->filter_location_id = $this->location_id;
         $this->filter_dmdcomb = $this->dmdcomb;
         $this->filter_dmdctr = $this->dmdctr;
+        $this->filter_toecode = $this->toecode;
     }
 
     public function render()
@@ -75,6 +85,17 @@ class PrescriptionIssuance extends Component
             ->orderBy('hdr.drug_concat')
             ->get();
 
+        $selected_drug_label = '';
+        if ($this->selected_drug) {
+            $selected_drug = $issued_drugs->first(function ($drug) {
+                return $this->selected_drug === $drug->dmdcomb . ',' . $drug->dmdctr;
+            });
+
+            if ($selected_drug) {
+                $selected_drug_label = implode(',', explode('_,', $selected_drug->drug_concat));
+            }
+        }
+
         $issued_prescriptions = collect();
 
         if ($this->filter_dmdcomb && $this->filter_dmdctr) {
@@ -87,10 +108,28 @@ class PrescriptionIssuance extends Component
                 ->leftJoin('hpersonal as doc', 'doc.employeeid', '=', DB::raw($prescribingDoctor))
                 ->where('rxo.dmdcomb', $this->filter_dmdcomb)
                 ->where('rxo.dmdctr', $this->filter_dmdctr)
+                ->when($this->filter_toecode, function ($query) {
+                    if ($this->filter_toecode === 'ADM') {
+                        $query->whereIn('enctr.toecode', ['ADM', 'OPDAD', 'ERADM']);
+
+                        return;
+                    }
+
+                    $query->where('enctr.toecode', $this->filter_toecode);
+                })
                 ->selectRaw("
                     rxi.issuedte,
                     rxi.qty,
                     enctr.toecode,
+                    CASE enctr.toecode
+                        WHEN 'ADM' THEN 'Admitted'
+                        WHEN 'OPDAD' THEN 'Admitted'
+                        WHEN 'ERADM' THEN 'Admitted'
+                        WHEN 'OPD' THEN 'Outpatient'
+                        WHEN 'ER' THEN 'Emergency Room'
+                        WHEN 'WALKN' THEN 'Walk-in'
+                        ELSE enctr.toecode
+                    END as encounter_type,
                     pat.patlast,
                     pat.patfirst,
                     pat.patmiddle,
@@ -108,6 +147,8 @@ class PrescriptionIssuance extends Component
             'issued_drugs' => $issued_drugs,
             'issued_prescriptions' => $issued_prescriptions,
             'locations' => PharmLocation::all(),
+            'selected_drug_label' => $selected_drug_label,
+            'toecode_options' => $this->toecode_labels,
         ]);
     }
 }
