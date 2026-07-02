@@ -104,6 +104,7 @@ class PrescriptionIssuance extends Component
         }
 
         return view('livewire.pharmacy.reports.prescription-issuance', [
+            'has_applied_drug_filter' => (bool) $this->filter_dmdcomb,
             'issued_drugs' => $issued_drugs,
             'issued_prescriptions' => $issued_prescriptions,
             'locations' => PharmLocation::all(),

@@ -120,7 +120,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="py-4 text-sm text-center border">
-                                {{ $filter_dmdcomb ? 'No issued prescriptions found.' : 'Select a drug and click Filter to generate the report.' }}
+                                {{ $has_applied_drug_filter ? 'No issued prescriptions found.' : 'Select a drug and click Filter to generate the report.' }}
                             </td>
                         </tr>
                     @endforelse
