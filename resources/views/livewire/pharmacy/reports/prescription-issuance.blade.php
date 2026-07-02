@@ -81,7 +81,7 @@
                         <td class="text-sm uppercase border">#</td>
                         <td class="text-sm border">Date Issued</td>
                         <td class="text-sm text-right border">Qty Issued</td>
-                        <td class="text-sm border">Toecode</td>
+                        <td class="text-sm border">Type of Encounter</td>
                         <td class="text-sm border">Patient Name</td>
                         <td class="text-sm border">Prescribing Doctor</td>
                     </tr>
