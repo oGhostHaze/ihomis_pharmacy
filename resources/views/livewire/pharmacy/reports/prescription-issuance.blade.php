@@ -82,7 +82,7 @@
                             );
 
                             $doctorName = trim(
-                                trim($issued->doctor_prefix . ' ' . $issued->doctor_lastname) .
+                                $issued->doctor_lastname .
                                     ', ' .
                                     trim($issued->doctor_firstname . ' ' . $issued->doctor_middlename),
                             );

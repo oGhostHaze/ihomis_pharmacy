@@ -49,7 +49,6 @@ class PrescriptionIssuance extends Component
                 pat.patfirst,
                 pat.patmiddle,
                 pat.patsuffix,
-                doc.prefix as doctor_prefix,
                 doc.lastname as doctor_lastname,
                 doc.firstname as doctor_firstname,
                 doc.middlename as doctor_middlename
