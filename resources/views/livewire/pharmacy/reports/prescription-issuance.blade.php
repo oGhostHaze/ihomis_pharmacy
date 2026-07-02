@@ -35,7 +35,7 @@
                     <label class="py-0 label">
                         <span class="label-text">Location</span>
                     </label>
-                    <select class="w-full text-sm select select-bordered select-sm" wire:model="location_id">
+                    <select class="w-full text-sm select select-bordered select-sm" wire:model.defer="location_id">
                         <option value="">All</option>
                         @foreach ($locations as $loc)
                             <option value="{{ $loc->id }}">{{ $loc->description }}</option>
@@ -47,7 +47,8 @@
                     <label class="py-0 label">
                         <span class="label-text">Drug</span>
                     </label>
-                    <select class="w-full text-sm select select-bordered select-sm" wire:model="selected_drug">
+                    <select class="w-full text-sm select select-bordered select-sm select2" id="selected_drug"
+                        wire:model.defer="selected_drug">
                         <option value="">Select Drug</option>
                         @foreach ($issued_drugs as $drug)
                             <option value="{{ $drug->dmdcomb }},{{ $drug->dmdctr }}">
@@ -61,7 +62,7 @@
                         <span class="label-text">From</span>
                     </label>
                     <input type="datetime-local" class="w-full input input-sm input-bordered" max="{{ $date_to }}"
-                        wire:model.lazy="date_from" />
+                        wire:model.defer="date_from" />
                 </div>
 
                 <div class="form-control">
@@ -69,7 +70,13 @@
                         <span class="label-text">To</span>
                     </label>
                     <input type="datetime-local" class="w-full input input-sm input-bordered" min="{{ $date_from }}"
-                        wire:model.lazy="date_to" />
+                        wire:model.defer="date_to" />
+                </div>
+
+                <div class="form-control">
+                    <button type="button" class="btn btn-sm btn-secondary" wire:click="applyFilters">
+                        <i class="las la-lg la-filter"></i> Filter
+                    </button>
                 </div>
             </div>
         </div>
@@ -113,7 +120,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="py-4 text-sm text-center border">
-                                {{ $selected_drug ? 'No issued prescriptions found.' : 'Select a drug to generate the report.' }}
+                                {{ $filter_dmdcomb ? 'No issued prescriptions found.' : 'Select a drug and click Filter to generate the report.' }}
                             </td>
                         </tr>
                     @endforelse
@@ -137,6 +144,34 @@
 
 @push('scripts')
     <script>
+        function initializePrescriptionIssuanceDrugSelect() {
+            const $selectedDrug = $('#selected_drug');
+
+            if (!$selectedDrug.length) {
+                return;
+            }
+
+            if ($selectedDrug.hasClass('select2-hidden-accessible')) {
+                $selectedDrug.select2('destroy');
+            }
+
+            $selectedDrug.select2({
+                width: 'resolve',
+            });
+
+            $selectedDrug.off('change.prescription-issuance').on('change.prescription-issuance', function() {
+                @this.set('selected_drug', $(this).val(), true);
+            });
+        }
+
+        document.addEventListener('livewire:load', function() {
+            initializePrescriptionIssuanceDrugSelect();
+
+            Livewire.hook('message.processed', function() {
+                initializePrescriptionIssuanceDrugSelect();
+            });
+        });
+
         function ExportToExcel(type, fn, dl) {
             var elt = document.getElementById('table');
             var wb = XLSX.utils.table_to_book(elt, {
