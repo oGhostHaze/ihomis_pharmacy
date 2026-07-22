@@ -49,6 +49,7 @@ class AuthServiceProvider extends ServiceProvider
                 'DRUMAM',
                 'DRUMAN',
                 'DRUMAO',
+                'DRUMAP',
             );
         });
 
