@@ -182,7 +182,7 @@ Route::middleware([
         Route::get('/drugsandmedicine', ListDrugHomis::class)->name('dmd');
         Route::get('/PNDF-Generics', PndfGenerics::class)->name('pndf');
         Route::get('/permissions', ListPermissions::class)->name('permissions');
-        Route::get('/users', UserManagement::class)->name('users');
+        Route::get('/users', UserManagement::class)->middleware('can:view-settings')->name('users');
         Route::get('/manual', Manual::class)->name('manual');
         Route::get('/manual/create', CreateManual::class)->name('manual.add');
     });
