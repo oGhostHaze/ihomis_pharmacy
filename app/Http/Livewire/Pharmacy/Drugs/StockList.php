@@ -16,6 +16,7 @@ use App\Models\StockAdjustment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -256,7 +257,7 @@ class StockList extends Component
             'unit_cost' => 'required',
             'qty' => ['required', 'numeric', 'min:0'],
             'expiry_date' => 'required',
-            'chrgcode' => 'required',
+            'chrgcode' => ['required', Rule::in([(string) $stock->chrgcode])],
         ]);
         $old_chrgcode = $stock->chrgcode;
         $old_stock_bal = $stock->stock_bal;
@@ -301,7 +302,6 @@ class StockList extends Component
         $stock->stock_bal = 0;
 
         $stock->lot_no = $this->lot_no;
-        $stock->chrgcode = $this->chrgcode;
         $stock->exp_date = $this->expiry_date;
         $stock->retail_price = $retail_price;
         $stock->stock_bal = $stock->stock_bal + $this->qty;

@@ -22,6 +22,7 @@ use App\Http\Livewire\Pharmacy\Drugs\ReorderLevelVersion2;
 use App\Http\Livewire\Pharmacy\Drugs\StockList;
 use App\Http\Livewire\Pharmacy\Drugs\StockPullOutList;
 use App\Http\Livewire\Pharmacy\Drugs\StockSummary;
+use App\Http\Livewire\Pharmacy\Drugs\ChargeCodeReclassification;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIotrans;
 use App\Http\Livewire\Pharmacy\Drugs\ViewIoTransDate;
 use App\Http\Livewire\Pharmacy\Drugs\ViewWardRisDate;
@@ -115,6 +116,9 @@ Route::middleware([
     Route::name('dmd.')->prefix('drugsandmedicine')->group(function () {
         Route::get('/stocks', StockList::class)->name('stk');
         Route::get('/stocks/summary', StockSummary::class)->name('stk.sum');
+        Route::get('/stocks/reclassify-charge-code', ChargeCodeReclassification::class)
+            ->middleware('can:adjust-stock-qty')
+            ->name('stk.reclassify');
         Route::get('/stocks/reorder-levels', ReorderLevel::class)->name('stk.reorder');
         Route::get('/stocks/reorder-levels-2', ReorderLevelVersion2::class)->name('stk.reorder2');
         Route::get('/stocks/for-pull-out', StockPullOutList::class)->name('stk.pullout');

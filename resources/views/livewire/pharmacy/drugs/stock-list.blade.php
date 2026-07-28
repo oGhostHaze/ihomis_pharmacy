@@ -257,11 +257,9 @@
                         <label class="label" for="update_chrgcode">
                             <span class="label-text">Fund Source</span>
                         </label>
-                        <select class="text-sm select select-bordered select-sm" id="update_chrgcode">
-                            @foreach ($charge_codes as $charge)
-                                <option value="{{ $charge->chrgcode }}">{{ $charge->chrgdesc }}</option>
-                            @endforeach
-                        </select>
+                        <input class="w-full text-sm input input-bordered input-sm" id="update_chrgcode"
+                            type="text" readonly />
+                        <span class="text-xs label-text-alt">Use the controlled charge-code reclassification command to change fund source.</span>
                     </div>
                     <div class="w-full px-2 form-control">
                         <label class="label" for="update_lot_no">

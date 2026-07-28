@@ -91,6 +91,9 @@
                             <li><a href="{{ route('dmd.stk.reorder') }}">Reorder Levels</a></li>
                             <li><a href="{{ route('dmd.stk.reorder2') }}">Reorder Levels (Computed)</a></li>
                         @endcan
+                        @can('adjust-stock-qty')
+                            <li><a href="{{ route('dmd.stk.reclassify') }}">Reclassify Fund Source</a></li>
+                        @endcan
                         @can('view-iotrans')
                             <li><a href="{{ route('iotrans.list') }}">IO Trans</a></li>
                         @endcan
