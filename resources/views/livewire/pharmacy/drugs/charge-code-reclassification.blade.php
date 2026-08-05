@@ -154,7 +154,7 @@
                         </div>
                         <div class="flex gap-3">
                             <i class="mt-1 las la-check-circle text-success"></i>
-                            <p class="text-sm">Place every affected pharmacy location under maintenance.</p>
+                            <p class="text-sm">Affected locations enter maintenance automatically during processing.</p>
                         </div>
                         <div class="flex gap-3">
                             <i class="mt-1 las la-check-circle text-success"></i>

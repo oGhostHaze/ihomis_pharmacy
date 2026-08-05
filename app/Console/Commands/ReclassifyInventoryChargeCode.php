@@ -50,15 +50,19 @@ class ReclassifyInventoryChargeCode extends Command
                 return 0;
             }
 
-            $this->validateOperationalState($preview);
+            $maintenanceLocationIds = $this->validateOperationalState($preview);
             $reference = $this->makeReference();
-            $result = DB::connection('hospital')->transaction(function () use (
-                $sourceCode,
-                $destinationCode,
-                $userId,
-                $preview,
-                $reference
-            ) {
+
+            try {
+                $this->setLocationsMaintenance($maintenanceLocationIds, true);
+
+                $result = DB::connection('hospital')->transaction(function () use (
+                    $sourceCode,
+                    $destinationCode,
+                    $userId,
+                    $preview,
+                    $reference
+                ) {
                 $locked = DrugStock::where('chrgcode', $sourceCode)
                     ->where('stock_bal', '>', 0)
                     ->orderBy('id')
@@ -96,15 +100,18 @@ class ReclassifyInventoryChargeCode extends Command
                     throw new RuntimeException('Post-transfer reconciliation failed. The transaction was rolled back.');
                 }
 
-                return [
-                    'reference' => $reference,
-                    'rows' => $rows,
-                    'debited' => $debited,
-                    'credited' => $credited,
-                ];
-            }, 3);
+                    return [
+                        'reference' => $reference,
+                        'rows' => $rows,
+                        'debited' => $debited,
+                        'credited' => $credited,
+                    ];
+                }, 3);
 
-            $reportPath = $this->saveReport($result, $sourceCode, $destinationCode);
+                $reportPath = $this->saveReport($result, $sourceCode, $destinationCode);
+            } finally {
+                $this->setLocationsMaintenance($maintenanceLocationIds, false);
+            }
 
             $this->newLine();
             $this->info("Reclassification {$reference} completed successfully.");
@@ -158,14 +165,18 @@ class ReclassifyInventoryChargeCode extends Command
             if (!$location) {
                 throw new RuntimeException("Pharmacy location {$locationId} does not exist.");
             }
-            if (!(bool) $location->under_maintenance) {
-                throw new RuntimeException(
-                    "Location {$locationId} ({$location->description}) must be under maintenance before committing."
-                );
-            }
         }
 
         $this->activeConsumptionIds($locationIds);
+
+        return $locationIds;
+    }
+
+    private function setLocationsMaintenance(Collection $locationIds, $enabled)
+    {
+        PharmLocation::withTrashed()
+            ->whereIn('id', $locationIds)
+            ->update(['under_maintenance' => (bool) $enabled]);
     }
 
     private function activeConsumptionIds(Collection $locationIds)
