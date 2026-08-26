@@ -22,12 +22,13 @@ use App\Models\Pharmacy\Dispensing\DrugOrderReturn;
 use App\Models\Pharmacy\Dispensing\OrderChargeCode;
 use App\Models\Record\Prescriptions\PrescriptionData;
 use App\Models\Record\Prescriptions\PrescriptionDataIssued;
+use App\Services\Pharmacy\UdddsService;
 
 class EncounterTransactionView extends Component
 {
     use LivewireAlert;
 
-    protected $listeners = ['charge_items', 'issue_order', 'add_item', 'return_issued', 'add_prescribed_item', 'delete_item', 'deactivate_rx', 'update_qty'];
+    protected $listeners = ['charge_items', 'issue_order', 'add_item', 'return_issued', 'add_prescribed_item', 'delete_item', 'deactivate_rx', 'update_qty', 'remove_from_uddds'];
 
     public $generic, $charge_code = [];
     public $enccode, $location_id, $hpercode, $toecode, $mssikey;
@@ -62,6 +63,8 @@ class EncounterTransactionView extends Component
     public $adttl_remarks;
 
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
+    public $rx_order_type = 'BASIC';
+    public $uddds_start_date, $uddds_end_date;
 
     public $stock_changes = false;
     public $is_walkin_linked_encounter = false;
@@ -75,6 +78,7 @@ class EncounterTransactionView extends Component
 
         if ($this->toecode == 'WALKN') {
             $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
+                                        " . UdddsService::hrxoSelectColumns() . ",
                                         CASE WHEN hrxo.original_enccode IS NULL THEN 0 ELSE 1 END AS is_mgh_item
                                     FROM henctr enctr
                                     INNER JOIN hospital.dbo.hrxo ON enctr.enccode = hrxo.enccode
@@ -85,6 +89,7 @@ class EncounterTransactionView extends Component
                                     ORDER BY dodate DESC");
         } else {
             $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
+                                        " . UdddsService::hrxoSelectColumns() . ",
                                         CASE WHEN hrxo.original_enccode = '" . $enccode . "' THEN 1 ELSE 0 END AS is_mgh_item
                                     FROM hospital.dbo.hrxo
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
@@ -329,6 +334,25 @@ class EncounterTransactionView extends Component
 
         $selected_items = implode(',', $this->selected_items);
         $rxos = collect(DB::select("SELECT * FROM hrxo WHERE docointkey IN (" . $selected_items . ") AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"))->all();
+
+        $udddsService = app(UdddsService::class);
+        $hasBasic = false;
+        foreach ($rxos as $rxo) {
+            if ($udddsService->isBasic($rxo->order_type ?? null)) {
+                $hasBasic = true;
+                break;
+            }
+        }
+
+        if (($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') && $hasBasic) {
+            if (!$this->uddds_start_date || !$this->uddds_end_date) {
+                return $this->alert('error', 'Start and End dates are required for Basic (standing) items.');
+            }
+            if ($this->uddds_end_date < $this->uddds_start_date) {
+                return $this->alert('error', 'End date must be on or after the start date.');
+            }
+        }
+
         if ($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') {
             switch ($this->mssikey) {
                 case 'MSSA11111999':
@@ -462,6 +486,15 @@ class EncounterTransactionView extends Component
         }
 
         if ($cnt == 1) {
+            if (($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') && $hasBasic) {
+                $keys = array_map(function ($item) {
+                    return trim($item, "'");
+                }, $this->selected_items);
+                $enroll = $udddsService->enrollIssuedOrders($keys, $this->uddds_start_date, $this->uddds_end_date);
+                if (!$enroll['ok']) {
+                    return $this->alert('error', $enroll['message']);
+                }
+            }
             $this->alert('success', 'Order issued successfully.');
         } else {
             $this->alert('error', 'No item to issue.');
@@ -696,14 +729,18 @@ class EncounterTransactionView extends Component
             $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
             $docointkey = '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $chrgcode . $dmdcomb . $dmdctr;
 
+            $orderType = $this->resolvedOrderType($with_rx);
+            $orderTypeSql = UdddsService::hasHrxoColumns() ? ", '" . $orderType . "'" : '';
+            $orderTypeCol = UdddsService::hasHrxoColumns() ? ', order_type' : '';
+
             DB::insert("INSERT INTO hospital.dbo.hrxo(docointkey, enccode, hpercode, rxooccid, rxoref, dmdcomb, repdayno1, rxostatus,
                             rxolock, rxoupsw, rxoconfd, dmdctr, estatus, entryby, ordcon, orderupd, locacode, orderfrom, issuetype,
-                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by, original_enccode )
+                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by, original_enccode{$orderTypeCol} )
                         VALUES ( '" . $docointkey . "', '" . $targetEnccode . "', '" . $this->hpercode . "', '1', '1', '" . $dmdcomb . "', '1', 'A',
                             'N', 'N', 'N', '" . $dmdctr . "', 'U', '" . session('employeeid') . "', 'NEWOR', 'ACTIV', 'PHARM', '" . $chrgcode . "', 'c',
                             '" . ($this->type ? true : false) . "', '" . $this->type . "', '" . ($this->is_ris ? true : false) . "', '" . $this->order_qty . "', '" . $this->unit_price . "',
                             '" . $this->order_qty * $this->unit_price . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . $dmdprdte . "', '" . $exp_date . "',
-                            '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "', " . ($originalLinkEnccode ? "'" . $originalLinkEnccode . "'" : "NULL") . " )");
+                            '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "', " . ($originalLinkEnccode ? "'" . $originalLinkEnccode . "'" : "NULL") . "{$orderTypeSql} )");
 
             if ($with_rx) {
                 DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -884,6 +921,7 @@ class EncounterTransactionView extends Component
     {
         $rx_id = $this->rx_id;
         $empid = $this->empid;
+        $orderType = $this->resolvedOrderType(true);
         if ($this->ems) {
             $this->type = 'ems';
         } else if ($this->maip) {
@@ -919,7 +957,7 @@ class EncounterTransactionView extends Component
             $targetEnccode = $this->is_walkin_linked_encounter ? ($this->resolved_walkin_enccode ?: $this->resolveLatestWalkInEncounter()) : $originalEnccode;
             $originalLinkEnccode = $targetEnccode !== $originalEnccode ? $originalEnccode : null;
 
-            DrugOrder::create([
+            $order = [
                 'docointkey' => '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $dm->chrgcode . $dm->dmdcomb . $dm->dmdctr,
                 'enccode' => $targetEnccode,
                 'hpercode' => $this->hpercode,
@@ -957,7 +995,11 @@ class EncounterTransactionView extends Component
                 'prescription_data_id' => $rx_id,
                 'prescribed_by' => $empid,
                 'original_enccode' => $originalLinkEnccode,
-            ]);
+            ];
+            if (UdddsService::hasHrxoColumns()) {
+                $order['order_type'] = $orderType;
+            }
+            DrugOrder::create($order);
             DB::connection('webapp')->table('webapp.dbo.prescription_data')
                 ->where('id', $rx_id)
                 ->update(['stat' => 'I']);
@@ -1013,5 +1055,20 @@ class EncounterTransactionView extends Component
                 'pcchrgamt' =>  $this->order_qty * $this->unit_price
             ]);
         $this->alert('success', 'Order updated!');
+    }
+
+    public function remove_from_uddds($docointkey)
+    {
+        $result = app(UdddsService::class)->removeFromUddds($docointkey);
+        $this->alert($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    protected function resolvedOrderType($withRx = false)
+    {
+        if (!$withRx && empty($this->rx_order_type)) {
+            return 'BASIC';
+        }
+
+        return app(UdddsService::class)->normalizeOrderType($this->rx_order_type);
     }
 }

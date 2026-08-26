@@ -65,6 +65,7 @@
                             class="overflow-y-auto shadow-2xl dropdown-content bg-base-100 text-base-content rounded-t-box rounded-b-box">
                             <li><a href="{{ route('rx.opd') }}">OPD Rx</a></li>
                             <li><a href="{{ route('rx.ward') }}">Ward Rx</a></li>
+                            <li><a href="{{ route('rx.uddds') }}">UDDDS (Wards)</a></li>
                             <li><a href="{{ route('rx.er') }}">ER Rx</a></li>
                             <li>
                                 <a href="{{ route('dispensing.rxo.pending') }}">Pending Orders</a>

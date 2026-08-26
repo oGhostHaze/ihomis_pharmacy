@@ -16,6 +16,9 @@
         <x-jet-nav-link class="ml-2" href="{{ route('rx.ward') }}" :active="request()->routeIs('rx.ward')">
             <i class="mr-1 las la-lg la-file-prescription"></i> {{ __('Wards') }}
         </x-jet-nav-link>
+        <x-jet-nav-link class="ml-2" href="{{ route('rx.uddds') }}" :active="request()->routeIs('rx.uddds')">
+            <i class="mr-1 las la-lg la-clock"></i> {{ __('UDDDS') }}
+        </x-jet-nav-link>
         <x-jet-nav-link class="ml-2" href="{{ route('rx.opd') }}" :active="request()->routeIs('rx.opd')">
             <i class="mr-1 las la-lg la-file-prescription"></i> {{ __('Out Patient Department') }}
         </x-jet-nav-link>

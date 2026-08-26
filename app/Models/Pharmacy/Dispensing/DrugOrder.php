@@ -42,6 +42,11 @@ class DrugOrder extends Model
         'remarks',
         'deptcode',
         'original_enccode',
+        'order_type',
+        'uddds_start_date',
+        'uddds_end_date',
+        'is_uddds',
+        'uddds_source_docointkey',
     ];
 
     public function department()

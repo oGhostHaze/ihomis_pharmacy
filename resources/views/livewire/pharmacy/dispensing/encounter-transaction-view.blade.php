@@ -207,6 +207,16 @@
                                                 @if ($rxo->is_mgh_item)
                                                     <span class="badge badge-xs badge-error">MGH</span>
                                                 @endif
+                                                @if ($rxo->is_uddds)
+                                                    <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
+                                                    @if ($rxo->uddds_start_date)
+                                                        <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
+                                                    @endif
+                                                    <button type="button" class="btn btn-ghost btn-xs" title="Remove from UDDDS"
+                                                        onclick="remove_uddds('{{ $rxo->docointkey }}')">
+                                                        <i class="las la-times"></i>
+                                                    </button>
+                                                @endif
                                             </div>
                                         </div>
                                     </td>
@@ -287,6 +297,13 @@
                                             {!! $badge !!}
                                             @if ($rxo->is_mgh_item)
                                                 <span class="badge badge-xs badge-error">MGH</span>
+                                            @endif
+                                            @if ($rxo->is_uddds)
+                                                <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
+                                                <button type="button" class="btn btn-ghost btn-xs" title="Remove from UDDDS"
+                                                    onclick="remove_uddds('{{ $rxo->docointkey }}')">
+                                                    <i class="las la-times"></i>
+                                                </button>
                                             @endif
                                         </div>
                                     </td>
@@ -1087,6 +1104,11 @@
                         <div class="px-2 mt-2">
                             <textarea id="rx_remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                         </div>
+                        <div class="grid grid-cols-3 gap-2 px-2 mt-2 text-left">
+                            <label class="text-xs"><input type="radio" name="rx_order_type" value="BASIC" checked> Basic</label>
+                            <label class="text-xs"><input type="radio" name="rx_order_type" value="G24"> G24</label>
+                            <label class="text-xs"><input type="radio" name="rx_order_type" value="OR"> OR Use</label>
+                        </div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
@@ -1135,6 +1157,8 @@
                                                 // @this.set('caf', rx_caf.checked);
                                                 // @this.set('is_ris', rx_is_ris.checked);
                                                 @this.set('remarks', rx_remarks.value);
+                                                const selectedType = Swal.getHtmlContainer().querySelector('input[name="rx_order_type"]:checked');
+                                                @this.set('rx_order_type', selectedType ? selectedType.value : 'BASIC');
 
                                                 Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
                                             }
@@ -1160,18 +1184,31 @@
                                     <span class="label-text">NON-Basic</span>
                                 </label>
                             </div>
+                            <div class="col-span-4 font-bold text-left">UDDDS Start / End (Basic / standing)</div>
+                            <div class="col-span-2 text-left">
+                                <label class="label"><span class="label-text">Start</span></label>
+                                <input type="date" id="uddds_start_date" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
+                            </div>
+                            <div class="col-span-2 text-left">
+                                <label class="label"><span class="label-text">End</span></label>
+                                <input type="date" id="uddds_end_date" class="w-full input input-bordered input-sm" />
+                            </div>
                         </div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
                                             didOpen: () => {
                                                 const na = Swal.getHtmlContainer().querySelector('#na')
+                                                const udddsStart = Swal.getHtmlContainer().querySelector('#uddds_start_date')
+                                                const udddsEnd = Swal.getHtmlContainer().querySelector('#uddds_end_date')
                                             }
 
                                         }).then((result) => {
                                             /* Read more about isConfirmed, isDenied below */
                                             if (result.isConfirmed) {
                                                 @this.set('bnb', na.checked);
+                                                @this.set('uddds_start_date', udddsStart.value);
+                                                @this.set('uddds_end_date', udddsEnd.value);
                                                 Livewire.emit('issue_order')
                                             }
                                         })
@@ -1272,6 +1309,19 @@
                                         // $("#generic").trigger('keyup');
                                     }
                                 @endif
+
+                                function remove_uddds(docointkey) {
+                                    Swal.fire({
+                                        title: 'Remove from UDDDS?',
+                                        text: 'Future daily unit-dose orders will stop. Already charged or issued rows stay.',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Remove',
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            Livewire.emit('remove_from_uddds', docointkey);
+                                        }
+                                    });
+                                }
 
                                 function select_rx_item_inactive(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
                                     var search = drug.split(",");

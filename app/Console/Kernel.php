@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->everyMinute();
         $schedule->command('init:stock-card')->everyMinute();
+        $schedule->command('uddds:generate-daily')->dailyAt('07:00')->timezone('Asia/Manila');
         // $schedule->command('init:consumption')->monthly();
     }
 

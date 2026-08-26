@@ -15,6 +15,8 @@ use App\Http\Livewire\Pharmacy\Dispensing\EncounterTransactionView;
 use App\Http\Livewire\Pharmacy\Dispensing\PendingOrders;
 use App\Http\Livewire\Pharmacy\Dispensing\ReturnSlip;
 use App\Http\Livewire\Pharmacy\Dispensing\RxoChargeSlip;
+use App\Http\Livewire\Pharmacy\Dispensing\UdddsChargeSlipBatch;
+use App\Http\Livewire\Records\UdddsWard;
 use App\Http\Livewire\Pharmacy\Drugs\IoTransList;
 use App\Http\Livewire\Pharmacy\Drugs\IoTransListRequestor;
 use App\Http\Livewire\Pharmacy\Drugs\ReorderLevel;
@@ -105,6 +107,7 @@ Route::middleware([
 
     Route::name('rx.')->prefix('prescriptions')->group(function () {
         Route::get('/ward', PrescriptionWard::class)->name('ward');
+        Route::get('/uddds', UdddsWard::class)->name('uddds');
         Route::get('/opd', PrescriptionOpd::class)->name('opd');
         Route::get('/er', PrescriptionEr::class)->name('er');
 
@@ -137,6 +140,7 @@ Route::middleware([
     Route::name('dispensing.')->prefix('dispensing')->group(function () {
         Route::get('/encounter/trans/{enccode}', EncounterTransactionView::class)->name('view.enctr');
         Route::get('/encounter/charge/{pcchrgcod}', RxoChargeSlip::class)->name('rxo.chargeslip');
+        Route::get('/uddds/charge-slips', UdddsChargeSlipBatch::class)->name('uddds.chargeslips');
         Route::get('/encounter/summary/returns/{hpercode}', ReturnSlip::class)->name('rxo.return.sum');
         Route::get('/pending-orders', PendingOrders::class)->name('rxo.pending');
     });
