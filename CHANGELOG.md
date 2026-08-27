@@ -5,6 +5,7 @@
 ### Improvements
 
 - UDDDS is optional and only available on inpatient (ADM) encounters. Add Item no longer requires unit-dose dates. OPD, ER, and other encounter types do not show UDDDS.
+- UDDDS start and end dates appear only when the order type is Basic (standing). G24 and OR Use hide those dates.
 
 ### Errors and fixes
 

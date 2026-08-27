@@ -1214,7 +1214,7 @@
                             <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="G24"> G24</label>
                             <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="OR"> OR Use</label>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div id="item_uddds_dates" class="grid grid-cols-2 gap-2 mt-2">
                             <div>
                                 <label class="label py-1"><span class="label-text">UDDDS start</span></label>
                                 <input type="date" id="item_uddds_start" class="w-full input input-bordered input-sm" />
@@ -1276,7 +1276,10 @@
                                         start: startEl ? startEl.value : '',
                                         end: endEl ? endEl.value : '',
                                     };
-                                    if (form.start || form.end) {
+                                    if (form.orderType !== 'BASIC') {
+                                        form.start = '';
+                                        form.end = '';
+                                    } else if (form.start || form.end) {
                                         if (!form.start || !form.end) {
                                             Swal.showValidationMessage('Enter both UDDDS start and end dates, or leave both blank.');
                                             return false;
@@ -1289,8 +1292,33 @@
                                     return form;
                                 }
 
+                                function bindUdddsTypeDates(box, typeName, datesSelector) {
+                                    if (!box) {
+                                        return;
+                                    }
+                                    const dates = box.querySelector(datesSelector);
+                                    if (!dates) {
+                                        return;
+                                    }
+                                    const sync = () => {
+                                        const typeEl = box.querySelector('input[name="' + typeName + '"]:checked');
+                                        const isBasic = !typeEl || typeEl.value === 'BASIC';
+                                        dates.classList.toggle('hidden', !isBasic);
+                                        if (!isBasic) {
+                                            dates.querySelectorAll('input[type="date"]').forEach((el) => {
+                                                el.value = '';
+                                            });
+                                        }
+                                    };
+                                    box.querySelectorAll('input[name="' + typeName + '"]').forEach((el) => {
+                                        el.addEventListener('change', sync);
+                                    });
+                                    sync();
+                                }
+
                                 function bindSelectItemTotals(up) {
                                     const box = Swal.getHtmlContainer();
+                                    bindUdddsTypeDates(box, 'item_order_type', '#item_uddds_dates');
                                     const order_qty = box.querySelector('#order_qty');
                                     const unit_price = box.querySelector('#unit_price');
                                     const total = box.querySelector('#total');
@@ -1363,20 +1391,23 @@
                                 <label class="text-sm cursor-pointer"><input type="radio" name="row_order_type" value="G24" ${typeVal === 'G24' ? 'checked' : ''}> G24</label>
                                 <label class="text-sm cursor-pointer"><input type="radio" name="row_order_type" value="OR" ${typeVal === 'OR' ? 'checked' : ''}> OR Use</label>
                             </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div id="row_uddds_dates" class="grid grid-cols-2 gap-2 mt-2${typeVal === 'BASIC' ? '' : ' hidden'}">
                                 <div>
                                     <label class="label py-1"><span class="label-text">UDDDS start</span></label>
-                                    <input type="date" id="row_uddds_start" class="w-full input input-bordered input-sm" value="${startVal}" />
+                                    <input type="date" id="row_uddds_start" class="w-full input input-bordered input-sm" value="${typeVal === 'BASIC' ? startVal : ''}" />
                                 </div>
                                 <div>
                                     <label class="label py-1"><span class="label-text">UDDDS end</span></label>
-                                    <input type="date" id="row_uddds_end" class="w-full input input-bordered input-sm" value="${endVal}" />
+                                    <input type="date" id="row_uddds_end" class="w-full input input-bordered input-sm" value="${typeVal === 'BASIC' ? endVal : ''}" />
                                 </div>
                             </div>
                         </div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: 'Enable',
+                                            didOpen: () => {
+                                                bindUdddsTypeDates(Swal.getHtmlContainer(), 'row_order_type', '#row_uddds_dates');
+                                            },
                                             preConfirm: () => {
                                                 const box = Swal.getHtmlContainer();
                                                 const typeEl = box.querySelector('input[name="row_order_type"]:checked');
