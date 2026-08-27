@@ -164,11 +164,12 @@
                         <thead>
                             <tr class="border border-black">
                                 <td class="text-center w-min"></td>
-                                <td class="whitespace-nowrap w-min" onclick="sortTable(1)">Charge Slip <i
+                                <td class="text-center w-min">UDDDS</td>
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Charge Slip <i
                                         class="las la-sort"></i></td>
-                                <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Date of Order <i
+                                <td class="whitespace-nowrap w-min" onclick="sortTable(3)">Date of Order <i
                                         class="las la-sort"></i></td>
-                                <td class="w-max whitespace-nowrap" onclick="sortTable(3)">Description <i
+                                <td class="w-max whitespace-nowrap" onclick="sortTable(4)">Description <i
                                         class="las la-sort"></i></td>
                                 <td class="w-20 text-right">
                                     <div class="tooltip" data-tip="Quantity Ordered">Q.O.</div>
@@ -179,7 +180,7 @@
                                 <td class="text-right w-min">Price</td>
                                 <td class="text-right w-min">Total</td>
                                 <td>Remarks</td>
-                                <td class="text-center w-min" onclick="sortTable(9)">Status</td>
+                                <td class="text-center w-min" onclick="sortTable(10)">Status</td>
                             </tr>
                         </thead>
                         <tbody class="bg-white">
@@ -195,6 +196,34 @@
                                             wire:model.defer="selected_items" wire:key="item-{{ $rxo->docointkey }}"
                                             name="docointkey" value="'{{ $rxo->docointkey }}'" />
                                     </td>
+                                    <td class="text-xs text-center w-min">
+                                        @php
+                                            $showUdddsToggle = $uddds_ready
+                                                && in_array($toecode, ['ADM', 'OPDAD', 'ERADM'], true)
+                                                && empty($rxo->uddds_source_docointkey)
+                                                && empty($rxo->is_mgh_item);
+                                            $udddsStartVal = $rxo->uddds_start_date ? date('Y-m-d', strtotime($rxo->uddds_start_date)) : '';
+                                            $udddsEndVal = $rxo->uddds_end_date ? date('Y-m-d', strtotime($rxo->uddds_end_date)) : '';
+                                            $udddsTypeVal = $rxo->order_type ?: 'BASIC';
+                                            $rxDrugVal = $rxo->rx_drug_display ?? '';
+                                            $rxQtyVal = $rxo->rx_qty ?? '';
+                                            $rxFreqVal = $rxo->rx_frequency ?? '';
+                                            $rxDaysVal = $rxo->rx_days ?? '';
+                                        @endphp
+                                        @if ($showUdddsToggle)
+                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer" title="{{ $rxo->is_uddds ? 'Remove from UDDDS' : 'Enable UDDDS' }}">
+                                                <input type="checkbox"
+                                                    class="toggle toggle-sm toggle-info"
+                                                    @if ($rxo->is_uddds) checked @endif
+                                                    onchange="toggle_uddds(this, {{ json_encode($rxo->docointkey) }}, {{ json_encode($udddsStartVal) }}, {{ json_encode($udddsEndVal) }}, {{ json_encode($udddsTypeVal) }}, {{ json_encode($rxDrugVal) }}, {{ json_encode((string) $rxQtyVal) }}, {{ json_encode((string) $rxFreqVal) }}, {{ json_encode((string) $rxDaysVal) }})" />
+                                                @if ($rxo->is_uddds && $rxo->uddds_start_date)
+                                                    <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
+                                                @endif
+                                            </label>
+                                        @elseif ($rxo->is_uddds)
+                                            <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
+                                        @endif
+                                    </td>
                                     <td class="text-xs whitespace-nowrap w-min" title="View Charge Slip">
                                         <div class="flex flex-col align-center">
                                             @if ($rxo->pcchrgcod)
@@ -207,15 +236,8 @@
                                                 @if ($rxo->is_mgh_item)
                                                     <span class="badge badge-xs badge-error">MGH</span>
                                                 @endif
-                                                @if ($rxo->is_uddds)
-                                                    <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
-                                                    @if ($rxo->uddds_start_date)
-                                                        <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
-                                                    @endif
-                                                    <button type="button" class="btn btn-ghost btn-xs" title="Remove from UDDDS"
-                                                        onclick="remove_uddds('{{ $rxo->docointkey }}')">
-                                                        <i class="las la-times"></i>
-                                                    </button>
+                                                @if ($rxo->is_uddds && $rxo->uddds_start_date)
+                                                    <span class="text-[10px] whitespace-nowrap" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
                                                 @endif
                                             </div>
                                         </div>
@@ -265,16 +287,16 @@
                                             <label class="input-group input-group-xs">
                                                 @if ($selected_remarks == $rxo->docointkey)
                                                     <textarea class="textarea textarea-bordered textarea-xs" wire:model.lazy="new_remarks"
-                                                        wire:key="rem-input-{{ $rxo->docointkey }}">{{ $rxo->remarks }}</textarea>
+                                                        wire:key="rem-input-{{ $rxo->docointkey }}"></textarea>
                                                     <button class="btn-primary btn btn-square"
                                                         wire:click="update_remarks()"
                                                         wire:key="update-rem-{{ $rxo->docointkey }}">
                                                         <i class="las la-lg la-save"></i>
                                                     </button>
                                                 @else
-                                                    <textarea class="textarea textarea-bordered textarea-xs" wire:key="rem-input-dis-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks }}</textarea>
+                                                    <textarea class="textarea textarea-bordered textarea-xs" wire:key="rem-input-dis-{{ $rxo->docointkey }}" disabled>{{ $rxo->remarks_display ?? $rxo->remarks }}</textarea>
                                                     <button class="btn btn-square"
-                                                        wire:click="$set('selected_remarks', '{{ $rxo->docointkey }}')"
+                                                        wire:click="edit_remarks('{{ $rxo->docointkey }}')"
                                                         wire:key="set-rem-id-dis-{{ $rxo->docointkey }}">
                                                         <i class="las la-lg la-edit"></i>
                                                     </button>
@@ -298,19 +320,12 @@
                                             @if ($rxo->is_mgh_item)
                                                 <span class="badge badge-xs badge-error">MGH</span>
                                             @endif
-                                            @if ($rxo->is_uddds)
-                                                <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
-                                                <button type="button" class="btn btn-ghost btn-xs" title="Remove from UDDDS"
-                                                    onclick="remove_uddds('{{ $rxo->docointkey }}')">
-                                                    <i class="las la-times"></i>
-                                                </button>
-                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="12">EMPTY</td>
+                                    <td colspan="13">EMPTY</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -413,7 +428,7 @@
                                         {{ date('h:i A', strtotime($presc_data->updated_at)) }}
                                     </td>
                                     <td class="text-xs cursor-pointer"
-                                        onclick="select_rx_item({{ $presc_data->id }}, `{{ $presc_data->dm->drug_concat() }}`, '{{ $presc_data->qty }}', '{{ $presc->empid }}', '{{ $presc_data->dmdcomb }}', '{{ $presc_data->dmdctr }}')">
+                                        onclick="select_rx_item({{ $presc_data->id }}, `{{ $presc_data->dm->drug_concat() }}`, '{{ $presc_data->qty }}', '{{ $presc->empid }}', '{{ $presc_data->dmdcomb }}', '{{ $presc_data->dmdctr }}', {{ json_encode($presc_data->issueRemarksText()) }})">
                                         {{ $presc_data->dm->drug_concat() }}</td>
                                     <td class="text-xs">
                                         @switch($presc_data->order_type)
@@ -467,7 +482,7 @@
                                                 {{ date('h:i A', strtotime($extra_data->updated_at)) }}
                                             </td>
                                             <td class="text-xs cursor-pointer"
-                                                onclick="select_rx_item({{ $extra_data->id }}, `{{ $extra_data->dm->drug_concat() }}`, '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}')">
+                                                onclick="select_rx_item({{ $extra_data->id }}, `{{ $extra_data->dm->drug_concat() }}`, '{{ $extra_data->qty }}', '{{ $extra->empid }}', '{{ $extra_data->dmdcomb }}', '{{ $extra_data->dmdctr }}', {{ json_encode($extra_data->issueRemarksText()) }})">
                                                 {{ $extra_data->dm->drug_concat() }}</td>
                                             <td class="text-xs">
                                                 @switch($extra_data->order_type)
@@ -549,7 +564,7 @@
                                                 {{ date('h:i A', strtotime($presc_all_data->updated_at)) }}
                                             </td>
                                             <td class="text-xs cursor-pointer"
-                                                onclick="select_rx_item({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}')">
+                                                onclick="select_rx_item({{ $presc_all_data->id }}, `{{ $presc_all_data->dm->drug_concat() }}`, '{{ $presc_all_data->qty }}', '{{ $presc_all->empid }}', '{{ $presc_all_data->dmdcomb }}', '{{ $presc_all_data->dmdctr }}', {{ json_encode($presc_all_data->issueRemarksText()) }})">
                                                 {{ $presc_all_data->dm->drug_concat() }}</td>
                                             <td class="text-xs">
                                                 @switch($presc_all_data->order_type)
@@ -609,7 +624,7 @@
                                                         {{ date('h:i A', strtotime($extra_all_data->updated_at)) }}
                                                     </td>
                                                     <td class="text-xs cursor-pointer"
-                                                        onclick="select_rx_item({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}')">
+                                                        onclick="select_rx_item({{ $extra_all_data->id }}, `{{ $extra_all_data->dm->drug_concat() }}`, '{{ $extra_all_data->qty }}', '{{ $extra_all->empid }}', '{{ $extra_all_data->dmdcomb }}', '{{ $extra_all_data->dmdctr }}', {{ json_encode($extra_all_data->issueRemarksText()) }})">
                                                         {{ $extra_all_data->dm->drug_concat() }}</td>
                                                     <td class="text-xs">
                                                         @switch($extra_all_data->order_type)
@@ -1008,73 +1023,24 @@
                                     function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
                                         exp_date) {
                                         Swal.fire({
-                                            html: `
-                        <div class="text-xl font-bold">` + drug + `</div>
-                        <div class="flex w-full space-x-3">
-                            <div class="w-full mb-3 form-control">
-                                <label class="label">
-                                    <span class="label-text">Quantity</span>
-                                </label>
-                                <input id="order_qty" type="number" class="box-border w-64 h-32 p-4 text-7xl input input-bordered" />
-                            </div>
-                            <div class="w-full">
-                                <div class="w-full form-control">
-                                    <label class="label">
-                                        <span class="label-text">Unit Price</span>
-                                    </label>
-                                    <input id="unit_price" type="number" step="0.01" class="w-full input input-bordered" />
-                                </div>
-
-                                <div class="w-full mb-3 form-control">
-                                    <label class="label">
-                                        <span class="label-text">TOTAL</span>
-                                    </label>
-                                    <input id="total" type="number" step="0.01" class="w-full input input-bordered" readonly tabindex="-1" />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="px-2 mt-2">
-                            <textarea id="remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
-                        </div>
-                            `,
+                                            html: selectItemModalHtml(drug),
                                             showCancelButton: true,
+                                            showCloseButton: true,
                                             confirmButtonText: `Confirm`,
-                                            didOpen: () => {
-                                                const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
-                                                const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
-                                                const total = Swal.getHtmlContainer().querySelector('#total')
-
-                                                order_qty.focus();
-                                                unit_price.value = up;
-                                                total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
-
-                                                order_qty.addEventListener('input', () => {
-                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                                        .value)
-                                                })
-
-                                                unit_price.addEventListener('input', () => {
-                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                                        .value)
-                                                })
-                                            }
+                                            didOpen: () => bindSelectItemTotals(up),
+                                            preConfirm: () => captureSelectItemForm()
                                         }).then((result) => {
-                                            /* Read more about isConfirmed, isDenied below */
                                             if (result.isConfirmed) {
-                                                @this.set('unit_price', unit_price.value)
-                                                @this.set('order_qty', order_qty.value)
-
-                                                @this.set('remarks', remarks.value);
-
-                                                Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
+                                                submitSelectItem(result.value, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
                                                     available, exp_date)
                                             }
                                         });
                                     }
 
-                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
+                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr, rxSig) {
 
                                         var search = drug.split(",");
+                                        window.__pendingRxRemarks = rxSig || '';
                                         @this.set('rx_id', rx_id)
                                         @this.set('generic', search[0])
                                         @this.set('rx_dmdcomb', rx_dmdcomb);
@@ -1104,10 +1070,23 @@
                         <div class="px-2 mt-2">
                             <textarea id="rx_remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 px-2 mt-2 text-left">
-                            <label class="text-xs"><input type="radio" name="rx_order_type" value="BASIC" checked> Basic</label>
-                            <label class="text-xs"><input type="radio" name="rx_order_type" value="G24"> G24</label>
-                            <label class="text-xs"><input type="radio" name="rx_order_type" value="OR"> OR Use</label>
+                        <div class="px-2 mt-3 text-left border rounded border-slate-300 p-2">
+                            <div class="mb-1 text-sm font-bold">UDDDS</div>
+                            <div class="grid grid-cols-3 gap-2 text-left">
+                                <label class="text-xs"><input type="radio" name="rx_order_type" value="BASIC" checked> Basic</label>
+                                <label class="text-xs"><input type="radio" name="rx_order_type" value="G24"> G24</label>
+                                <label class="text-xs"><input type="radio" name="rx_order_type" value="OR"> OR Use</label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                    <label class="label py-1"><span class="label-text">UDDDS start</span></label>
+                                    <input type="date" id="rx_uddds_start" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
+                                </div>
+                                <div>
+                                    <label class="label py-1"><span class="label-text">UDDDS end</span></label>
+                                    <input type="date" id="rx_uddds_end" class="w-full input input-bordered input-sm" />
+                                </div>
+                            </div>
                         </div>
                     `,
                                             showCancelButton: true,
@@ -1140,6 +1119,9 @@
                                                 });
                                                 rx_order_qty.focus();
                                                 rx_order_qty.value = rx_qty;
+                                                if (rx_remarks && rxSig) {
+                                                    rx_remarks.value = rxSig;
+                                                }
 
                                             }
                                         }).then((result) => {
@@ -1159,6 +1141,14 @@
                                                 @this.set('remarks', rx_remarks.value);
                                                 const selectedType = Swal.getHtmlContainer().querySelector('input[name="rx_order_type"]:checked');
                                                 @this.set('rx_order_type', selectedType ? selectedType.value : 'BASIC');
+                                                const rxStart = Swal.getHtmlContainer().querySelector('#rx_uddds_start');
+                                                const rxEnd = Swal.getHtmlContainer().querySelector('#rx_uddds_end');
+                                                if (rxStart) {
+                                                    @this.set('uddds_start_date', rxStart.value);
+                                                }
+                                                if (rxEnd) {
+                                                    @this.set('uddds_end_date', rxEnd.value);
+                                                }
 
                                                 Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
                                             }
@@ -1217,8 +1207,39 @@
                                     function select_item(dm_id, drug, up, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available,
                                         exp_date) {
                                         Swal.fire({
-                                            input: 'number',
-                                            html: `
+                                            html: selectItemModalHtml(drug),
+                                            showCancelButton: true,
+                                            showCloseButton: true,
+                                            confirmButtonText: `Confirm`,
+                                            didOpen: () => bindSelectItemTotals(up),
+                                            preConfirm: () => captureSelectItemForm()
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                submitSelectItem(result.value, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
+                                                    available, exp_date)
+                                            }
+                                        });
+                                    }
+
+                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr, rxSig) {
+
+                                        var search = drug.split(",");
+                                        window.__pendingRxRemarks = rxSig || '';
+                                        @this.set('rx_id', rx_id)
+                                        @this.set('generic', search[0])
+                                        @this.set('rx_dmdcomb', rx_dmdcomb);
+                                        @this.set('rx_dmdctr', rx_dmdctr);
+                                        @this.set('empid', empid);
+                                        if (rxSig) {
+                                            @this.set('remarks', rxSig);
+                                        }
+                                        // $("#generic").val(search[0]);
+                                        // $("#generic").trigger('keyup');
+                                    }
+                                @endif
+
+                                function selectItemModalHtml(drug) {
+                                    return `
                     <div class="text-xl font-bold">` + drug + `</div>
                     <div class="flex w-full space-x-3">
                         <div class="w-full mb-3 form-control">
@@ -1234,7 +1255,6 @@
                                 </label>
                                 <input id="unit_price" type="number" step="0.01" class="w-full input input-bordered" />
                             </div>
-
                             <div class="w-full mb-3 form-control">
                                 <label class="label">
                                     <span class="label-text">TOTAL</span>
@@ -1246,69 +1266,182 @@
                     <div class="px-2 mt-2">
                         <textarea id="remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                     </div>
-                `,
+                    <div class="px-2 mt-3 text-left border rounded border-slate-300 p-2">
+                        <div class="mb-1 text-sm font-bold">UDDDS</div>
+                        <div class="mb-1 text-xs font-semibold">Order type</div>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="BASIC" checked> Basic (standing)</label>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="G24"> G24</label>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="OR"> OR Use</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <label class="label py-1"><span class="label-text">UDDDS start</span></label>
+                                <input type="date" id="item_uddds_start" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
+                            </div>
+                            <div>
+                                <label class="label py-1"><span class="label-text">UDDDS end</span></label>
+                                <input type="date" id="item_uddds_end" class="w-full input input-bordered input-sm" />
+                            </div>
+                        </div>
+                    </div>
+                `;
+                                }
+
+                                function captureSelectItemForm() {
+                                    const box = Swal.getHtmlContainer();
+                                    if (!box) {
+                                        return null;
+                                    }
+                                    const qty = box.querySelector('#order_qty');
+                                    const price = box.querySelector('#unit_price');
+                                    const rem = box.querySelector('#remarks');
+                                    const itemType = box.querySelector('input[name="item_order_type"]:checked');
+                                    const startEl = box.querySelector('#item_uddds_start');
+                                    const endEl = box.querySelector('#item_uddds_end');
+                                    return {
+                                        qty: qty ? qty.value : '',
+                                        price: price ? price.value : '',
+                                        remarks: rem ? rem.value : '',
+                                        orderType: itemType ? itemType.value : 'BASIC',
+                                        start: startEl ? startEl.value : '',
+                                        end: endEl ? endEl.value : '',
+                                    };
+                                }
+
+                                function bindSelectItemTotals(up) {
+                                    const box = Swal.getHtmlContainer();
+                                    const order_qty = box.querySelector('#order_qty');
+                                    const unit_price = box.querySelector('#unit_price');
+                                    const total = box.querySelector('#total');
+                                    const rem = box.querySelector('#remarks');
+                                    if (!order_qty || !unit_price || !total) {
+                                        return;
+                                    }
+                                    order_qty.focus();
+                                    unit_price.value = up;
+                                    if (rem && window.__pendingRxRemarks && !rem.value) {
+                                        rem.value = window.__pendingRxRemarks;
+                                    }
+                                    const recalc = () => {
+                                        total.value = (parseFloat(order_qty.value || 0) * parseFloat(unit_price.value || 0)).toFixed(2);
+                                    };
+                                    recalc();
+                                    order_qty.addEventListener('input', recalc);
+                                    unit_price.addEventListener('input', recalc);
+                                    order_qty.addEventListener('keypress', function(event) {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            Swal.clickConfirm();
+                                        }
+                                    });
+                                }
+
+                                function submitSelectItem(v, dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available, exp_date) {
+                                    const form = v || captureSelectItemForm() || {};
+                                    @this.set('unit_price', form.price)
+                                    @this.set('order_qty', form.qty)
+                                    @this.set('remarks', form.remarks || '');
+                                    Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available, exp_date,
+                                        form.orderType || 'BASIC', form.start || '', form.end || '', form.qty || '', form.price || '', form.remarks || '')
+                                }
+
+                                function toggle_uddds(el, docointkey, start, end, orderType, drug, qty, freq, days) {
+                                    if (el.checked) {
+                                        const today = '{{ date('Y-m-d') }}';
+                                        const startVal = start || today;
+                                        const endVal = end || '';
+                                        const typeVal = (orderType || 'BASIC').toUpperCase();
+                                        const esc = (s) => String(s || '').replace(/[&<>"']/g, (c) => ({
+                                            '&': '&amp;',
+                                            '<': '&lt;',
+                                            '>': '&gt;',
+                                            '"': '&quot;',
+                                            "'": '&#39;'
+                                        }[c]));
+                                        const hasRx = Boolean(drug || qty || freq || days);
+                                        const rxBlock = hasRx ? `
+                            <div class="p-2 mb-3 text-left border rounded border-slate-300 bg-slate-50">
+                                <div class="mb-1 text-xs font-semibold">From prescription</div>
+                                <div class="text-sm font-bold">${esc(drug) || '—'}</div>
+                                <div class="grid grid-cols-3 gap-2 mt-2 text-xs">
+                                    <div><span class="opacity-70">Qty</span><div class="font-semibold">${esc(qty) || '—'}</div></div>
+                                    <div><span class="opacity-70">Frequency</span><div class="font-semibold">${esc(freq) || '—'}</div></div>
+                                    <div><span class="opacity-70">Days</span><div class="font-semibold">${esc(days) || '—'}</div></div>
+                                </div>
+                            </div>
+                        ` : '';
+                                        Swal.fire({
+                                            title: 'Enable UDDDS',
+                                            html: `
+                        <div class="px-2 mt-2 text-left">
+                            <p class="mb-2 text-sm text-slate-500">Set the standing unit-dose window for this issued item.</p>
+                            ${rxBlock}
+                            <div class="mb-1 text-xs font-semibold">Order type</div>
+                            <div class="flex flex-wrap gap-3">
+                                <label class="text-sm cursor-pointer"><input type="radio" name="row_order_type" value="BASIC" ${typeVal === 'BASIC' ? 'checked' : ''}> Basic (standing)</label>
+                                <label class="text-sm cursor-pointer"><input type="radio" name="row_order_type" value="G24" ${typeVal === 'G24' ? 'checked' : ''}> G24</label>
+                                <label class="text-sm cursor-pointer"><input type="radio" name="row_order_type" value="OR" ${typeVal === 'OR' ? 'checked' : ''}> OR Use</label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <div>
+                                    <label class="label py-1"><span class="label-text">UDDDS start</span></label>
+                                    <input type="date" id="row_uddds_start" class="w-full input input-bordered input-sm" value="${startVal}" />
+                                </div>
+                                <div>
+                                    <label class="label py-1"><span class="label-text">UDDDS end</span></label>
+                                    <input type="date" id="row_uddds_end" class="w-full input input-bordered input-sm" value="${endVal}" />
+                                </div>
+                            </div>
+                        </div>
+                    `,
                                             showCancelButton: true,
-                                            showCloseButton: true,
-                                            confirmButtonText: `Confirm`,
-                                            didOpen: () => {
-                                                const order_qty = Swal.getHtmlContainer().querySelector('#order_qty')
-                                                const unit_price = Swal.getHtmlContainer().querySelector('#unit_price')
-                                                const total = Swal.getHtmlContainer().querySelector('#total')
-
-                                                order_qty.focus();
-                                                unit_price.value = up;
-                                                total.value = parseFloat(order_qty.value) * parseFloat(unit_price.value)
-
-                                                order_qty.addEventListener('input', () => {
-                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                                        .value)
-                                                })
-
-                                                unit_price.addEventListener('input', () => {
-                                                    total.value = parseFloat(order_qty.value) * parseFloat(unit_price
-                                                        .value)
-                                                })
-
-                                                order_qty.addEventListener("keypress", function(event) {
-                                                    if (event.key === "Enter") {
-                                                        event.preventDefault();
-                                                        @this.set('unit_price', unit_price.value)
-                                                        @this.set('order_qty', order_qty.value)
-                                                        @this.set('remarks', remarks.value);
-
-                                                        Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte,
-                                                            id, available, exp_date)
-
-                                                        Swal.close()
-
-                                                    }
-                                                });
+                                            confirmButtonText: 'Enable',
+                                            preConfirm: () => {
+                                                const box = Swal.getHtmlContainer();
+                                                const typeEl = box.querySelector('input[name="row_order_type"]:checked');
+                                                const startEl = box.querySelector('#row_uddds_start');
+                                                const endEl = box.querySelector('#row_uddds_end');
+                                                const type = typeEl ? typeEl.value : 'BASIC';
+                                                const startDate = startEl ? startEl.value : '';
+                                                const endDate = endEl ? endEl.value : '';
+                                                if (type !== 'BASIC') {
+                                                    Swal.showValidationMessage('UDDDS applies to Basic (standing) orders only.');
+                                                    return false;
+                                                }
+                                                if (!startDate || !endDate) {
+                                                    Swal.showValidationMessage('UDDDS start and end dates are required.');
+                                                    return false;
+                                                }
+                                                if (endDate < startDate) {
+                                                    Swal.showValidationMessage('End date must be on or after the start date.');
+                                                    return false;
+                                                }
+                                                return { type, startDate, endDate };
                                             }
                                         }).then((result) => {
-                                            /* Read more about isConfirmed, isDenied below */
-                                            if (result.isConfirmed) {
-                                                @this.set('unit_price', unit_price.value)
-                                                @this.set('order_qty', order_qty.value)
-                                                @this.set('remarks', remarks.value);
-
-                                                Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id,
-                                                    available, exp_date)
+                                            if (result.isConfirmed && result.value) {
+                                                Livewire.emit('enroll_in_uddds', docointkey, result.value.type, result.value.startDate, result.value.endDate);
+                                            } else {
+                                                el.checked = false;
                                             }
                                         });
+                                        return;
                                     }
 
-                                    function select_rx_item(rx_id, drug, rx_qty, empid, rx_dmdcomb, rx_dmdctr) {
-
-                                        var search = drug.split(",");
-                                        @this.set('rx_id', rx_id)
-                                        @this.set('generic', search[0])
-                                        @this.set('rx_dmdcomb', rx_dmdcomb);
-                                        @this.set('rx_dmdctr', rx_dmdctr);
-                                        @this.set('empid', empid);
-                                        // $("#generic").val(search[0]);
-                                        // $("#generic").trigger('keyup');
-                                    }
-                                @endif
+                                    Swal.fire({
+                                        title: 'Remove from UDDDS?',
+                                        text: 'Future daily unit-dose orders will stop. Already charged or issued rows stay.',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Remove',
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            Livewire.emit('remove_from_uddds', docointkey);
+                                        } else {
+                                            el.checked = true;
+                                        }
+                                    });
+                                }
 
                                 function remove_uddds(docointkey) {
                                     Swal.fire({

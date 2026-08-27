@@ -102,6 +102,57 @@ class UdddsService
         return ['ok' => true, 'message' => 'UDDDS enrollment saved.'];
     }
 
+    public function enrollSingleOrder($docointkey, $orderType, $startDate, $endDate)
+    {
+        if (!self::hasHrxoColumns()) {
+            return ['ok' => false, 'message' => $this->schemaMissingMessage()];
+        }
+
+        $order = DrugOrder::where('docointkey', $docointkey)->first();
+
+        if (!$order) {
+            return ['ok' => false, 'message' => 'Order not found.'];
+        }
+
+        if (!empty($order->uddds_source_docointkey)) {
+            return ['ok' => false, 'message' => 'This row was generated from a standing UDDDS order.'];
+        }
+
+        $type = $this->normalizeOrderType($orderType);
+
+        if ($type !== 'BASIC') {
+            return ['ok' => false, 'message' => 'UDDDS applies to Basic (standing) orders only. Choose Basic, then set start and end dates.'];
+        }
+
+        if (!$startDate || !$endDate) {
+            return ['ok' => false, 'message' => 'UDDDS start and end dates are required.'];
+        }
+
+        try {
+            $start = Carbon::parse($startDate)->toDateString();
+            $end = Carbon::parse($endDate)->toDateString();
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => 'UDDDS start and end dates are required.'];
+        }
+
+        if ($end < $start) {
+            return ['ok' => false, 'message' => 'End date must be on or after the start date.'];
+        }
+
+        DB::update(
+            "UPDATE hospital.dbo.hrxo
+                SET is_uddds = 1,
+                    uddds_start_date = ?,
+                    uddds_end_date = ?,
+                    order_type = 'BASIC',
+                    uddds_source_docointkey = NULL
+                WHERE docointkey = ?",
+            [$start, $end, $docointkey]
+        );
+
+        return ['ok' => true, 'message' => 'UDDDS enabled. Daily unit-dose orders will generate through the end date.'];
+    }
+
     public function removeFromUddds($docointkey)
     {
         if (!self::hasHrxoColumns()) {

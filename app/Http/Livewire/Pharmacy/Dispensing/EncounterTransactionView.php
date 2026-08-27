@@ -28,7 +28,7 @@ class EncounterTransactionView extends Component
 {
     use LivewireAlert;
 
-    protected $listeners = ['charge_items', 'issue_order', 'add_item', 'return_issued', 'add_prescribed_item', 'delete_item', 'deactivate_rx', 'update_qty', 'remove_from_uddds'];
+    protected $listeners = ['charge_items', 'issue_order', 'add_item', 'return_issued', 'add_prescribed_item', 'delete_item', 'deactivate_rx', 'update_qty', 'remove_from_uddds', 'enroll_in_uddds'];
 
     public $generic, $charge_code = [];
     public $enccode, $location_id, $hpercode, $toecode, $mssikey;
@@ -65,6 +65,7 @@ class EncounterTransactionView extends Component
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
     public $rx_order_type = 'BASIC';
     public $uddds_start_date, $uddds_end_date;
+    public $uddds_ready = false;
 
     public $stock_changes = false;
     public $is_walkin_linked_encounter = false;
@@ -79,25 +80,41 @@ class EncounterTransactionView extends Component
         if ($this->toecode == 'WALKN') {
             $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
                                         " . UdddsService::hrxoSelectColumns() . ",
+                                        pd.qty as rx_qty, pd.remark as rx_frequency, pd.frequency as rx_days, pd.addtl_remarks as rx_addtl_remarks,
                                         CASE WHEN hrxo.original_enccode IS NULL THEN 0 ELSE 1 END AS is_mgh_item
                                     FROM henctr enctr
                                     INNER JOIN hospital.dbo.hrxo ON enctr.enccode = hrxo.enccode
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
                                     INNER JOIN hcharge ON orderfrom = chrgcode
                                     LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
+                                    LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
                                     WHERE hrxo.hpercode = '" . $this->hpercode . "' AND enctr.toecode = 'WALKN'
                                     ORDER BY dodate DESC");
         } else {
             $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
                                         " . UdddsService::hrxoSelectColumns() . ",
+                                        pd.qty as rx_qty, pd.remark as rx_frequency, pd.frequency as rx_days, pd.addtl_remarks as rx_addtl_remarks,
                                         CASE WHEN hrxo.original_enccode = '" . $enccode . "' THEN 1 ELSE 0 END AS is_mgh_item
                                     FROM hospital.dbo.hrxo
                                     INNER JOIN hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
                                     INNER JOIN hcharge ON orderfrom = chrgcode
                                     LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
+                                    LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
                                     WHERE hrxo.enccode = '" . $enccode . "'
                                         OR hrxo.original_enccode = '" . $enccode . "'
                                     ORDER BY dodate DESC");
+        }
+
+        foreach ($rxos as $rxo) {
+            $rxo->rx_drug_display = PrescriptionData::formatDrugDescription($rxo->drug_concat ?? '');
+            $formatted = PrescriptionData::formatIssueRemarks(
+                $rxo->rx_qty ?? null,
+                $rxo->rx_frequency ?? null,
+                $rxo->rx_days ?? null,
+                $rxo->rx_addtl_remarks ?? null
+            );
+            $saved = trim((string) ($rxo->remarks ?? ''));
+            $rxo->remarks_display = $saved !== '' ? $saved : $formatted;
         }
 
         $stocks = DB::select("SELECT pharm_drug_stocks.dmdcomb, pharm_drug_stocks.dmdctr, pharm_drug_stocks.drug_concat, hcharge.chrgdesc, pharm_drug_stocks.chrgcode, hdmhdrprice.retail_price, dmselprice, pharm_drug_stocks.loc_code, pharm_drug_stocks.dmdprdte as dmdprdte, SUM(stock_bal) as stock_bal, MAX(id) as id, MIN(exp_date) as exp_date, hdmhdrprice.acquisition_cost
@@ -120,6 +137,7 @@ class EncounterTransactionView extends Component
         ");
 
         $departments = DB::select("SELECT * FROM hdept WHERE deptstat = 'A'");
+        $this->uddds_ready = UdddsService::hasHrxoColumns();
 
         $this->dispatchBrowserEvent('issued');
         $encounter = $this->encounter;
@@ -303,6 +321,7 @@ class EncounterTransactionView extends Component
             'is_walkin_linked_encounter',
             'resolved_walkin_enccode',
             'take_home_mgh_label',
+            'uddds_ready',
         ];
     }
 
@@ -478,6 +497,7 @@ class EncounterTransactionView extends Component
                         "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = '" . $rxo->pchrgqty . "', tx_type = '" . $this->type . "', dodtepost = '" . now() . "', dotmepost = '" . now() . "', deptcode = '" . $this->deptcode . "' WHERE docointkey = '" . $rxo->docointkey . "' AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
                     );
                     $this->log_hrxoissue($rxo->docointkey, $rxo->enccode, $rxo->hpercode, $rxo->dmdcomb, $rxo->dmdctr, $rxo->pchrgqty, session('employeeid'), $rxo->orderfrom, $rxo->pcchrgcod, $rxo->pchrgup, $rxo->ris, $rxo->prescription_data_id, now(), $rxo->dmdprdte);
+                    $this->fillEmptyRemarksFromPrescription($rxo->docointkey, $rxo->prescription_data_id, $rxo->remarks ?? null);
                 }
             } else {
                 $insuf = Drug::select('drug_concat')->where('dmdcomb', $rxo->dmdcomb)->where('dmdctr', $rxo->dmdctr)->first();
@@ -652,8 +672,22 @@ class EncounterTransactionView extends Component
         return;
     }
 
-    public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date)
+    public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date, $orderType = null, $udddsStart = null, $udddsEnd = null, $qty = null, $price = null, $remarks = null)
     {
+        $this->applyIncomingUdddsFields($orderType, $udddsStart, $udddsEnd);
+
+        if ($qty !== null && $qty !== '') {
+            $this->order_qty = $qty;
+        }
+
+        if ($price !== null && $price !== '') {
+            $this->unit_price = $price;
+        }
+
+        if ($remarks !== null) {
+            $this->remarks = $remarks;
+        }
+
         $with_rx = false;
         if ($dmdcomb == $this->rx_dmdcomb and $dmdctr == $this->rx_dmdctr) {
             $with_rx = true;
@@ -730,17 +764,20 @@ class EncounterTransactionView extends Component
             $docointkey = '0000040' . $this->hpercode . date('m/d/Yh:i:s', strtotime(now())) . $chrgcode . $dmdcomb . $dmdctr;
 
             $orderType = $this->resolvedOrderType($with_rx);
-            $orderTypeSql = UdddsService::hasHrxoColumns() ? ", '" . $orderType . "'" : '';
-            $orderTypeCol = UdddsService::hasHrxoColumns() ? ', order_type' : '';
+            if ($with_rx) {
+                $this->remarks = $this->remarksFromPrescription($rx_id, $this->remarks);
+            }
+            $udddsSql = $this->hrxoUdddsInsertSql($orderType);
+            $remarksSql = str_replace("'", "''", (string) ($this->remarks ?? ''));
 
             DB::insert("INSERT INTO hospital.dbo.hrxo(docointkey, enccode, hpercode, rxooccid, rxoref, dmdcomb, repdayno1, rxostatus,
                             rxolock, rxoupsw, rxoconfd, dmdctr, estatus, entryby, ordcon, orderupd, locacode, orderfrom, issuetype,
-                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by, original_enccode{$orderTypeCol} )
+                            has_tag, tx_type, ris, pchrgqty, pchrgup, pcchrgamt, dodate, dotime, dodtepost, dotmepost, dmdprdte, exp_date, loc_code, item_id, remarks, prescription_data_id, prescribed_by, original_enccode{$udddsSql['columns']} )
                         VALUES ( '" . $docointkey . "', '" . $targetEnccode . "', '" . $this->hpercode . "', '1', '1', '" . $dmdcomb . "', '1', 'A',
                             'N', 'N', 'N', '" . $dmdctr . "', 'U', '" . session('employeeid') . "', 'NEWOR', 'ACTIV', 'PHARM', '" . $chrgcode . "', 'c',
                             '" . ($this->type ? true : false) . "', '" . $this->type . "', '" . ($this->is_ris ? true : false) . "', '" . $this->order_qty . "', '" . $this->unit_price . "',
                             '" . $this->order_qty * $this->unit_price . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . now() . "', '" . $dmdprdte . "', '" . $exp_date . "',
-                            '" . $loc_code . "', '" . $id . "', '" . ($this->remarks ?? '') . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "', " . ($originalLinkEnccode ? "'" . $originalLinkEnccode . "'" : "NULL") . "{$orderTypeSql} )");
+                            '" . $loc_code . "', '" . $id . "', '" . $remarksSql . "', '" . ($with_rx ? $rx_id : null) . "', '" . ($with_rx ? $empid : null) . "', " . ($originalLinkEnccode ? "'" . $originalLinkEnccode . "'" : "NULL") . "{$udddsSql['values']} )");
 
             if ($with_rx) {
                 DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -922,6 +959,7 @@ class EncounterTransactionView extends Component
         $rx_id = $this->rx_id;
         $empid = $this->empid;
         $orderType = $this->resolvedOrderType(true);
+        $this->remarks = $this->remarksFromPrescription($rx_id, $this->remarks);
         if ($this->ems) {
             $this->type = 'ems';
         } else if ($this->maip) {
@@ -998,6 +1036,8 @@ class EncounterTransactionView extends Component
             ];
             if (UdddsService::hasHrxoColumns()) {
                 $order['order_type'] = $orderType;
+                $order['uddds_start_date'] = $this->uddds_start_date ?: null;
+                $order['uddds_end_date'] = $this->uddds_end_date ?: null;
             }
             DrugOrder::create($order);
             DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -1034,6 +1074,16 @@ class EncounterTransactionView extends Component
         return redirect(route('dispensing.view.enctr', $this->enccode));
     }
 
+    public function edit_remarks($docointkey)
+    {
+        $this->selected_remarks = $docointkey;
+        $rxo = DrugOrder::find($docointkey);
+        $this->new_remarks = $rxo ? trim((string) ($rxo->remarks ?? '')) : '';
+        if ($this->new_remarks === '' && $rxo && $rxo->prescription_data_id) {
+            $this->new_remarks = $this->remarksFromPrescription($rxo->prescription_data_id);
+        }
+    }
+
     public function deactivate_rx($rx_id)
     {
         $data = PrescriptionData::find($rx_id);
@@ -1063,6 +1113,64 @@ class EncounterTransactionView extends Component
         $this->alert($result['ok'] ? 'success' : 'error', $result['message']);
     }
 
+    public function enroll_in_uddds($docointkey, $orderType = 'BASIC', $startDate = null, $endDate = null)
+    {
+        $result = app(UdddsService::class)->enrollSingleOrder($docointkey, $orderType, $startDate, $endDate);
+        if ($result['ok']) {
+            $order = DrugOrder::find($docointkey);
+            if ($order && $order->prescription_data_id) {
+                $this->applyPrescriptionRemarks($order->docointkey, $order->prescription_data_id, true);
+            }
+        }
+        $this->alert($result['ok'] ? 'success' : 'error', $result['message']);
+    }
+
+    protected function remarksFromPrescription($prescriptionDataId, $existing = null, $force = false)
+    {
+        if (!$force && trim((string) $existing) !== '') {
+            return $existing;
+        }
+
+        if (!$prescriptionDataId) {
+            return $existing;
+        }
+
+        $pd = PrescriptionData::with('dm')->find($prescriptionDataId);
+        if (!$pd) {
+            return $existing;
+        }
+
+        $formatted = $pd->issueRemarksText();
+
+        return $formatted !== '' ? $formatted : $existing;
+    }
+
+    protected function fillEmptyRemarksFromPrescription($docointkey, $prescriptionDataId, $existing = null)
+    {
+        $this->applyPrescriptionRemarks($docointkey, $prescriptionDataId, false, $existing);
+    }
+
+    protected function applyPrescriptionRemarks($docointkey, $prescriptionDataId, $force = false, $existing = null)
+    {
+        $remarks = $this->remarksFromPrescription($prescriptionDataId, $existing, $force);
+        if (trim((string) $remarks) === '') {
+            return;
+        }
+
+        if ($force) {
+            DB::update(
+                'UPDATE hospital.dbo.hrxo SET remarks = ? WHERE docointkey = ?',
+                [$remarks, $docointkey]
+            );
+            return;
+        }
+
+        DB::update(
+            'UPDATE hospital.dbo.hrxo SET remarks = ? WHERE docointkey = ? AND (remarks IS NULL OR LTRIM(RTRIM(remarks)) = \'\')',
+            [$remarks, $docointkey]
+        );
+    }
+
     protected function resolvedOrderType($withRx = false)
     {
         if (!$withRx && empty($this->rx_order_type)) {
@@ -1070,5 +1178,39 @@ class EncounterTransactionView extends Component
         }
 
         return app(UdddsService::class)->normalizeOrderType($this->rx_order_type);
+    }
+
+    protected function applyIncomingUdddsFields($orderType = null, $udddsStart = null, $udddsEnd = null)
+    {
+        if ($orderType !== null && $orderType !== '') {
+            $this->rx_order_type = $orderType;
+        }
+
+        if ($udddsStart !== null) {
+            $this->uddds_start_date = $udddsStart !== '' ? $udddsStart : null;
+        }
+
+        if ($udddsEnd !== null) {
+            $this->uddds_end_date = $udddsEnd !== '' ? $udddsEnd : null;
+        }
+    }
+
+    protected function hrxoUdddsInsertSql($orderType)
+    {
+        if (!UdddsService::hasHrxoColumns()) {
+            return ['columns' => '', 'values' => ''];
+        }
+
+        $esc = function ($value) {
+            return str_replace("'", "''", (string) $value);
+        };
+
+        $start = $this->uddds_start_date ? "'" . $esc($this->uddds_start_date) . "'" : 'NULL';
+        $end = $this->uddds_end_date ? "'" . $esc($this->uddds_end_date) . "'" : 'NULL';
+
+        return [
+            'columns' => ', order_type, uddds_start_date, uddds_end_date',
+            'values' => ", '" . $esc($orderType) . "', {$start}, {$end}",
+        ];
     }
 }

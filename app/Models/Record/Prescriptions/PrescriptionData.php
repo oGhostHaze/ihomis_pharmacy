@@ -48,4 +48,65 @@ class PrescriptionData extends Model
     {
         return $this->belongsTo(Employee::class, 'entry_by', 'employeeid')->with('dept')->with('provider');
     }
+
+    public function issueRemarksText()
+    {
+        return self::formatIssueRemarks($this->qty, $this->remark, $this->frequency, $this->addtl_remarks);
+    }
+
+    public static function formatDrugDescription($drugConcat)
+    {
+        $raw = trim((string) $drugConcat);
+        if ($raw === '') {
+            return '';
+        }
+
+        $parts = preg_split('/_,/', $raw);
+        $parts = array_map(function ($part) {
+            return trim(str_replace('_', ' ', $part));
+        }, $parts);
+        $parts = array_filter($parts, function ($part) {
+            return $part !== '';
+        });
+
+        return trim(implode(' ', $parts));
+    }
+
+    public static function formatIssueRemarks($qty, $frequencyText, $days, $addtlRemarks = null)
+    {
+        $parts = [];
+
+        if ($qty !== null && $qty !== '') {
+            if (is_numeric($qty)) {
+                $qty = 0 + $qty;
+            }
+            $parts[] = (string) $qty;
+        }
+
+        $freq = trim((string) $frequencyText);
+        if ($freq !== '') {
+            $parts[] = $freq;
+        }
+
+        if ($days !== null && $days !== '' && is_numeric($days) && (int) $days > 0) {
+            $n = (int) $days;
+            $parts[] = $n === 1 ? 'for 1 day' : 'for ' . $n . ' days';
+        }
+
+        $text = implode(' ', $parts);
+        $addtl = trim((string) $addtlRemarks);
+        if ($addtl !== '') {
+            $text = $text === '' ? $addtl : $text . ' - ' . $addtl;
+        }
+
+        if (function_exists('mb_strlen') && mb_strlen($text) > 255) {
+            return mb_substr($text, 0, 255);
+        }
+
+        if (strlen($text) > 255) {
+            return substr($text, 0, 255);
+        }
+
+        return $text;
+    }
 }
