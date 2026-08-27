@@ -2,16 +2,20 @@
 
 ## 2026-08-27
 
+### Improvements
+
+- UDDDS order type and start/end dates are set when adding an item. The Issue popup no longer asks for those dates. UDDDS turns on only after the item is issued, using the dates saved at add.
+
 ### Errors and fixes
 
-- Issuing ward items no longer fails with `udddsStart is not defined`. The Issue popup now keeps the UDDDS start and end dates when Confirm is clicked.
+- Issuing ward items no longer fails with `udddsStart is not defined`.
 
 ## 2026-08-26
 
 ### Improvements
 
 - UDDDS (Wards) lists today's Basic (standing) unit-dose orders. Pharmacy can Ready to Bill a patient, selected items, or a whole ward; that charges, issues, and prints the charge slips together.
-- Issuing Basic ward items asks for a UDDDS start and end date so later daily unit-dose rows can be generated. A scheduled `uddds:generate-daily` command creates those pending orders at 7:00 AM Asia/Manila.
+- Issuing a Basic ward item that already has UDDDS start and end dates (set when the item was added) turns UDDDS on so later daily unit-dose rows can be generated. A scheduled `uddds:generate-daily` command creates those pending orders at 7:00 AM Asia/Manila.
 - Adding a stock item on an encounter now includes UDDDS order type and start/end dates on the same popup, instead of only asking at Issue.
 - Issued ward items show a UDDDS switch. Turning it on later asks for order type and start/end dates again; turning it off stops future daily unit-dose orders.
 - Encounter item rows have a UDDDS column next to the checkbox.

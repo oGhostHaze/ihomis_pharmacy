@@ -201,7 +201,8 @@
                                             $showUdddsToggle = $uddds_ready
                                                 && in_array($toecode, ['ADM', 'OPDAD', 'ERADM'], true)
                                                 && empty($rxo->uddds_source_docointkey)
-                                                && empty($rxo->is_mgh_item);
+                                                && empty($rxo->is_mgh_item)
+                                                && trim((string) ($rxo->estatus ?? '')) === 'S';
                                             $udddsStartVal = $rxo->uddds_start_date ? date('Y-m-d', strtotime($rxo->uddds_start_date)) : '';
                                             $udddsEndVal = $rxo->uddds_end_date ? date('Y-m-d', strtotime($rxo->uddds_end_date)) : '';
                                             $udddsTypeVal = $rxo->order_type ?: 'BASIC';
@@ -1174,46 +1175,20 @@
                                     <span class="label-text">NON-Basic</span>
                                 </label>
                             </div>
-                            <div class="col-span-4 font-bold text-left">UDDDS Start / End (Basic / standing)</div>
-                            <div class="col-span-2 text-left">
-                                <label class="label"><span class="label-text">Start</span></label>
-                                <input type="date" id="uddds_start_date" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
-                            </div>
-                            <div class="col-span-2 text-left">
-                                <label class="label"><span class="label-text">End</span></label>
-                                <input type="date" id="uddds_end_date" class="w-full input input-bordered input-sm" />
-                            </div>
                         </div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
                                             preConfirm: () => {
-                                                const box = Swal.getHtmlContainer();
-                                                const na = box.querySelector('#na');
-                                                const startEl = box.querySelector('#uddds_start_date');
-                                                const endEl = box.querySelector('#uddds_end_date');
-                                                const start = startEl ? startEl.value : '';
-                                                const end = endEl ? endEl.value : '';
-                                                if (!start || !end) {
-                                                    Swal.showValidationMessage('UDDDS start and end dates are required for Basic (standing) items.');
-                                                    return false;
-                                                }
-                                                if (end < start) {
-                                                    Swal.showValidationMessage('End date must be on or after the start date.');
-                                                    return false;
-                                                }
+                                                const na = Swal.getHtmlContainer().querySelector('#na');
                                                 return {
-                                                    bnb: na ? na.checked : false,
-                                                    start: start,
-                                                    end: end
+                                                    bnb: na ? na.checked : false
                                                 };
                                             }
                                         }).then((result) => {
                                             if (result.isConfirmed && result.value) {
                                                 @this.set('bnb', result.value.bnb);
-                                                @this.set('uddds_start_date', result.value.start);
-                                                @this.set('uddds_end_date', result.value.end);
-                                                Livewire.emit('issue_order', result.value.bnb, result.value.start, result.value.end)
+                                                Livewire.emit('issue_order', result.value.bnb)
                                             }
                                         })
                                     }
@@ -1313,7 +1288,7 @@
                                     const itemType = box.querySelector('input[name="item_order_type"]:checked');
                                     const startEl = box.querySelector('#item_uddds_start');
                                     const endEl = box.querySelector('#item_uddds_end');
-                                    return {
+                                    const form = {
                                         qty: qty ? qty.value : '',
                                         price: price ? price.value : '',
                                         remarks: rem ? rem.value : '',
@@ -1321,6 +1296,17 @@
                                         start: startEl ? startEl.value : '',
                                         end: endEl ? endEl.value : '',
                                     };
+                                    if (form.orderType === 'BASIC') {
+                                        if (!form.start || !form.end) {
+                                            Swal.showValidationMessage('UDDDS start and end dates are required for Basic (standing) items.');
+                                            return false;
+                                        }
+                                        if (form.end < form.start) {
+                                            Swal.showValidationMessage('End date must be on or after the start date.');
+                                            return false;
+                                        }
+                                    }
+                                    return form;
                                 }
 
                                 function bindSelectItemTotals(up) {

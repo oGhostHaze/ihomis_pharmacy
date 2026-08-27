@@ -102,6 +102,35 @@ class UdddsService
         return ['ok' => true, 'message' => 'UDDDS enrollment saved.'];
     }
 
+    public function activateOnIssued(array $docointkeys)
+    {
+        if (!self::hasHrxoColumns()) {
+            return ['ok' => true, 'message' => ''];
+        }
+
+        foreach ($docointkeys as $docointkey) {
+            $order = DrugOrder::where('docointkey', $docointkey)->first();
+
+            if (!$order || !$this->isBasic($order->order_type)) {
+                continue;
+            }
+
+            if (!$order->uddds_start_date || !$order->uddds_end_date) {
+                continue;
+            }
+
+            DB::update(
+                "UPDATE hospital.dbo.hrxo
+                    SET is_uddds = 1,
+                        uddds_source_docointkey = NULL
+                    WHERE docointkey = ?",
+                [$docointkey]
+            );
+        }
+
+        return ['ok' => true, 'message' => 'UDDDS activated for issued standing items.'];
+    }
+
     public function enrollSingleOrder($docointkey, $orderType, $startDate, $endDate)
     {
         if (!self::hasHrxoColumns()) {

@@ -345,16 +345,10 @@ class EncounterTransactionView extends Component
         }
     }
 
-    public function issue_order($bnb = null, $udddsStart = null, $udddsEnd = null)
+    public function issue_order($bnb = null)
     {
         if ($bnb !== null) {
             $this->bnb = filter_var($bnb, FILTER_VALIDATE_BOOLEAN);
-        }
-        if ($udddsStart !== null && $udddsStart !== '') {
-            $this->uddds_start_date = $udddsStart;
-        }
-        if ($udddsEnd !== null && $udddsEnd !== '') {
-            $this->uddds_end_date = $udddsEnd;
         }
 
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
@@ -364,22 +358,6 @@ class EncounterTransactionView extends Component
         $rxos = collect(DB::select("SELECT * FROM hrxo WHERE docointkey IN (" . $selected_items . ") AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"))->all();
 
         $udddsService = app(UdddsService::class);
-        $hasBasic = false;
-        foreach ($rxos as $rxo) {
-            if ($udddsService->isBasic($rxo->order_type ?? null)) {
-                $hasBasic = true;
-                break;
-            }
-        }
-
-        if (($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') && $hasBasic) {
-            if (!$this->uddds_start_date || !$this->uddds_end_date) {
-                return $this->alert('error', 'Start and End dates are required for Basic (standing) items.');
-            }
-            if ($this->uddds_end_date < $this->uddds_start_date) {
-                return $this->alert('error', 'End date must be on or after the start date.');
-            }
-        }
 
         if ($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') {
             switch ($this->mssikey) {
@@ -515,14 +493,11 @@ class EncounterTransactionView extends Component
         }
 
         if ($cnt == 1) {
-            if (($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') && $hasBasic) {
+            if ($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') {
                 $keys = array_map(function ($item) {
                     return trim($item, "'");
                 }, $this->selected_items);
-                $enroll = $udddsService->enrollIssuedOrders($keys, $this->uddds_start_date, $this->uddds_end_date);
-                if (!$enroll['ok']) {
-                    return $this->alert('error', $enroll['message']);
-                }
+                $udddsService->activateOnIssued($keys);
             }
             $this->alert('success', 'Order issued successfully.');
         } else {
@@ -1047,6 +1022,7 @@ class EncounterTransactionView extends Component
                 $order['order_type'] = $orderType;
                 $order['uddds_start_date'] = $this->uddds_start_date ?: null;
                 $order['uddds_end_date'] = $this->uddds_end_date ?: null;
+                $order['is_uddds'] = false;
             }
             DrugOrder::create($order);
             DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -1218,8 +1194,8 @@ class EncounterTransactionView extends Component
         $end = $this->uddds_end_date ? "'" . $esc($this->uddds_end_date) . "'" : 'NULL';
 
         return [
-            'columns' => ', order_type, uddds_start_date, uddds_end_date',
-            'values' => ", '" . $esc($orderType) . "', {$start}, {$end}",
+            'columns' => ', order_type, uddds_start_date, uddds_end_date, is_uddds',
+            'values' => ", '" . $esc($orderType) . "', {$start}, {$end}, 0",
         ];
     }
 }
