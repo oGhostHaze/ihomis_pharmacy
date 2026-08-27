@@ -4,7 +4,7 @@
 
 ### Improvements
 
-- UDDDS order type and start/end dates are set when adding an item. The Issue popup no longer asks for those dates. UDDDS turns on only after the item is issued, using the dates saved at add.
+- UDDDS is optional and only available on inpatient (ADM) encounters. Add Item no longer requires unit-dose dates. OPD, ER, and other encounter types do not show UDDDS.
 
 ### Errors and fixes
 

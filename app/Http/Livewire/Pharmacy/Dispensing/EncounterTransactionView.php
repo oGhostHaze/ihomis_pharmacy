@@ -493,7 +493,7 @@ class EncounterTransactionView extends Component
         }
 
         if ($cnt == 1) {
-            if ($this->toecode == 'ADM' or $this->toecode == 'OPDAD' or $this->toecode == 'ERADM') {
+            if ($this->isInpatientUdddsEncounter()) {
                 $keys = array_map(function ($item) {
                     return trim($item, "'");
                 }, $this->selected_items);
@@ -658,7 +658,11 @@ class EncounterTransactionView extends Component
 
     public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date, $orderType = null, $udddsStart = null, $udddsEnd = null, $qty = null, $price = null, $remarks = null)
     {
-        $this->applyIncomingUdddsFields($orderType, $udddsStart, $udddsEnd);
+        if ($this->isInpatientUdddsEncounter()) {
+            $this->applyIncomingUdddsFields($orderType, $udddsStart, $udddsEnd);
+        } else {
+            $this->clearUdddsFields();
+        }
 
         if ($qty !== null && $qty !== '') {
             $this->order_qty = $qty;
@@ -942,6 +946,9 @@ class EncounterTransactionView extends Component
     {
         $rx_id = $this->rx_id;
         $empid = $this->empid;
+        if (!$this->isInpatientUdddsEncounter()) {
+            $this->clearUdddsFields();
+        }
         $orderType = $this->resolvedOrderType(true);
         $this->remarks = $this->remarksFromPrescription($rx_id, $this->remarks);
         if ($this->ems) {
@@ -1018,7 +1025,7 @@ class EncounterTransactionView extends Component
                 'prescribed_by' => $empid,
                 'original_enccode' => $originalLinkEnccode,
             ];
-            if (UdddsService::hasHrxoColumns()) {
+            if (UdddsService::hasHrxoColumns() && $this->isInpatientUdddsEncounter()) {
                 $order['order_type'] = $orderType;
                 $order['uddds_start_date'] = $this->uddds_start_date ?: null;
                 $order['uddds_end_date'] = $this->uddds_end_date ?: null;
@@ -1100,6 +1107,11 @@ class EncounterTransactionView extends Component
 
     public function enroll_in_uddds($docointkey, $orderType = 'BASIC', $startDate = null, $endDate = null)
     {
+        if (!$this->isInpatientUdddsEncounter()) {
+            $this->alert('error', 'UDDDS is only available for inpatient (ADM) encounters.');
+            return;
+        }
+
         $result = app(UdddsService::class)->enrollSingleOrder($docointkey, $orderType, $startDate, $endDate);
         if ($result['ok']) {
             $order = DrugOrder::find($docointkey);
@@ -1165,6 +1177,11 @@ class EncounterTransactionView extends Component
         return app(UdddsService::class)->normalizeOrderType($this->rx_order_type);
     }
 
+    protected function isInpatientUdddsEncounter(): bool
+    {
+        return strtoupper(trim((string) $this->toecode)) === 'ADM';
+    }
+
     protected function applyIncomingUdddsFields($orderType = null, $udddsStart = null, $udddsEnd = null)
     {
         if ($orderType !== null && $orderType !== '') {
@@ -1180,9 +1197,16 @@ class EncounterTransactionView extends Component
         }
     }
 
+    protected function clearUdddsFields()
+    {
+        $this->rx_order_type = 'BASIC';
+        $this->uddds_start_date = null;
+        $this->uddds_end_date = null;
+    }
+
     protected function hrxoUdddsInsertSql($orderType)
     {
-        if (!UdddsService::hasHrxoColumns()) {
+        if (!UdddsService::hasHrxoColumns() || !$this->isInpatientUdddsEncounter()) {
             return ['columns' => '', 'values' => ''];
         }
 

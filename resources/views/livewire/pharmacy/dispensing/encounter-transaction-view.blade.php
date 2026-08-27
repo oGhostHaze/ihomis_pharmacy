@@ -164,7 +164,9 @@
                         <thead>
                             <tr class="border border-black">
                                 <td class="text-center w-min"></td>
-                                <td class="text-center w-min">UDDDS</td>
+                                @if ($toecode === 'ADM')
+                                    <td class="text-center w-min">UDDDS</td>
+                                @endif
                                 <td class="whitespace-nowrap w-min" onclick="sortTable(2)">Charge Slip <i
                                         class="las la-sort"></i></td>
                                 <td class="whitespace-nowrap w-min" onclick="sortTable(3)">Date of Order <i
@@ -196,35 +198,36 @@
                                             wire:model.defer="selected_items" wire:key="item-{{ $rxo->docointkey }}"
                                             name="docointkey" value="'{{ $rxo->docointkey }}'" />
                                     </td>
-                                    <td class="text-xs text-center w-min">
-                                        @php
-                                            $showUdddsToggle = $uddds_ready
-                                                && in_array($toecode, ['ADM', 'OPDAD', 'ERADM'], true)
-                                                && empty($rxo->uddds_source_docointkey)
-                                                && empty($rxo->is_mgh_item)
-                                                && trim((string) ($rxo->estatus ?? '')) === 'S';
-                                            $udddsStartVal = $rxo->uddds_start_date ? date('Y-m-d', strtotime($rxo->uddds_start_date)) : '';
-                                            $udddsEndVal = $rxo->uddds_end_date ? date('Y-m-d', strtotime($rxo->uddds_end_date)) : '';
-                                            $udddsTypeVal = $rxo->order_type ?: 'BASIC';
-                                            $rxDrugVal = $rxo->rx_drug_display ?? '';
-                                            $rxQtyVal = $rxo->rx_qty ?? '';
-                                            $rxFreqVal = $rxo->rx_frequency ?? '';
-                                            $rxDaysVal = $rxo->rx_days ?? '';
-                                        @endphp
-                                        @if ($showUdddsToggle)
-                                            <label class="flex flex-col items-center gap-0.5 cursor-pointer" title="{{ $rxo->is_uddds ? 'Remove from UDDDS' : 'Enable UDDDS' }}">
-                                                <input type="checkbox"
-                                                    class="toggle toggle-sm toggle-info"
-                                                    @if ($rxo->is_uddds) checked @endif
-                                                    onchange="toggle_uddds(this, {{ json_encode($rxo->docointkey) }}, {{ json_encode($udddsStartVal) }}, {{ json_encode($udddsEndVal) }}, {{ json_encode($udddsTypeVal) }}, {{ json_encode($rxDrugVal) }}, {{ json_encode((string) $rxQtyVal) }}, {{ json_encode((string) $rxFreqVal) }}, {{ json_encode((string) $rxDaysVal) }})" />
-                                                @if ($rxo->is_uddds && $rxo->uddds_start_date)
-                                                    <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
-                                                @endif
-                                            </label>
-                                        @elseif ($rxo->is_uddds)
-                                            <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
-                                        @endif
-                                    </td>
+                                    @if ($toecode === 'ADM')
+                                        <td class="text-xs text-center w-min">
+                                            @php
+                                                $showUdddsToggle = $uddds_ready
+                                                    && empty($rxo->uddds_source_docointkey)
+                                                    && empty($rxo->is_mgh_item)
+                                                    && trim((string) ($rxo->estatus ?? '')) === 'S';
+                                                $udddsStartVal = $rxo->uddds_start_date ? date('Y-m-d', strtotime($rxo->uddds_start_date)) : '';
+                                                $udddsEndVal = $rxo->uddds_end_date ? date('Y-m-d', strtotime($rxo->uddds_end_date)) : '';
+                                                $udddsTypeVal = $rxo->order_type ?: 'BASIC';
+                                                $rxDrugVal = $rxo->rx_drug_display ?? '';
+                                                $rxQtyVal = $rxo->rx_qty ?? '';
+                                                $rxFreqVal = $rxo->rx_frequency ?? '';
+                                                $rxDaysVal = $rxo->rx_days ?? '';
+                                            @endphp
+                                            @if ($showUdddsToggle)
+                                                <label class="flex flex-col items-center gap-0.5 cursor-pointer" title="{{ $rxo->is_uddds ? 'Remove from UDDDS' : 'Enable UDDDS' }}">
+                                                    <input type="checkbox"
+                                                        class="toggle toggle-sm toggle-info"
+                                                        @if ($rxo->is_uddds) checked @endif
+                                                        onchange="toggle_uddds(this, {{ json_encode($rxo->docointkey) }}, {{ json_encode($udddsStartVal) }}, {{ json_encode($udddsEndVal) }}, {{ json_encode($udddsTypeVal) }}, {{ json_encode($rxDrugVal) }}, {{ json_encode((string) $rxQtyVal) }}, {{ json_encode((string) $rxFreqVal) }}, {{ json_encode((string) $rxDaysVal) }})" />
+                                                    @if ($rxo->is_uddds && $rxo->uddds_start_date)
+                                                        <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
+                                                    @endif
+                                                </label>
+                                            @elseif ($rxo->is_uddds)
+                                                <span class="badge badge-xs badge-info" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">UDDDS</span>
+                                            @endif
+                                        </td>
+                                    @endif
                                     <td class="text-xs whitespace-nowrap w-min" title="View Charge Slip">
                                         <div class="flex flex-col align-center">
                                             @if ($rxo->pcchrgcod)
@@ -237,7 +240,7 @@
                                                 @if ($rxo->is_mgh_item)
                                                     <span class="badge badge-xs badge-error">MGH</span>
                                                 @endif
-                                                @if ($rxo->is_uddds && $rxo->uddds_start_date)
+                                                @if ($toecode === 'ADM' && $rxo->is_uddds && $rxo->uddds_start_date)
                                                     <span class="text-[10px] whitespace-nowrap" title="{{ $rxo->uddds_start_date }} to {{ $rxo->uddds_end_date }}">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
                                                 @endif
                                             </div>
@@ -1071,24 +1074,6 @@
                         <div class="px-2 mt-2">
                             <textarea id="rx_remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                         </div>
-                        <div class="px-2 mt-3 text-left border rounded border-slate-300 p-2">
-                            <div class="mb-1 text-sm font-bold">UDDDS</div>
-                            <div class="grid grid-cols-3 gap-2 text-left">
-                                <label class="text-xs"><input type="radio" name="rx_order_type" value="BASIC" checked> Basic</label>
-                                <label class="text-xs"><input type="radio" name="rx_order_type" value="G24"> G24</label>
-                                <label class="text-xs"><input type="radio" name="rx_order_type" value="OR"> OR Use</label>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <div>
-                                    <label class="label py-1"><span class="label-text">UDDDS start</span></label>
-                                    <input type="date" id="rx_uddds_start" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
-                                </div>
-                                <div>
-                                    <label class="label py-1"><span class="label-text">UDDDS end</span></label>
-                                    <input type="date" id="rx_uddds_end" class="w-full input input-bordered input-sm" />
-                                </div>
-                            </div>
-                        </div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
@@ -1140,16 +1125,6 @@
                                                 // @this.set('caf', rx_caf.checked);
                                                 // @this.set('is_ris', rx_is_ris.checked);
                                                 @this.set('remarks', rx_remarks.value);
-                                                const selectedType = Swal.getHtmlContainer().querySelector('input[name="rx_order_type"]:checked');
-                                                @this.set('rx_order_type', selectedType ? selectedType.value : 'BASIC');
-                                                const rxStart = Swal.getHtmlContainer().querySelector('#rx_uddds_start');
-                                                const rxEnd = Swal.getHtmlContainer().querySelector('#rx_uddds_end');
-                                                if (rxStart) {
-                                                    @this.set('uddds_start_date', rxStart.value);
-                                                }
-                                                if (rxEnd) {
-                                                    @this.set('uddds_end_date', rxEnd.value);
-                                                }
 
                                                 Livewire.emit('add_prescribed_item', rx_dmdcomb, rx_dmdctr);
                                             }
@@ -1228,6 +1203,29 @@
                                 @endif
 
                                 function selectItemModalHtml(drug) {
+                                    const inpatientUddds = @json($toecode === 'ADM');
+                                    const udddsBlock = inpatientUddds ? `
+                    <div class="px-2 mt-3 text-left border rounded border-slate-300 p-2">
+                        <div class="mb-1 text-sm font-bold">UDDDS <span class="font-normal text-xs text-slate-500">(optional)</span></div>
+                        <p class="mb-2 text-xs text-slate-500">Inpatient unit-dose only. Leave blank to add a regular item.</p>
+                        <div class="mb-1 text-xs font-semibold">Order type</div>
+                        <div class="flex flex-wrap gap-3">
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="BASIC" checked> Basic (standing)</label>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="G24"> G24</label>
+                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="OR"> OR Use</label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                                <label class="label py-1"><span class="label-text">UDDDS start</span></label>
+                                <input type="date" id="item_uddds_start" class="w-full input input-bordered input-sm" />
+                            </div>
+                            <div>
+                                <label class="label py-1"><span class="label-text">UDDDS end</span></label>
+                                <input type="date" id="item_uddds_end" class="w-full input input-bordered input-sm" />
+                            </div>
+                        </div>
+                    </div>
+                ` : '';
                                     return `
                     <div class="text-xl font-bold">` + drug + `</div>
                     <div class="flex w-full space-x-3">
@@ -1255,25 +1253,7 @@
                     <div class="px-2 mt-2">
                         <textarea id="remarks" class="w-full textarea textarea-bordered" placeholder="Remarks"></textarea>
                     </div>
-                    <div class="px-2 mt-3 text-left border rounded border-slate-300 p-2">
-                        <div class="mb-1 text-sm font-bold">UDDDS</div>
-                        <div class="mb-1 text-xs font-semibold">Order type</div>
-                        <div class="flex flex-wrap gap-3">
-                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="BASIC" checked> Basic (standing)</label>
-                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="G24"> G24</label>
-                            <label class="text-sm cursor-pointer"><input type="radio" name="item_order_type" value="OR"> OR Use</label>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <div>
-                                <label class="label py-1"><span class="label-text">UDDDS start</span></label>
-                                <input type="date" id="item_uddds_start" class="w-full input input-bordered input-sm" value="{{ date('Y-m-d') }}" />
-                            </div>
-                            <div>
-                                <label class="label py-1"><span class="label-text">UDDDS end</span></label>
-                                <input type="date" id="item_uddds_end" class="w-full input input-bordered input-sm" />
-                            </div>
-                        </div>
-                    </div>
+                    ${udddsBlock}
                 `;
                                 }
 
@@ -1296,9 +1276,9 @@
                                         start: startEl ? startEl.value : '',
                                         end: endEl ? endEl.value : '',
                                     };
-                                    if (form.orderType === 'BASIC') {
+                                    if (form.start || form.end) {
                                         if (!form.start || !form.end) {
-                                            Swal.showValidationMessage('UDDDS start and end dates are required for Basic (standing) items.');
+                                            Swal.showValidationMessage('Enter both UDDDS start and end dates, or leave both blank.');
                                             return false;
                                         }
                                         if (form.end < form.start) {
@@ -1375,7 +1355,7 @@
                                             title: 'Enable UDDDS',
                                             html: `
                         <div class="px-2 mt-2 text-left">
-                            <p class="mb-2 text-sm text-slate-500">Set the standing unit-dose window for this issued item.</p>
+                                            <p class="mb-2 text-sm text-slate-500">Optional for inpatient (ADM) standing orders. Set the unit-dose window to start daily generation.</p>
                             ${rxBlock}
                             <div class="mb-1 text-xs font-semibold">Order type</div>
                             <div class="flex flex-wrap gap-3">

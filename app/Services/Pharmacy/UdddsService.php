@@ -67,6 +67,20 @@ class UdddsService
         return $this->normalizeOrderType($type) === 'BASIC';
     }
 
+    public function isAdmEncounter($enccode): bool
+    {
+        if (!$enccode) {
+            return false;
+        }
+
+        $row = DB::selectOne(
+            'SELECT TOP 1 toecode FROM hospital.dbo.henctr WHERE enccode = ?',
+            [$enccode]
+        );
+
+        return $row && strtoupper(trim((string) $row->toecode)) === 'ADM';
+    }
+
     public function enrollIssuedOrders(array $docointkeys, $startDate, $endDate)
     {
         if (!self::hasHrxoColumns()) {
@@ -83,7 +97,7 @@ class UdddsService
         foreach ($docointkeys as $docointkey) {
             $order = DrugOrder::where('docointkey', $docointkey)->first();
 
-            if (!$order || !$this->isBasic($order->order_type)) {
+            if (!$order || !$this->isBasic($order->order_type) || !$this->isAdmEncounter($order->enccode)) {
                 continue;
             }
 
@@ -111,7 +125,7 @@ class UdddsService
         foreach ($docointkeys as $docointkey) {
             $order = DrugOrder::where('docointkey', $docointkey)->first();
 
-            if (!$order || !$this->isBasic($order->order_type)) {
+            if (!$order || !$this->isBasic($order->order_type) || !$this->isAdmEncounter($order->enccode)) {
                 continue;
             }
 
@@ -141,6 +155,10 @@ class UdddsService
 
         if (!$order) {
             return ['ok' => false, 'message' => 'Order not found.'];
+        }
+
+        if (!$this->isAdmEncounter($order->enccode)) {
+            return ['ok' => false, 'message' => 'UDDDS is only available for inpatient (ADM) encounters.'];
         }
 
         if (!empty($order->uddds_source_docointkey)) {
@@ -232,7 +250,7 @@ class UdddsService
                 AND hrxo.uddds_end_date IS NOT NULL
                 AND CAST(hrxo.uddds_start_date AS DATE) <= ?
                 AND CAST(hrxo.uddds_end_date AS DATE) >= ?
-                AND (enctr.toecode = 'ADM' OR enctr.toecode = 'OPDAD' OR enctr.toecode = 'ERADM')
+                AND enctr.toecode = 'ADM'
         ", [$today, $today]);
 
         $created = [];
@@ -331,6 +349,7 @@ class UdddsService
             INNER JOIN hospital.dbo.hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
             INNER JOIN hospital.dbo.hcharge ON hcharge.chrgcode = hrxo.orderfrom
             INNER JOIN hospital.dbo.hperson pt ON pt.hpercode = hrxo.hpercode
+            INNER JOIN hospital.dbo.henctr enctr ON enctr.enccode = hrxo.enccode AND enctr.toecode = 'ADM'
             INNER JOIN hospital.dbo.hpatroom pat_room ON pat_room.enccode = hrxo.enccode AND pat_room.patrmstat = 'A'
             INNER JOIN hospital.dbo.hward ward ON ward.wardcode = pat_room.wardcode
             LEFT JOIN hospital.dbo.hroom room ON room.rmintkey = pat_room.rmintkey
@@ -409,6 +428,7 @@ class UdddsService
             "SELECT hrxo.*, hdmhdr.drug_concat
              FROM hospital.dbo.hrxo
              INNER JOIN hospital.dbo.hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
+             INNER JOIN hospital.dbo.henctr enctr ON enctr.enccode = hrxo.enccode AND enctr.toecode = 'ADM'
              WHERE hrxo.docointkey IN ({$placeholders})
                 AND hrxo.is_uddds = 1
                 AND (hrxo.estatus = 'U' OR (hrxo.estatus = 'P' AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0)))",

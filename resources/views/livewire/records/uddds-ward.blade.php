@@ -29,6 +29,7 @@
 </x-slot>
 
 <div class="flex flex-col py-5 mx-auto max-w-screen-2xl">
+    <p class="mb-3 text-sm text-base-content/70">Today's unit-dose orders for inpatients (ADM). UDDDS is optional; only items already enrolled appear here.</p>
     <div class="flex flex-wrap items-end gap-4">
         <div class="form-control">
             <label>
