@@ -345,8 +345,17 @@ class EncounterTransactionView extends Component
         }
     }
 
-    public function issue_order()
+    public function issue_order($bnb = null, $udddsStart = null, $udddsEnd = null)
     {
+        if ($bnb !== null) {
+            $this->bnb = filter_var($bnb, FILTER_VALIDATE_BOOLEAN);
+        }
+        if ($udddsStart !== null && $udddsStart !== '') {
+            $this->uddds_start_date = $udddsStart;
+        }
+        if ($udddsEnd !== null && $udddsEnd !== '') {
+            $this->uddds_end_date = $udddsEnd;
+        }
 
         $enccode = str_replace('--', ' ', Crypt::decrypt($this->enccode));
         $cnt = 0;

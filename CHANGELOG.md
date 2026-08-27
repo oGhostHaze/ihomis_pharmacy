@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-27
+
+### Errors and fixes
+
+- Issuing ward items no longer fails with `udddsStart is not defined`. The Issue popup now keeps the UDDDS start and end dates when Confirm is clicked.
+
 ## 2026-08-26
 
 ### Improvements

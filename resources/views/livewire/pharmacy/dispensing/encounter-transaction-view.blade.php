@@ -1187,19 +1187,33 @@
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
-                                            didOpen: () => {
-                                                const na = Swal.getHtmlContainer().querySelector('#na')
-                                                const udddsStart = Swal.getHtmlContainer().querySelector('#uddds_start_date')
-                                                const udddsEnd = Swal.getHtmlContainer().querySelector('#uddds_end_date')
+                                            preConfirm: () => {
+                                                const box = Swal.getHtmlContainer();
+                                                const na = box.querySelector('#na');
+                                                const startEl = box.querySelector('#uddds_start_date');
+                                                const endEl = box.querySelector('#uddds_end_date');
+                                                const start = startEl ? startEl.value : '';
+                                                const end = endEl ? endEl.value : '';
+                                                if (!start || !end) {
+                                                    Swal.showValidationMessage('UDDDS start and end dates are required for Basic (standing) items.');
+                                                    return false;
+                                                }
+                                                if (end < start) {
+                                                    Swal.showValidationMessage('End date must be on or after the start date.');
+                                                    return false;
+                                                }
+                                                return {
+                                                    bnb: na ? na.checked : false,
+                                                    start: start,
+                                                    end: end
+                                                };
                                             }
-
                                         }).then((result) => {
-                                            /* Read more about isConfirmed, isDenied below */
-                                            if (result.isConfirmed) {
-                                                @this.set('bnb', na.checked);
-                                                @this.set('uddds_start_date', udddsStart.value);
-                                                @this.set('uddds_end_date', udddsEnd.value);
-                                                Livewire.emit('issue_order')
+                                            if (result.isConfirmed && result.value) {
+                                                @this.set('bnb', result.value.bnb);
+                                                @this.set('uddds_start_date', result.value.start);
+                                                @this.set('uddds_end_date', result.value.end);
+                                                Livewire.emit('issue_order', result.value.bnb, result.value.start, result.value.end)
                                             }
                                         })
                                     }
