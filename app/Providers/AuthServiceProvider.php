@@ -52,6 +52,14 @@ class AuthServiceProvider extends ServiceProvider
                 'DRUMAP',
                 'DRUMAQ',
                 'DRUMAR',
+                'DRUMAS',
+                'DRUMAT',
+                'DRUMAU',
+                'DRUMAV',
+                'DRUMAW',
+                'DRUMAX',
+                'DRUMAY',
+                'DRUMAZ',
             );
         });
 
