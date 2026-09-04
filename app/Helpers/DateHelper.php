@@ -6,6 +6,8 @@ use Carbon\Carbon;
 
 class DateHelper
 {
+    private const SQL_SERVER_DATETIME_MIN_YEAR = 1753;
+
     /**
      * Format a date string to a specific format.
      *
@@ -46,13 +48,13 @@ class DateHelper
                 $month = $matches[1];
                 $year = $matches[2];
                 $day = 1; // Default to first day of the month
-                $parsedDate = Carbon::createFromDate($year, $month, $day);
+                $parsedDate = self::createValidDate($year, $month, $day);
             } elseif (preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/', $expiryDate, $matches)) {
                 // Format: 2/9/2027 (M/D/Y)
                 $month = $matches[1];
                 $day = $matches[2];
                 $year = $matches[3];
-                $parsedDate = Carbon::createFromDate($year, $month, $day);
+                $parsedDate = self::createValidDate($year, $month, $day);
             } elseif (preg_match('/^(\d{1,2})-(\d{1,2})-(\d{4})$/', $expiryDate, $matches)) {
                 // Format: 10-01-2029 (M-D-Y or D-M-Y)
                 // Try D-M-Y first as it's more common with dates like 10-01-2029
@@ -72,16 +74,22 @@ class DateHelper
                     $day = $matches[2];
                     $year = $matches[3];
                 }
-                $parsedDate = Carbon::createFromDate($year, $month, $day);
+                $parsedDate = self::createValidDate($year, $month, $day);
             } elseif (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $expiryDate, $matches)) {
                 // Format: 2027-02-09 (Y-M-D)
                 $year = $matches[1];
                 $month = $matches[2];
                 $day = $matches[3];
-                $parsedDate = Carbon::createFromDate($year, $month, $day);
+                $parsedDate = self::createValidDate($year, $month, $day);
             } else {
                 // Try to parse using Carbon's flexible parser
                 $parsedDate = Carbon::parse($expiryDate);
+            }
+
+            // hdmhdrprice.expdate uses SQL Server's legacy datetime type, whose
+            // supported range starts at 1753-01-01.
+            if ($parsedDate->year < self::SQL_SERVER_DATETIME_MIN_YEAR) {
+                throw new \InvalidArgumentException('Date is outside the SQL Server datetime range.');
             }
 
             return [
@@ -97,5 +105,18 @@ class DateHelper
                 'sql_format' => null
             ];
         }
+    }
+
+    private static function createValidDate($year, $month, $day)
+    {
+        $year = (int) $year;
+        $month = (int) $month;
+        $day = (int) $day;
+
+        if ($year < self::SQL_SERVER_DATETIME_MIN_YEAR || !checkdate($month, $day, $year)) {
+            throw new \InvalidArgumentException('Invalid or unsupported date.');
+        }
+
+        return Carbon::createFromDate($year, $month, $day);
     }
 }

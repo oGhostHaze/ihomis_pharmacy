@@ -972,6 +972,24 @@ class ShowRis extends Component
                 return;
             }
 
+            $invalidExpiryItem = $transferableItems->first(function ($detail) {
+                return !empty($detail->expire_date) && empty($detail->sql_formatted_expire_date);
+            });
+
+            if ($invalidExpiryItem) {
+                DB::rollBack();
+                $itemDescription = $invalidExpiryItem->description ?? 'Unknown item';
+                $stockNumber = $invalidExpiryItem->stockno ?? 'N/A';
+                $expiryDate = $invalidExpiryItem->expire_date;
+
+                session()->flash(
+                    'error',
+                    "Cannot transfer item \"{$itemDescription}\" (Stock No. {$stockNumber}): " .
+                    "invalid expiry date \"{$expiryDate}\". Correct the expiry date in the IAR before transferring."
+                );
+                return;
+            }
+
             // Group untransferred RIS details by invoice number
             $itemsByInvoice = $transferableItems->groupBy(function ($detail) {
                 return $detail->invoiceno ?? 'NO_INVOICE';
