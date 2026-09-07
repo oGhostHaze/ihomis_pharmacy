@@ -334,6 +334,7 @@ class UdddsService
                 hrxo.uddds_source_docointkey,
                 hrxo.order_type,
                 hrxo.is_uddds,
+                CASE WHEN hrxo.uddds_source_docointkey IS NOT NULL THEN 1 ELSE 0 END AS is_billable,
                 hdmhdr.drug_concat,
                 hcharge.chrgdesc,
                 pt.patfirst,
@@ -355,13 +356,31 @@ class UdddsService
             LEFT JOIN hospital.dbo.hroom room ON room.rmintkey = pat_room.rmintkey
             LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
             WHERE hrxo.is_uddds = 1
-                AND hrxo.uddds_source_docointkey IS NOT NULL
-                AND CAST(hrxo.dodate AS DATE) = ?
-                AND (hrxo.estatus = 'U' OR (hrxo.estatus = 'P' AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0)))
+                AND (
+                    (
+                        hrxo.uddds_source_docointkey IS NOT NULL
+                        AND CAST(hrxo.dodate AS DATE) = ?
+                        AND (hrxo.estatus = 'U' OR (hrxo.estatus = 'P' AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0)))
+                    )
+                    OR
+                    (
+                        (hrxo.uddds_source_docointkey IS NULL OR hrxo.uddds_source_docointkey = '')
+                        AND hrxo.estatus = 'S'
+                        AND hrxo.order_type = 'BASIC'
+                        AND CAST(hrxo.uddds_start_date AS DATE) <= ?
+                        AND CAST(hrxo.uddds_end_date AS DATE) >= ?
+                        AND NOT EXISTS (
+                            SELECT 1
+                            FROM hospital.dbo.hrxo daily_hrxo
+                            WHERE daily_hrxo.uddds_source_docointkey = hrxo.docointkey
+                                AND CAST(daily_hrxo.dodate AS DATE) = ?
+                        )
+                    )
+                )
                 AND (hrxo.loc_code = ? OR hrxo.loc_code IS NULL)
                 {$wardFilter}
             ORDER BY ward.wardname, pt.patlast, pt.patfirst, hdmhdr.drug_concat
-        ", $params);
+        ", [$today, $today, $today, $today, $locationId, ...array_slice($params, 2)]);
         } catch (QueryException $e) {
             if (str_contains($e->getMessage(), 'is_uddds')) {
                 return [];

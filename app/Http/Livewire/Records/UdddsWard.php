@@ -30,11 +30,13 @@ class UdddsWard extends Component
     {
         $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
         $patients = $this->groupPatients($items);
+        $hasBillableItems = collect($items)->contains(fn ($item) => (bool) $item->is_billable);
         $udddsReady = UdddsService::hasHrxoColumns();
 
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
+            'hasBillableItems' => $hasBillableItems,
             'udddsReady' => $udddsReady,
             'udddsMessage' => $udddsReady ? null : app(UdddsService::class)->schemaMissingMessage(),
         ]);
@@ -45,7 +47,7 @@ class UdddsWard extends Component
         $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
         $keys = [];
         foreach ($items as $item) {
-            if ($item->enccode === $enccode) {
+            if ($item->enccode === $enccode && $item->is_billable) {
                 $keys[] = $item->docointkey;
             }
         }
@@ -63,7 +65,9 @@ class UdddsWard extends Component
         $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
         $keys = [];
         foreach ($items as $item) {
-            $keys[] = $item->docointkey;
+            if ($item->is_billable) {
+                $keys[] = $item->docointkey;
+            }
         }
 
         $this->processKeys($keys);
@@ -118,7 +122,9 @@ class UdddsWard extends Component
                 ];
             }
             $patients[$item->enccode]['items'][] = $item;
-            $patients[$item->enccode]['keys'][] = $item->docointkey;
+            if ($item->is_billable) {
+                $patients[$item->enccode]['keys'][] = $item->docointkey;
+            }
         }
 
         return $patients;

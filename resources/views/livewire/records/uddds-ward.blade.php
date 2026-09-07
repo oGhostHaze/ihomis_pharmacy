@@ -29,7 +29,7 @@
 </x-slot>
 
 <div class="flex flex-col py-5 mx-auto max-w-screen-2xl">
-    <p class="mb-3 text-sm text-base-content/70">Today's unit-dose orders for inpatients (ADM). UDDDS is optional; only items already enrolled appear here.</p>
+    <p class="mb-3 text-sm text-base-content/70">Today's unit-dose orders and eligible UDDDS enrollments for inpatients (ADM).</p>
     <div class="flex flex-wrap items-end gap-4">
         <div class="form-control">
             <label>
@@ -45,7 +45,8 @@
         <button type="button" class="btn btn-sm btn-primary" wire:click="processSelected" wire:loading.attr="disabled">
             Batch selected
         </button>
-        <button type="button" class="btn btn-sm btn-success" wire:click="processWard" wire:loading.attr="disabled">
+        <button type="button" class="btn btn-sm btn-success" wire:click="processWard" wire:loading.attr="disabled"
+            @if (! $hasBillableItems) disabled @endif>
             Ready to Bill (ward)
         </button>
         <span wire:loading>
@@ -71,7 +72,8 @@
                         {{ $patient['hpercode'] }} · {{ $patient['wardname'] }} {{ $patient['rmname'] }}
                     </div>
                 </div>
-                <button type="button" class="btn btn-xs btn-success" wire:click="readyToBill('{{ $patient['enccode'] }}')">
+                <button type="button" class="btn btn-xs btn-success" wire:click="readyToBill('{{ $patient['enccode'] }}')"
+                    @if (empty($patient['keys'])) disabled @endif>
                     Ready to Bill
                 </button>
             </div>
@@ -92,7 +94,7 @@
                         <tr wire:key="uddds-item-{{ $item->docointkey }}">
                             <td>
                                 <input type="checkbox" class="checkbox checkbox-xs" wire:model="selected_items"
-                                    value="{{ $item->docointkey }}" />
+                                    value="{{ $item->docointkey }}" @if (! $item->is_billable) disabled @endif />
                             </td>
                             <td class="text-xs">{{ implode('', explode('_', $item->drug_concat)) }}</td>
                             <td class="text-xs">{{ $item->chrgdesc }}</td>
@@ -104,7 +106,9 @@
                                 {{ $item->uddds_end_date ? date('m/d/Y', strtotime($item->uddds_end_date)) : '' }}
                             </td>
                             <td class="text-xs">
-                                @if ($item->estatus == 'U' || !$item->pcchrgcod)
+                                @if (! $item->is_billable)
+                                    <span class="badge badge-xs badge-info">Eligible</span>
+                                @elseif ($item->estatus == 'U' || !$item->pcchrgcod)
                                     <span class="badge badge-xs badge-warning">Pending</span>
                                 @else
                                     <span class="badge badge-xs badge-secondary">Charged</span>
@@ -117,7 +121,7 @@
         </div>
     @empty
         <div class="p-8 mt-4 text-center border rounded-lg text-base-content/60">
-            No UDDDS Basic orders for today.
+            No eligible or generated UDDDS Basic orders for today.
         </div>
     @endforelse
 </div>
