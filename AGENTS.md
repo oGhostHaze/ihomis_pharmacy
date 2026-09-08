@@ -14,9 +14,10 @@ These instructions apply to every AI or automated coding agent working in this r
 
 ## PDIMS application handoff
 
-- After making any source change in this repository, explicitly ask the user whether the same or an adapted change should also be applied to the main PDIMS application at:
+- After making any source change in this repository, immediately apply the same or an adapted change to the main PDIMS application at:
 
   `C:\laragon\www\emr2\pdims`
 
-- Do not automatically copy or apply the change to the PDIMS application without the user's confirmation.
-- When asking, briefly identify which changes would be carried over and whether adaptation is likely to be required.
+- Do not ask for separate confirmation before synchronizing the change.
+- Preserve differences in framework version, architecture, styling system, and file organization; adapt rather than blindly copy when necessary.
+- After synchronization, report the PDIMS files changed and identify satellite-only changes without a corresponding main-application surface.

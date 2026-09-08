@@ -89,7 +89,7 @@ class EncounterTransactionView extends Component
                                     LEFT JOIN hpatmss ON hrxo.enccode = hpatmss.enccode
                                     LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
                                     WHERE hrxo.hpercode = '" . $this->hpercode . "' AND enctr.toecode = 'WALKN'
-                                    ORDER BY dodate DESC");
+                                    ORDER BY is_uddds DESC, uddds_source_docointkey ASC, dodate DESC");
         } else {
             $rxos = DB::select("SELECT docointkey, pcchrgcod, dodate, pchrgqty, estatus, qtyissued, pchrgup, pcchrgamt, drug_concat, chrgdesc, remarks, mssikey, tx_type, prescription_data_id, hrxo.original_enccode,
                                         " . UdddsService::hrxoSelectColumns() . ",
@@ -102,7 +102,7 @@ class EncounterTransactionView extends Component
                                     LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
                                     WHERE hrxo.enccode = '" . $enccode . "'
                                         OR hrxo.original_enccode = '" . $enccode . "'
-                                    ORDER BY dodate DESC");
+                                    ORDER BY is_uddds DESC, uddds_source_docointkey ASC, dodate DESC");
         }
 
         foreach ($rxos as $rxo) {

@@ -81,6 +81,22 @@
                         </tr>
                     </tfoot>
                 </table>
+                <div class="flex flex-col py-0 my-0 text-left text-xs/4 whitespace-nowrap">
+                    <div>Issued by:
+                        {{ $rxo_header->employee ? $rxo_header->employee->fullname() : ($rxo_header->user ? $rxo_header->user->name : $rxo_header->entry_by) }}
+                    </div>
+                    <div><span>Time: {{ \Carbon\Carbon::create($rxo_header->dodate)->format('h:i A') }}</span></div>
+                    <div><span>Verified by @if (fnmatch('*[ADM]', $toecode))
+                                Nurse/N.A.
+                            @endif: _________________________</span></div>
+                    <div><span>Received by Patient/Watcher: ____________________</span></div>
+                    <div class="mt-10 italic text-right justify-content-end"><span class="border-t border-black">Signature
+                            Over
+                            Printed Name</span></div>
+                    <div class="mt-2 text-right justify-content-end">
+                        <span><input type="checkbox" class="mt-1" disabled> Counseled</span>
+                    </div>
+                </div>
             </div>
         @empty
             <div class="p-8 text-center">No charge slips to print.</div>
