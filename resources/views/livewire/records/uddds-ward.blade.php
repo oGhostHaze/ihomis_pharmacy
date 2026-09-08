@@ -28,7 +28,10 @@
     </div>
 </x-slot>
 
-<div class="flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6">
+<div class="flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
+    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode) }}"
+    x-data='{"selected": [], "actionable": @json($actionableKeys)}'
+    @uddds-selection-cleared.window="selected = []">
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h1 class="text-xl font-semibold text-base-content">UDDDS ward queue</h1>
@@ -71,13 +74,16 @@
             <span class="mr-1 text-xs text-base-content/60" wire:loading>
                 <i class="las la-spinner la-lg animate-spin"></i> Updating…
             </span>
-            <button type="button" class="btn btn-sm btn-outline" wire:click="processSelected" wire:loading.attr="disabled"
-                @if (empty($selected_items)) disabled @endif>
-                Batch selected
+            <button type="button" class="btn btn-sm btn-success"
+                @click="confirmUdddsIssue(selected.length, () => $wire.processSelected([...selected]))"
+                :disabled="selected.length === 0" wire:loading.attr="disabled">
+                Charge &amp; Issue Selected
             </button>
-            <button type="button" class="btn btn-sm btn-success" wire:click="processWard" wire:loading.attr="disabled"
-                @if (! $hasBillableItems) disabled @endif>
-                Ready to bill ward
+            <button type="button" class="btn btn-sm btn-outline"
+                @click="selected = actionable.length > 0 && actionable.every(key => selected.includes(key)) ? [] : [...actionable]"
+                wire:loading.attr="disabled"
+                @if (! $hasActionableItems) disabled @endif>
+                <span x-text="actionable.length > 0 && actionable.every(key => selected.includes(key)) ? 'Clear selection' : 'Select all'">Select all</span>
             </button>
         </div>
     </div>
@@ -99,9 +105,10 @@
                         {{ $patient['hpercode'] }} · {{ $patient['wardname'] }} {{ $patient['rmname'] }}
                     </div>
                 </div>
-                <button type="button" class="btn btn-xs btn-success" wire:click="readyToBill('{{ $patient['enccode'] }}')"
+                <button type="button" class="btn btn-xs btn-success"
+                    @click="confirmUdddsIssue({{ count($patient['keys']) }}, () => $wire.readyToBill('{{ $patient['enccode'] }}'))"
                     @if (empty($patient['keys'])) disabled @endif>
-                    Ready to Bill
+                    Charge &amp; Issue
                 </button>
             </div>
             <div class="overflow-x-auto">
@@ -124,7 +131,7 @@
                             <td class="px-3 py-3">
                                 <input type="checkbox"
                                     class="h-4 w-4 cursor-pointer rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                                    aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" wire:model="selected_items"
+                                    aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" x-model="selected"
                                     value="{{ $item->docointkey }}" @if (! $item->is_actionable) disabled @endif />
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>
@@ -165,6 +172,27 @@
 
 @push('scripts')
     <script>
+        window.confirmUdddsIssue = function(itemCount, proceed) {
+            const label = itemCount === 1 ? 'item' : 'items';
+
+            Swal.fire({
+                title: 'Charge and issue ' + itemCount + ' ' + label + '?',
+                text: 'This will post the charge, deduct pharmacy stock, and record the selected ' + label + ' as issued.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Charge & issue',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#16a34a',
+                reverseButtons: true,
+                focusCancel: true,
+                allowOutsideClick: false,
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    proceed();
+                }
+            });
+        };
+
         window.addEventListener('uddds-print', function(event) {
             window.open(event.detail.url, 'udddsChargeSlips', 'width=900,height=900');
         });

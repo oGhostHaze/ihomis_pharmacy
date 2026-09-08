@@ -44,13 +44,19 @@ class UdddsWard extends Component
     {
         $items = $this->filteredItems();
         $patients = $this->groupPatients($items);
-        $hasBillableItems = collect($items)->contains(fn ($item) => (bool) $item->is_actionable);
+        $actionableKeys = collect($items)
+            ->filter(fn ($item) => (bool) $item->is_actionable)
+            ->pluck('docointkey')
+            ->map(fn ($key) => (string) $key)
+            ->values()
+            ->all();
         $udddsReady = UdddsService::hasHrxoColumns();
 
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
-            'hasBillableItems' => $hasBillableItems,
+            'hasActionableItems' => !empty($actionableKeys),
+            'actionableKeys' => $actionableKeys,
             'displayDate' => Carbon::parse($this->selected_date)->format('F j, Y'),
             'isToday' => $this->selected_date === now('Asia/Manila')->toDateString(),
             'eligibleCount' => collect($items)->where('is_billable', 0)->count(),
@@ -75,21 +81,8 @@ class UdddsWard extends Component
         $this->processKeys($keys);
     }
 
-    public function processSelected()
+    public function processSelected(array $keys = [])
     {
-        $this->processKeys($this->selected_items);
-    }
-
-    public function processWard()
-    {
-        $items = $this->filteredItems();
-        $keys = [];
-        foreach ($items as $item) {
-            if ($item->is_actionable) {
-                $keys[] = $item->docointkey;
-            }
-        }
-
         $this->processKeys($keys);
     }
 
@@ -117,6 +110,7 @@ class UdddsWard extends Component
         }
 
         $this->reset('selected_items');
+        $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
         if (!empty($result['pcchrgcods'])) {
