@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Records;
 
+use Carbon\Carbon;
 use Livewire\Component;
 use App\Models\Hospital\Ward;
 use Illuminate\Support\Facades\Crypt;
@@ -13,11 +14,13 @@ class UdddsWard extends Component
     use LivewireAlert;
 
     public $wardcode;
+    public $selected_date;
     public $wards = [];
     public $selected_items = [];
 
     public function mount()
     {
+        $this->selected_date = now('Asia/Manila')->toDateString();
         $this->wards = Ward::where('wardstat', 'A')->orderBy('wardname')->get();
     }
 
@@ -26,17 +29,34 @@ class UdddsWard extends Component
         $this->reset('selected_items');
     }
 
+    public function updatingSelectedDate()
+    {
+        $this->reset('selected_items');
+    }
+
+    public function showToday()
+    {
+        $this->selected_date = now('Asia/Manila')->toDateString();
+        $this->reset('selected_items');
+    }
+
     public function render()
     {
-        $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
+        $items = $this->filteredItems();
         $patients = $this->groupPatients($items);
-        $hasBillableItems = collect($items)->contains(fn ($item) => (bool) $item->is_billable);
+        $hasBillableItems = collect($items)->contains(fn ($item) => (bool) $item->is_actionable);
         $udddsReady = UdddsService::hasHrxoColumns();
 
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
             'hasBillableItems' => $hasBillableItems,
+            'displayDate' => Carbon::parse($this->selected_date)->format('F j, Y'),
+            'isToday' => $this->selected_date === now('Asia/Manila')->toDateString(),
+            'eligibleCount' => collect($items)->where('is_billable', 0)->count(),
+            'billableCount' => collect($items)->where('is_billable', 1)->count(),
+            'issuedCount' => collect($items)->filter(fn ($item) => !empty($item->is_source_issued_for_date)
+                || ($item->estatus === 'S' && !empty($item->uddds_source_docointkey)))->count(),
             'udddsReady' => $udddsReady,
             'udddsMessage' => $udddsReady ? null : app(UdddsService::class)->schemaMissingMessage(),
         ]);
@@ -44,10 +64,10 @@ class UdddsWard extends Component
 
     public function readyToBill($enccode)
     {
-        $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
+        $items = $this->filteredItems();
         $keys = [];
         foreach ($items as $item) {
-            if ($item->enccode === $enccode && $item->is_billable) {
+            if ($item->enccode === $enccode && $item->is_actionable) {
                 $keys[] = $item->docointkey;
             }
         }
@@ -62,10 +82,10 @@ class UdddsWard extends Component
 
     public function processWard()
     {
-        $items = app(UdddsService::class)->todaysWardItems($this->wardcode, session('pharm_location_id'));
+        $items = $this->filteredItems();
         $keys = [];
         foreach ($items as $item) {
-            if ($item->is_billable) {
+            if ($item->is_actionable) {
                 $keys[] = $item->docointkey;
             }
         }
@@ -82,7 +102,9 @@ class UdddsWard extends Component
 
     protected function processKeys(array $keys)
     {
-        $result = app(UdddsService::class)->chargeAndIssue($keys, session('pharm_location_id'), [
+        $udddsService = app(UdddsService::class);
+        $keys = $udddsService->materializeDailyItems($keys, $this->selected_date);
+        $result = $udddsService->chargeAndIssue($keys, session('pharm_location_id'), [
             'employeeid' => session('employeeid'),
             'user_id' => session('user_id'),
             'consumption_id' => session('active_consumption'),
@@ -122,11 +144,20 @@ class UdddsWard extends Component
                 ];
             }
             $patients[$item->enccode]['items'][] = $item;
-            if ($item->is_billable) {
+            if ($item->is_actionable) {
                 $patients[$item->enccode]['keys'][] = $item->docointkey;
             }
         }
 
         return $patients;
+    }
+
+    protected function filteredItems(): array
+    {
+        return app(UdddsService::class)->wardItemsForDate(
+            $this->wardcode,
+            session('pharm_location_id'),
+            $this->selected_date
+        );
     }
 }

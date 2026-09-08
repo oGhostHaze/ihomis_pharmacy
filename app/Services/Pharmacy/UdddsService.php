@@ -301,11 +301,16 @@ class UdddsService
 
     public function todaysWardItems($wardcode, $locationId)
     {
+        return $this->wardItemsForDate($wardcode, $locationId, now('Asia/Manila')->toDateString());
+    }
+
+    public function wardItemsForDate($wardcode, $locationId, $referenceDate)
+    {
         if (!self::hasHrxoColumns()) {
             return [];
         }
 
-        $today = now('Asia/Manila')->toDateString();
+        $today = Carbon::parse($referenceDate ?: now('Asia/Manila'))->toDateString();
         $params = [$today, $locationId];
         $wardFilter = '';
 
@@ -315,7 +320,7 @@ class UdddsService
         }
 
         try {
-            return DB::select("
+            $items = DB::select("
             SELECT
                 hrxo.docointkey,
                 hrxo.enccode,
@@ -327,6 +332,8 @@ class UdddsService
                 hrxo.pchrgup,
                 hrxo.pcchrgamt,
                 hrxo.estatus,
+                hrxo.qtyissued,
+                hrxo.dodate,
                 hrxo.pcchrgcod,
                 hrxo.loc_code,
                 hrxo.uddds_start_date,
@@ -334,7 +341,17 @@ class UdddsService
                 hrxo.uddds_source_docointkey,
                 hrxo.order_type,
                 hrxo.is_uddds,
-                CASE WHEN hrxo.uddds_source_docointkey IS NOT NULL THEN 1 ELSE 0 END AS is_billable,
+                CASE
+                    WHEN hrxo.uddds_source_docointkey IS NOT NULL
+                        AND hrxo.estatus IN ('U', 'P')
+                        AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0)
+                    THEN 1 ELSE 0
+                END AS is_billable,
+                CASE
+                    WHEN hrxo.uddds_source_docointkey IS NULL OR hrxo.uddds_source_docointkey = '' THEN 1
+                    WHEN hrxo.estatus IN ('U', 'P') AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0) THEN 1
+                    ELSE 0
+                END AS is_actionable,
                 hdmhdr.drug_concat,
                 hcharge.chrgdesc,
                 pt.patfirst,
@@ -360,7 +377,7 @@ class UdddsService
                     (
                         hrxo.uddds_source_docointkey IS NOT NULL
                         AND CAST(hrxo.dodate AS DATE) = ?
-                        AND (hrxo.estatus = 'U' OR (hrxo.estatus = 'P' AND (hrxo.qtyissued IS NULL OR hrxo.qtyissued = 0)))
+                        AND hrxo.estatus IN ('U', 'P', 'S')
                     )
                     OR
                     (
@@ -381,6 +398,18 @@ class UdddsService
                 {$wardFilter}
             ORDER BY ward.wardname, pt.patlast, pt.patfirst, hdmhdr.drug_concat
         ", [$today, $today, $today, $today, $locationId, ...array_slice($params, 2)]);
+
+            foreach ($items as $item) {
+                $item->is_source_issued_for_date = empty($item->uddds_source_docointkey)
+                    && Carbon::parse($item->dodate)->toDateString() === $today
+                    && ($item->estatus === 'S' || (float) $item->qtyissued > 0);
+
+                if ($item->is_source_issued_for_date) {
+                    $item->is_actionable = 0;
+                }
+            }
+
+            return $items;
         } catch (QueryException $e) {
             if (str_contains($e->getMessage(), 'is_uddds')) {
                 return [];
@@ -432,6 +461,59 @@ class UdddsService
         }
 
         return ['ok' => true, 'message' => 'Stock available.'];
+    }
+
+    public function materializeDailyItems(array $docointkeys, $referenceDate): array
+    {
+        $docointkeys = array_values(array_filter($docointkeys));
+        if (!$docointkeys) {
+            return [];
+        }
+
+        $date = Carbon::parse($referenceDate ?: now('Asia/Manila'))->toDateString();
+        $placeholders = implode(',', array_fill(0, count($docointkeys), '?'));
+        $orders = DB::select(
+            "SELECT hrxo.*
+             FROM hospital.dbo.hrxo
+             WHERE hrxo.docointkey IN ({$placeholders})
+               AND hrxo.is_uddds = 1",
+            $docointkeys
+        );
+
+        $dailyKeys = [];
+        foreach ($orders as $index => $order) {
+            if (!empty($order->uddds_source_docointkey)) {
+                $dailyKeys[] = $order->docointkey;
+                continue;
+            }
+
+            if (Carbon::parse($order->dodate)->toDateString() === $date
+                && ($order->estatus === 'S' || (float) $order->qtyissued > 0)) {
+                continue;
+            }
+
+            $existing = DB::selectOne(
+                "SELECT TOP 1 docointkey
+                 FROM hospital.dbo.hrxo
+                 WHERE uddds_source_docointkey = ?
+                   AND CAST(dodate AS DATE) = ?",
+                [$order->docointkey, $date]
+            );
+
+            if ($existing) {
+                $dailyKeys[] = $existing->docointkey;
+                continue;
+            }
+
+            if ($order->estatus === 'S'
+                && $order->order_type === 'BASIC'
+                && Carbon::parse($order->uddds_start_date)->toDateString() <= $date
+                && Carbon::parse($order->uddds_end_date)->toDateString() >= $date) {
+                $dailyKeys[] = $this->cloneEnrollmentForDate($order, $date, $index)['docointkey'];
+            }
+        }
+
+        return array_values(array_unique($dailyKeys));
     }
 
     public function chargeAndIssue(array $docointkeys, $locationId, array $actor)
@@ -556,7 +638,6 @@ class UdddsService
             'prescription_data_id' => $enrollment->prescription_data_id,
             'prescribed_by' => $enrollment->prescribed_by,
             'deptcode' => $enrollment->deptcode,
-            'order_by' => $enrollment->order_by,
             'original_enccode' => $enrollment->original_enccode,
             'order_type' => 'BASIC',
             'uddds_start_date' => $enrollment->uddds_start_date,
