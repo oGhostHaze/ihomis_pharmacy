@@ -29,26 +29,85 @@ class StockSummary extends Component
 
     public function render()
     {
-        if ($this->selected_fund and $this->selected_fund != 'all') {
-            $stocks = DB::select("SELECT hcharge.chrgdesc, pds.drug_concat, pds.lot_no, pds.exp_date, SUM(pds.stock_bal) as stock_bal,
-                                pds.dmdcomb, pds.dmdctr, pds.chrgcode
-                            FROM pharm_drug_stocks as pds
-                            JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
-                            WHERE pds.stock_bal > 0 AND pds.chrgcode LIKE '%" . $this->chrgcode . "'
-                                AND pds.loc_code LIKE '%" . $this->location_id . "%'
-                                AND pds.drug_concat LIKE '%" . $this->search . "%'
-                            GROUP BY pds.drug_concat, hcharge.chrgdesc, pds.dmdcomb, pds.dmdctr, pds.chrgcode, pds.lot_no, pds.exp_date
-                    ");
+        $locationFilter = filled($this->location_id)
+            ? " AND pds.loc_code = ? "
+            : "";
+
+        if ($this->selected_fund && $this->selected_fund != 'all') {
+
+            $sql = "
+                SELECT
+                    hcharge.chrgdesc,
+                    pds.drug_concat,
+                    pds.lot_no,
+                    pds.exp_date,
+                    SUM(pds.stock_bal) AS stock_bal,
+                    pds.dmdcomb,
+                    pds.dmdctr,
+                    pds.chrgcode
+                FROM pharm_drug_stocks AS pds
+                JOIN hcharge
+                    ON pds.chrgcode = hcharge.chrgcode
+                WHERE pds.stock_bal > 0
+                    AND pds.chrgcode LIKE ?
+                    {$locationFilter}
+                    AND pds.drug_concat LIKE ?
+                GROUP BY
+                    pds.drug_concat,
+                    hcharge.chrgdesc,
+                    pds.dmdcomb,
+                    pds.dmdctr,
+                    pds.chrgcode,
+                    pds.lot_no,
+                    pds.exp_date
+            ";
+
+            $bindings = [
+                '%' . $this->chrgcode,
+            ];
+
+            if (filled($this->location_id)) {
+                $bindings[] = '%' . $this->location_id . '%';
+            }
+
+            $bindings[] = '%' . $this->search . '%';
+
+            $stocks = DB::select($sql, $bindings);
         } else {
-            $stocks = DB::select("SELECT 'ALL' as chrgdesc, pds.drug_concat, SUM(pds.stock_bal) as stock_bal,
-                    pds.dmdcomb, pds.dmdctr, pds.lot_no, pds.exp_date
-                FROM pharm_drug_stocks as pds
-                JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
-                WHERE pds.stock_bal > 0 AND pds.loc_code LIKE '%" . $this->location_id . "%'
-                    AND pds.drug_concat LIKE '%" . $this->search . "%'
-                GROUP BY pds.drug_concat, pds.dmdcomb, pds.dmdctr, pds.lot_no, pds.exp_date
-            ");
+
+            $sql = "
+                SELECT
+                    'ALL' AS chrgdesc,
+                    pds.drug_concat,
+                    SUM(pds.stock_bal) AS stock_bal,
+                    pds.dmdcomb,
+                    pds.dmdctr,
+                    pds.lot_no,
+                    pds.exp_date
+                FROM pharm_drug_stocks AS pds
+                JOIN hcharge
+                    ON pds.chrgcode = hcharge.chrgcode
+                WHERE pds.stock_bal > 0
+                    {$locationFilter}
+                    AND pds.drug_concat LIKE ?
+                GROUP BY
+                    pds.drug_concat,
+                    pds.dmdcomb,
+                    pds.dmdctr,
+                    pds.lot_no,
+                    pds.exp_date
+            ";
         }
+
+        $bindings = [];
+
+        if (filled($this->location_id)) {
+            $bindings[] = $this->location_id;
+        }
+
+        $bindings[] = '%' . $this->search . '%';
+
+        $stocks = DB::select($sql, $bindings);
 
         $locations = PharmLocation::all();
 

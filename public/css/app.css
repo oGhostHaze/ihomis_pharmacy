@@ -1577,6 +1577,12 @@ html {
   right: auto;
   bottom: var(--tooltip-offset);
 }
+.alert-info {
+  --tw-bg-opacity: 1;
+  background-color: hsl(var(--in) / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: hsl(var(--inc, var(--nc)) / var(--tw-text-opacity));
+}
 .alert-warning {
   --tw-bg-opacity: 1;
   background-color: hsl(var(--wa) / var(--tw-bg-opacity));
@@ -4986,6 +4992,9 @@ html {
   --tw-border-opacity: 1 !important;
   border-color: rgb(129 140 248 / var(--tw-border-opacity, 1)) !important;
 }
+.border-primary\/30 {
+  border-color: hsl(var(--p) / 0.3) !important;
+}
 .border-primary\/40 {
   border-color: hsl(var(--p) / 0.4) !important;
 }
@@ -5201,6 +5210,9 @@ html {
   --tw-bg-opacity: 1 !important;
   background-color: hsl(var(--wa) / var(--tw-bg-opacity, 1)) !important;
 }
+.bg-warning\/15 {
+  background-color: hsl(var(--wa) / 0.15) !important;
+}
 .bg-white {
   --tw-bg-opacity: 1 !important;
   background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1)) !important;
@@ -5331,6 +5343,10 @@ html {
 .py-12 {
   padding-top: 3rem !important;
   padding-bottom: 3rem !important;
+}
+.py-14 {
+  padding-top: 3.5rem !important;
+  padding-bottom: 3.5rem !important;
 }
 .py-2 {
   padding-top: 0.5rem !important;
@@ -5551,8 +5567,14 @@ html {
 .text-base-content\/20 {
   color: hsl(var(--bc) / 0.2) !important;
 }
+.text-base-content\/55 {
+  color: hsl(var(--bc) / 0.55) !important;
+}
 .text-base-content\/60 {
   color: hsl(var(--bc) / 0.6) !important;
+}
+.text-base-content\/65 {
+  color: hsl(var(--bc) / 0.65) !important;
 }
 .text-base-content\/70 {
   color: hsl(var(--bc) / 0.7) !important;
@@ -6434,6 +6456,10 @@ html {
 
   .sm\:p-6 {
     padding: 1.5rem !important;
+  }
+
+  .sm\:p-8 {
+    padding: 2rem !important;
   }
 
   .sm\:px-0 {

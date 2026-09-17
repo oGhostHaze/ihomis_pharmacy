@@ -19,6 +19,7 @@ use App\Http\Livewire\Pharmacy\Dispensing\UdddsChargeSlipBatch;
 use App\Http\Livewire\Records\UdddsWard;
 use App\Http\Livewire\Pharmacy\Drugs\IoTransList;
 use App\Http\Livewire\Pharmacy\Drugs\IoTransListRequestor;
+use App\Http\Livewire\Pharmacy\Drugs\MissingDrugPrices;
 use App\Http\Livewire\Pharmacy\Drugs\ReorderLevel;
 use App\Http\Livewire\Pharmacy\Drugs\ReorderLevelVersion2;
 use App\Http\Livewire\Pharmacy\Drugs\StockList;
@@ -119,6 +120,7 @@ Route::middleware([
     Route::name('dmd.')->prefix('drugsandmedicine')->group(function () {
         Route::get('/stocks', StockList::class)->name('stk');
         Route::get('/stocks/summary', StockSummary::class)->name('stk.sum');
+        Route::get('/stocks/missing-prices', MissingDrugPrices::class)->name('stk.missing-prices');
         Route::get('/stocks/reclassify-charge-code', ChargeCodeReclassification::class)
             ->middleware('can:adjust-stock-qty')
             ->name('stk.reclassify');
