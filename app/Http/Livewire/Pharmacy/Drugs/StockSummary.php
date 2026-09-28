@@ -67,7 +67,7 @@ class StockSummary extends Component
             ];
 
             if (filled($this->location_id)) {
-                $bindings[] = '%' . $this->location_id . '%';
+                $bindings[] = $this->location_id;
             }
 
             $bindings[] = '%' . $this->search . '%';
