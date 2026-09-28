@@ -29,86 +29,81 @@ class StockSummary extends Component
 
     public function render()
     {
-        $locationFilter = filled($this->location_id)
-            ? " AND pds.loc_code = ? "
-            : "";
+        // 1. Initialize empty arrays/strings
+        $bindings = [];
+        $locationFilter = "";
 
+        // 2. Build location filters and bindings sequentially
+        if (filled($this->location_id)) {
+            $locationFilter = " AND pds.loc_code = ? ";
+        }
+
+        // 3. Build query based on fund selection
         if ($this->selected_fund && $this->selected_fund != 'all') {
-
             $sql = "
-                SELECT
-                    hcharge.chrgdesc,
-                    pds.drug_concat,
-                    pds.lot_no,
-                    pds.exp_date,
-                    SUM(pds.stock_bal) AS stock_bal,
-                    pds.dmdcomb,
-                    pds.dmdctr,
-                    pds.chrgcode
-                FROM pharm_drug_stocks AS pds
-                JOIN hcharge
-                    ON pds.chrgcode = hcharge.chrgcode
-                WHERE pds.stock_bal > 0
-                    AND pds.chrgcode LIKE ?
-                    {$locationFilter}
-                    AND pds.drug_concat LIKE ?
-                GROUP BY
-                    pds.drug_concat,
-                    hcharge.chrgdesc,
-                    pds.dmdcomb,
-                    pds.dmdctr,
-                    pds.chrgcode,
-                    pds.lot_no,
-                    pds.exp_date
-            ";
+            SELECT
+                hcharge.chrgdesc,
+                pds.drug_concat,
+                pds.lot_no,
+                pds.exp_date,
+                SUM(pds.stock_bal) AS stock_bal,
+                pds.dmdcomb,
+                pds.dmdctr,
+                pds.chrgcode
+            FROM pharm_drug_stocks AS pds
+            JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
+            WHERE pds.stock_bal > 0
+                AND pds.chrgcode LIKE ?
+                {$locationFilter}
+                AND pds.drug_concat LIKE ?
+            GROUP BY
+                pds.drug_concat,
+                hcharge.chrgdesc,
+                pds.dmdcomb,
+                pds.dmdctr,
+                pds.chrgcode,
+                pds.lot_no,
+                pds.exp_date
+        ";
 
-            $bindings = [
-                '%' . $this->chrgcode,
-            ];
-
+            // ORDER MATTERS: Bindings must match the exact sequence of '?' in the query above
+            $bindings[] = '%' . $this->chrgcode;
             if (filled($this->location_id)) {
                 $bindings[] = $this->location_id;
             }
-
             $bindings[] = '%' . $this->search . '%';
-
-            $stocks = DB::select($sql, $bindings);
         } else {
-
             $sql = "
-                SELECT
-                    'ALL' AS chrgdesc,
-                    pds.drug_concat,
-                    SUM(pds.stock_bal) AS stock_bal,
-                    pds.dmdcomb,
-                    pds.dmdctr,
-                    pds.lot_no,
-                    pds.exp_date
-                FROM pharm_drug_stocks AS pds
-                JOIN hcharge
-                    ON pds.chrgcode = hcharge.chrgcode
-                WHERE pds.stock_bal > 0
-                    {$locationFilter}
-                    AND pds.drug_concat LIKE ?
-                GROUP BY
-                    pds.drug_concat,
-                    pds.dmdcomb,
-                    pds.dmdctr,
-                    pds.lot_no,
-                    pds.exp_date
-            ";
-        }
+            SELECT
+                'ALL' AS chrgdesc,
+                pds.drug_concat,
+                SUM(pds.stock_bal) AS stock_bal,
+                pds.dmdcomb,
+                pds.dmdctr,
+                pds.lot_no,
+                pds.exp_date
+            FROM pharm_drug_stocks AS pds
+            JOIN hcharge ON pds.chrgcode = hcharge.chrgcode
+            WHERE pds.stock_bal > 0
+                {$locationFilter}
+                AND pds.drug_concat LIKE ?
+            GROUP BY
+                pds.drug_concat,
+                pds.dmdcomb,
+                pds.dmdctr,
+                pds.lot_no,
+                pds.exp_date
+        ";
 
-        $bindings = [];
-
-        if (filled($this->location_id)) {
+            // ORDER MATTERS: Bindings must match the exact sequence of '?' in the query above
+            if (filled($this->location_id)) {
             $bindings[] = $this->location_id;
+            }
+        $bindings[] = '%' . $this->search . '%';
         }
 
-        $bindings[] = '%' . $this->search . '%';
-
+        // 4. Single point of execution
         $stocks = DB::select($sql, $bindings);
-
         $locations = PharmLocation::all();
 
         return view('livewire.pharmacy.drugs.stock-summary', [
@@ -116,6 +111,7 @@ class StockSummary extends Component
             'locations' => $locations,
         ]);
     }
+
 
     public function mount()
     {
