@@ -17,11 +17,17 @@ class UdddsWard extends Component
     public $selected_date;
     public $wards = [];
     public $selected_items = [];
+    public $queueLoaded = false;
 
     public function mount()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
         $this->wards = Ward::where('wardstat', 'A')->orderBy('wardname')->get();
+    }
+
+    public function loadQueue()
+    {
+        $this->queueLoaded = true;
     }
 
     public function updatingWardcode()
@@ -50,7 +56,7 @@ class UdddsWard extends Component
             ->map(fn ($key) => (string) $key)
             ->values()
             ->all();
-        $udddsReady = UdddsService::hasHrxoColumns();
+        $udddsReady = !$this->queueLoaded || UdddsService::hasHrxoColumns();
 
         return view('livewire.records.uddds-ward', [
             'items' => $items,
@@ -148,6 +154,10 @@ class UdddsWard extends Component
 
     protected function filteredItems(): array
     {
+        if (!$this->queueLoaded) {
+            return [];
+        }
+
         return app(UdddsService::class)->wardItemsForDate(
             $this->wardcode,
             session('pharm_location_id'),

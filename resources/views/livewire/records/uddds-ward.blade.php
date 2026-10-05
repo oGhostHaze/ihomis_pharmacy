@@ -29,7 +29,8 @@
 </x-slot>
 
 <div class="flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
-    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode) }}"
+    wire:init="loadQueue"
+    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded) }}"
     x-data='{"selected": [], "actionable": @json($actionableKeys)}'
     @uddds-selection-cleared.window="selected = []">
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -94,6 +95,11 @@
         </div>
     @endif
 
+    @if (!$queueLoaded)
+        <div class="p-10 mt-6 text-center text-base-content/60" role="status">
+            <i class="las la-spinner la-lg animate-spin" aria-hidden="true"></i> Loading UDDDS orders...
+        </div>
+    @else
     @forelse ($patients as $patient)
         <section class="mt-4 overflow-hidden border border-base-300 bg-base-100" wire:key="uddds-{{ md5($patient['enccode']) }}">
             <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-base-200">
@@ -168,6 +174,7 @@
             <div class="mt-1 text-sm">There are no eligible or generated Basic orders for {{ $displayDate }} in this ward.</div>
         </div>
     @endforelse
+    @endif
 </div>
 
 @push('scripts')

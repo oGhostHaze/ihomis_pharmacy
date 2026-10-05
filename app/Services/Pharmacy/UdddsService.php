@@ -311,7 +311,8 @@ class UdddsService
         }
 
         $today = Carbon::parse($referenceDate ?: now('Asia/Manila'))->toDateString();
-        $params = [$today, $locationId];
+        $nextDay = Carbon::parse($today)->addDay()->toDateString();
+        $params = [];
         $wardFilter = '';
 
         if ($wardcode) {
@@ -372,11 +373,17 @@ class UdddsService
             INNER JOIN hospital.dbo.hward ward ON ward.wardcode = pat_room.wardcode
             LEFT JOIN hospital.dbo.hroom room ON room.rmintkey = pat_room.rmintkey
             LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
+            LEFT JOIN (
+                SELECT DISTINCT uddds_source_docointkey
+                FROM hospital.dbo.hrxo
+                WHERE dodate >= ? AND dodate < ?
+                    AND uddds_source_docointkey IS NOT NULL
+            ) daily_orders ON daily_orders.uddds_source_docointkey = hrxo.docointkey
             WHERE hrxo.is_uddds = 1
                 AND (
                     (
                         hrxo.uddds_source_docointkey IS NOT NULL
-                        AND CAST(hrxo.dodate AS DATE) = ?
+                        AND hrxo.dodate >= ? AND hrxo.dodate < ?
                         AND hrxo.estatus IN ('U', 'P', 'S')
                     )
                     OR
@@ -384,20 +391,15 @@ class UdddsService
                         (hrxo.uddds_source_docointkey IS NULL OR hrxo.uddds_source_docointkey = '')
                         AND hrxo.estatus = 'S'
                         AND hrxo.order_type = 'BASIC'
-                        AND CAST(hrxo.uddds_start_date AS DATE) <= ?
-                        AND CAST(hrxo.uddds_end_date AS DATE) >= ?
-                        AND NOT EXISTS (
-                            SELECT 1
-                            FROM hospital.dbo.hrxo daily_hrxo
-                            WHERE daily_hrxo.uddds_source_docointkey = hrxo.docointkey
-                                AND CAST(daily_hrxo.dodate AS DATE) = ?
-                        )
+                        AND hrxo.uddds_start_date < ?
+                        AND hrxo.uddds_end_date >= ?
+                        AND daily_orders.uddds_source_docointkey IS NULL
                     )
                 )
                 AND (hrxo.loc_code = ? OR hrxo.loc_code IS NULL)
                 {$wardFilter}
             ORDER BY ward.wardname, pt.patlast, pt.patfirst, hdmhdr.drug_concat
-        ", [$today, $today, $today, $today, $locationId, ...array_slice($params, 2)]);
+        ", [$today, $nextDay, $today, $nextDay, $nextDay, $today, $locationId, ...$params]);
 
             foreach ($items as $item) {
                 $item->is_source_issued_for_date = empty($item->uddds_source_docointkey)
