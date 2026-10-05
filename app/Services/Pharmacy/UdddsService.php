@@ -421,6 +421,70 @@ class UdddsService
         }
     }
 
+    public function processedWardItemsForDate($wardcode, $locationId, $referenceDate): array
+    {
+        if (!self::hasHrxoColumns()) {
+            return [];
+        }
+
+        $date = Carbon::parse($referenceDate)->toDateString();
+        $nextDay = Carbon::parse($date)->addDay()->toDateString();
+        $params = [$nextDay, $date, $nextDay, $locationId];
+        $wardFilter = '';
+        if ($wardcode) {
+            $wardFilter = ' AND pat_room.wardcode = ?';
+            $params[] = $wardcode;
+        }
+
+        return DB::select("
+            SELECT hrxo.*, hdmhdr.drug_concat AS drug_concat, hcharge.chrgdesc,
+                pt.patfirst, pt.patmiddle, pt.patlast, pt.patsuffix,
+                ward.wardname, room.rmname, pd.remark AS frequency,
+                0 AS is_billable, 0 AS is_actionable,
+                CASE WHEN hrxo.estatus = 'S' OR hrxo.qtyissued > 0 THEN 1 ELSE 0 END AS is_source_issued_for_date
+            FROM hospital.dbo.hrxo
+            OUTER APPLY (
+                SELECT TOP 1 wardcode, rmintkey
+                FROM hospital.dbo.hpatroom
+                WHERE enccode = hrxo.enccode AND hprdate < ?
+                ORDER BY hprdate DESC, wardcode, rmintkey
+            ) pat_room
+            LEFT JOIN hospital.dbo.hward ward ON ward.wardcode = pat_room.wardcode
+            LEFT JOIN hospital.dbo.hroom room ON room.rmintkey = pat_room.rmintkey
+            LEFT JOIN hospital.dbo.hperson pt ON pt.hpercode = hrxo.hpercode
+            LEFT JOIN hospital.dbo.hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
+            LEFT JOIN hospital.dbo.hcharge ON hcharge.chrgcode = hrxo.orderfrom
+            LEFT JOIN webapp.dbo.prescription_data pd ON pd.id = hrxo.prescription_data_id
+            WHERE hrxo.dodate >= ? AND hrxo.dodate < ?
+                AND hrxo.pcchrgcod IS NOT NULL AND hrxo.pcchrgcod <> ''
+                AND (hrxo.is_uddds = 1
+                    OR (hrxo.uddds_source_docointkey IS NOT NULL AND hrxo.uddds_source_docointkey <> '')
+                    OR (hrxo.order_type = 'BASIC' AND hrxo.uddds_start_date IS NOT NULL AND hrxo.uddds_end_date IS NOT NULL))
+                AND (hrxo.loc_code = ? OR hrxo.loc_code IS NULL)
+                {$wardFilter}
+            ORDER BY ward.wardname, pt.patlast, pt.patfirst, hrxo.pcchrgcod
+        ", $params);
+    }
+
+    public function reprintChargeCodes(array $items, $referenceDate): array
+    {
+        $date = Carbon::parse($referenceDate)->toDateString();
+        $codes = [];
+
+        foreach ($items as $item) {
+            $code = trim((string) ($item->pcchrgcod ?? ''));
+            // Standing enrollments may carry a slip from an earlier service date.
+            if ($code === '' || empty($item->dodate)
+                || Carbon::parse($item->dodate)->toDateString() !== $date) {
+                continue;
+            }
+
+            $codes[] = $code;
+        }
+
+        return array_values(array_unique($codes));
+    }
+
     public function validateFefoStock(array $items, $locationId)
     {
         $needed = [];
@@ -575,9 +639,15 @@ class UdddsService
                     $item->pcchrgcod = $pcchrgcod;
                     $item->estatus = 'P';
                 }
-            } else {
-                $pcchrgcod = $encounterItems[0]->pcchrgcod;
             }
+
+            // Include every existing and newly assigned slip, even on partial issuance.
+            foreach ($encounterItems as $item) {
+                if (!empty($item->pcchrgcod)) {
+                    $pcchrgcods[] = $item->pcchrgcod;
+                }
+            }
+            $pcchrgcods = array_values(array_unique($pcchrgcods));
 
             foreach ($encounterItems as $item) {
                 $issued = $this->issueOne($item, $locationId, $actor);
@@ -586,9 +656,6 @@ class UdddsService
                 }
             }
 
-            if ($pcchrgcod) {
-                $pcchrgcods[] = $pcchrgcod;
-            }
         }
 
         return [

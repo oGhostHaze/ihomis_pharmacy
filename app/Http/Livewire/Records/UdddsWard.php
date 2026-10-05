@@ -18,6 +18,8 @@ class UdddsWard extends Component
     public $wards = [];
     public $selected_items = [];
     public $queueLoaded = false;
+    public $queue_view = 'active';
+    public $lastBatchPrintUrl;
 
     public function mount()
     {
@@ -28,6 +30,11 @@ class UdddsWard extends Component
     public function loadQueue()
     {
         $this->queueLoaded = true;
+    }
+
+    public function updatingQueueView()
+    {
+        $this->reset('selected_items');
     }
 
     public function updatingWardcode()
@@ -61,6 +68,7 @@ class UdddsWard extends Component
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
+            'batchReprintUrl' => $this->reprintUrl($items),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,
             'displayDate' => Carbon::parse($this->selected_date)->format('F j, Y'),
@@ -101,6 +109,9 @@ class UdddsWard extends Component
 
     protected function processKeys(array $keys)
     {
+        if ($this->queue_view === 'processed') {
+            return;
+        }
         $udddsService = app(UdddsService::class);
         $keys = $udddsService->materializeDailyItems($keys, $this->selected_date);
         $result = $udddsService->chargeAndIssue($keys, session('pharm_location_id'), [
@@ -109,6 +120,11 @@ class UdddsWard extends Component
             'consumption_id' => session('active_consumption'),
             'toecode' => 'ADM',
         ]);
+
+        if (!empty($result['pcchrgcods'])) {
+            $this->lastBatchPrintUrl = route('dispensing.uddds.chargeslips', ['codes' => implode(',', $result['pcchrgcods'])]);
+            $this->dispatchBrowserEvent('uddds-print', ['url' => $this->lastBatchPrintUrl]);
+        }
 
         if (!$result['ok']) {
             $this->alert('error', $result['message']);
@@ -119,11 +135,6 @@ class UdddsWard extends Component
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
-        if (!empty($result['pcchrgcods'])) {
-            $this->dispatchBrowserEvent('uddds-print', [
-                'url' => route('dispensing.uddds.chargeslips', ['codes' => implode(',', $result['pcchrgcods'])]),
-            ]);
-        }
     }
 
     protected function groupPatients(array $items)
@@ -149,7 +160,19 @@ class UdddsWard extends Component
             }
         }
 
+        foreach ($patients as &$patient) {
+            $patient['reprint_url'] = $this->reprintUrl($patient['items']);
+        }
+        unset($patient);
+
         return $patients;
+    }
+
+    protected function reprintUrl(array $items): ?string
+    {
+        $codes = app(UdddsService::class)->reprintChargeCodes($items, $this->selected_date);
+
+        return $codes ? route('dispensing.uddds.chargeslips', ['codes' => implode(',', $codes)]) : null;
     }
 
     protected function filteredItems(): array
@@ -158,7 +181,12 @@ class UdddsWard extends Component
             return [];
         }
 
-        return app(UdddsService::class)->wardItemsForDate(
+        $service = app(UdddsService::class);
+        if ($this->queue_view === 'processed') {
+            return $service->processedWardItemsForDate($this->wardcode, session('pharm_location_id'), $this->selected_date);
+        }
+
+        return $service->wardItemsForDate(
             $this->wardcode,
             session('pharm_location_id'),
             $this->selected_date

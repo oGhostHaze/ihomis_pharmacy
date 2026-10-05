@@ -30,13 +30,13 @@
 
 <div class="flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
     wire:init="loadQueue"
-    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded) }}"
+    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded . '|' . $queue_view) }}"
     x-data='{"selected": [], "actionable": @json($actionableKeys)}'
     @uddds-selection-cleared.window="selected = []">
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h1 class="text-xl font-semibold text-base-content">UDDDS ward queue</h1>
-            <p class="mt-1 text-sm text-base-content/70">Unit-dose orders and eligible enrollments for {{ $displayDate }}.</p>
+            <p class="mt-1 text-sm text-base-content/70">{{ $queue_view === 'processed' ? 'Existing UDDDS charge slips' : 'Unit-dose orders and eligible enrollments' }} for {{ $displayDate }}.</p>
         </div>
         <div class="flex items-center gap-3 text-xs text-base-content/70" aria-label="Queue summary">
             <span><strong class="font-semibold text-base-content">{{ $eligibleCount }}</strong> eligible</span>
@@ -48,7 +48,14 @@
     </div>
 
     <div class="flex flex-col gap-3 pb-5 border-b border-base-300 lg:flex-row lg:items-end lg:justify-between">
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div class="grid gap-3 sm:grid-cols-3">
+            <label class="form-control">
+                <span class="pb-1 text-xs font-medium label-text">View</span>
+                <select wire:model="queue_view" class="w-full select select-bordered select-sm">
+                    <option value="active">Active queue</option>
+                    <option value="processed">Processed / Charge Slips</option>
+                </select>
+            </label>
             <label class="form-control">
                 <span class="pb-1 text-xs font-medium label-text">Service date</span>
                 <div class="flex gap-2">
@@ -75,6 +82,17 @@
             <span class="mr-1 text-xs text-base-content/60" wire:loading>
                 <i class="las la-spinner la-lg animate-spin"></i> Updating…
             </span>
+            @if ($batchReprintUrl)
+                <a href="{{ $batchReprintUrl }}" target="_blank" rel="noopener"
+                    class="btn btn-sm btn-outline btn-primary"
+                    title="Reprint all existing charge slips for the selected service date and ward">
+                    <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
+                </a>
+            @else
+                <button type="button" class="btn btn-sm btn-outline btn-primary" disabled>
+                    <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
+                </button>
+            @endif
             <button type="button" class="btn btn-sm btn-success"
                 @click="confirmUdddsIssue(selected.length, () => $wire.processSelected([...selected]))"
                 :disabled="selected.length === 0" wire:loading.attr="disabled">
@@ -88,6 +106,16 @@
             </button>
         </div>
     </div>
+
+    @if ($lastBatchPrintUrl)
+        <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
+            <span>Slips from the last processing attempt:</span>
+            <a href="{{ $lastBatchPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline btn-primary">Open Last Batch</a>
+        </div>
+    @endif
+    @if ($queue_view === 'processed')
+        <p class="mt-4 text-sm text-base-content/70">Includes existing slips even for transferred or discharged patients. Ward reflects the latest assignment on the service date. Paper printing is not tracked; use Reprint to view or print the slips.</p>
+    @endif
 
     @if (! $udddsReady)
         <div class="mt-4 alert alert-warning">
@@ -111,11 +139,23 @@
                         {{ $patient['hpercode'] }} · {{ $patient['wardname'] }} {{ $patient['rmname'] }}
                     </div>
                 </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    @if ($patient['reprint_url'])
+                        <a href="{{ $patient['reprint_url'] }}" target="_blank" rel="noopener"
+                            class="btn btn-xs btn-outline btn-primary">
+                            <i class="las la-print" aria-hidden="true"></i> Reprint Charge Slips
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-xs btn-outline btn-primary" disabled>
+                            <i class="las la-print" aria-hidden="true"></i> Reprint Charge Slips
+                        </button>
+                    @endif
                 <button type="button" class="btn btn-xs btn-success"
                     @click="confirmUdddsIssue({{ count($patient['keys']) }}, () => $wire.readyToBill('{{ $patient['enccode'] }}'))"
                     @if (empty($patient['keys'])) disabled @endif>
                     Charge &amp; Issue
                 </button>
+                </div>
             </div>
             <div class="overflow-x-auto">
             <table class="w-full border-collapse text-left">
@@ -128,6 +168,7 @@
                         <th scope="col" class="px-3 py-3">Frequency</th>
                         <th scope="col" class="px-3 py-3">Start / End</th>
                         <th scope="col" class="px-3 py-3">Status</th>
+                        <th scope="col" class="px-3 py-3">Charge Slip</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -152,7 +193,7 @@
                             <td class="px-3 py-3 text-xs">
                                 @if (!empty($item->is_source_issued_for_date))
                                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Issued</span>
-                                @elseif (empty($item->uddds_source_docointkey))
+                                @elseif ($queue_view !== 'processed' && empty($item->uddds_source_docointkey))
                                     <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">Eligible</span>
                                 @elseif ($item->estatus === 'S' || (float) $item->qtyissued > 0)
                                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Issued</span>
@@ -160,6 +201,13 @@
                                     <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Pending</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">Charged</span>
+                                @endif
+                            </td>
+                            <td class="px-3 py-3 text-xs">
+                                @if ($item->pcchrgcod)
+                                    <a class="text-primary underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
+                                @else
+                                    <span>—</span>
                                 @endif
                             </td>
                         </tr>
@@ -171,7 +219,7 @@
     @empty
         <div class="p-10 mt-6 text-center border rounded-lg border-base-300 text-base-content/60">
             <div class="font-medium text-base-content">No UDDDS orders found</div>
-            <div class="mt-1 text-sm">There are no eligible or generated Basic orders for {{ $displayDate }} in this ward.</div>
+            <div class="mt-1 text-sm">{{ $queue_view === 'processed' ? 'No existing UDDDS charge slips' : 'No eligible or generated Basic orders' }} for {{ $displayDate }} in this ward.</div>
         </div>
     @endforelse
     @endif
