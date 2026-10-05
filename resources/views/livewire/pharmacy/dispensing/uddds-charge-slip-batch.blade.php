@@ -1,8 +1,9 @@
-<div class="container max-w-xl mx-auto mt-5">
+<div class="container max-w-xl mx-auto mt-5 pos-print-page">
+    @include('livewire.pharmacy.dispensing.pos-receipt-styles')
     <div class="flex justify-end mb-3 no-print">
         <button class="btn btn-sm btn-primary" onclick="printMe()">Print all</button>
     </div>
-    <div id="print" class="bg-white">
+    <div id="print" class="bg-white pos-receipt">
         @forelse ($slips as $slip)
             @php
                 $total_issued = 0;
@@ -16,7 +17,7 @@
                 $wardname = $slip['wardname'];
                 $room_name = $slip['room_name'];
             @endphp
-            <div class="p-2 uddds-slip" style="page-break-after: always;">
+            <div class="p-2 uddds-slip">
                 <div class="flex flex-col text-xs/4">
                     <h5 class="mb-0 text-2xl text-left"><strong class="uppercase">*{{ $pcchrgcod }}*</strong></h5>
                     <div class="flex flex-col text-center whitespace-nowrap">
@@ -107,8 +108,6 @@
 @push('scripts')
     <script>
         function printMe() {
-            var printContents = document.getElementById('print').innerHTML;
-            document.body.innerHTML = printContents;
             window.print();
         }
         window.addEventListener('load', function() {
