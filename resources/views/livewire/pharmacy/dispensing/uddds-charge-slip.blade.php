@@ -67,4 +67,27 @@
                                 <td class="text-right">{{ number_format($amount, 2) }}</td>
                             </tr>
                             @php $total_issued++; @endphp
-                
+                        @empty
+                            <tr class="border-b border-black border-x">
+                                <td colspan="4" class="text-center">No issued items found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-bold border border-t-2 border-black">
+                            <td colspan="2" class="text-right">{{ number_format($total_issued) }} ITEMS</td>
+                            <td colspan="2" class="text-right">TOTAL {{ number_format($total_amt, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="flex flex-col py-0 my-0 text-left text-xs/4 receipt-wrap">
+                    <div>Issued by:
+                        {{ $rxo_header->employee ? $rxo_header->employee->fullname() : ($rxo_header->user ? $rxo_header->user->name : $rxo_header->entryby) }}
+                    </div>
+                    <div>Time: {{ \Carbon\Carbon::parse($rxo_header->dodate)->format('h:i A') }}</div>
+                    <div>Verified by @if (str_contains($toecode ?? '', 'ADM')) Nurse/N.A. @endif: _________________________</div>
+                    <div>Received by Patient/Watcher: ____________________</div>
+                    <div class="mt-10 italic text-right"><span class="border-t border-black">Signature Over Printed Name</span></div>
+                    <div class="mt-2 text-right"><label><input type="checkbox" disabled> Counseled</label></div>
+                </div>
+            </div>
