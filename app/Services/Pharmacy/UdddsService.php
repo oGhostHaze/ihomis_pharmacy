@@ -504,6 +504,21 @@ class UdddsService
         return array_values(array_filter($items, fn ($item) => $item->queue_status === $status));
     }
 
+    public function uncoveredFundGroups(array $groups, array $fallbacks): array
+    {
+        $uncovered = [];
+        foreach ($groups as $key => $group) {
+            $item = $group['item'];
+            $coverage = (float) $item->current_available;
+            $chosen = array_values(array_unique(array_filter((array) ($fallbacks[$key] ?? []))));
+            foreach ($item->alternate_funds ?? [] as $option) {
+                if (in_array($option['code'], $chosen, true)) $coverage += $option['available'];
+            }
+            if ($coverage + 0.000001 < $group['qty']) $uncovered[] = $key;
+        }
+        return $uncovered;
+    }
+
     public function fundSelectionGroups(array $items, array $selectedKeys): array
     {
         $groups = [];

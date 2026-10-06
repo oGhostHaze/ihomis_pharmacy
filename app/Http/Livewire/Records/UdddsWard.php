@@ -41,9 +41,44 @@ class UdddsWard extends Component
         }
     }
 
-    public function openFundModal()
+    public function prepareCharge($enccode = null)
     {
-        $this->fundModalOpen = !empty($this->selected_items) && $this->queue_view === 'active';
+        if ($this->queue_view !== 'active') return;
+        if ($enccode !== null) {
+            $this->selected_items = [];
+            foreach ($this->filteredItems() as $item) {
+                if ($item->enccode === $enccode && $item->is_actionable) $this->selected_items[] = (string) $item->docointkey;
+            }
+        }
+        $this->reviewFunding(false);
+    }
+
+    public function continueCharge()
+    {
+        $this->reviewFunding(true);
+    }
+
+    protected function reviewFunding(bool $requireCoverage)
+    {
+        $service = app(UdddsService::class);
+        $items = $this->filteredItems();
+        $allowed = array_map(fn ($item) => (string) $item->docointkey, array_filter($items, fn ($item) => (bool) $item->is_actionable));
+        $this->selected_items = array_values(array_intersect($this->selected_items, $allowed));
+        if (!$this->selected_items) {
+            $this->processingProblem = 'Select pending items first.';
+            return;
+        }
+        $items = $service->annotatePendingStock($items, session('pharm_location_id'));
+        $groups = $service->fundSelectionGroups($items, $this->selected_items);
+        $uncovered = $service->uncoveredFundGroups($groups, $this->fallback_sources);
+        $this->processingProblem = null;
+        if ($uncovered) {
+            $this->fundModalOpen = true;
+            if ($requireCoverage) $this->processingProblem = 'Selected funds still cannot cover the shortage. Choose another available fund before continuing.';
+            return;
+        }
+        $this->fundModalOpen = false;
+        $this->dispatchBrowserEvent('uddds-confirm-issue', ['count' => count($this->selected_items), 'componentId' => $this->id]);
     }
 
     public function closeFundModal()
@@ -101,7 +136,7 @@ class UdddsWard extends Component
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
-            'fundGroups' => app(UdddsService::class)->fundSelectionGroups($items, $this->selected_items),
+            'fundGroups' => array_filter(app(UdddsService::class)->fundSelectionGroups($items, $this->selected_items), fn ($group) => $group['item']->current_available < $group['qty']),
             'batchReprintUrl' => $this->reprintUrl($items),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,

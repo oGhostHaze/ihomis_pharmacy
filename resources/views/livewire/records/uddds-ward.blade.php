@@ -70,6 +70,9 @@
                     <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="closeFundModal">Close</button>
                 </div>
                 <p class="mt-2 text-sm">One choice per medicine and original fund, shared across all selected patients. Current stock is used first.</p>
+                @if ($processingProblem)
+                    <p class="mt-3 text-sm text-red-700" role="alert">{{ $processingProblem }}</p>
+                @endif
                 <div class="uddds-fund-list">
                     @forelse ($fundGroups as $fundGroup)
                         @php $item = $fundGroup['item']; @endphp
@@ -123,7 +126,7 @@
                         <p class="py-4">Select pending items first.</p>
                     @endforelse
                 </div>
-                <button type="button" class="btn btn-sm uddds-issue mt-4" wire:click="closeFundModal">Use These Choices</button>
+                <button type="button" class="btn btn-sm uddds-issue mt-4" wire:click="continueCharge" wire:loading.attr="disabled">Continue to Charge &amp; Issue</button>
             </div>
         </div>
     @endif
@@ -134,7 +137,7 @@
             <h2 id="uddds-loading-title" class="text-lg font-semibold">{{ $queueLoaded ? 'Updating UDDDS queue' : 'Loading UDDDS queue' }}</h2>
             <p class="mt-2 text-sm">Please wait while the request completes.</p>
             <p class="mt-2 text-sm" wire:loading wire:target="processSelected,readyToBill">Charging and issuing selected items…</p>
-            <p class="mt-2 text-sm" wire:loading wire:target="wardcode,selected_date,queue_view,status_filter,showToday">Applying filters and checking stock…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="wardcode,selected_date,queue_view,status_filter,showToday,prepareCharge,continueCharge">Applying filters and checking stock…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items,fallback_sources">Updating item selection…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="view_enctr">Opening patient encounter…</p>
         </div>
@@ -206,9 +209,8 @@
                     <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
                 </button>
             @endif
-            <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="openFundModal" wire:loading.attr="disabled" @if (empty($selected_items)) disabled @endif>Choose Fund Sources</button>
             <button type="button" class="btn btn-sm uddds-issue"
-                onclick="confirmUdddsIssue({{ count($selected_items) }}, () => @this.call('processSelected'))"
+                wire:click="prepareCharge"
                 @if (empty($selected_items)) disabled @endif wire:loading.attr="disabled">
                 Charge &amp; Issue Selected
             </button>
@@ -271,7 +273,7 @@
                         </button>
                     @endif
                 <button type="button" class="btn btn-xs uddds-issue"
-                    onclick="confirmUdddsIssue({{ count($patient['keys']) }}, () => @this.call('readyToBill', '{{ $patient['enccode'] }}'))"
+                    wire:click="prepareCharge('{{ $patient['enccode'] }}')"
                     @if (empty($patient['keys'])) disabled @endif wire:loading.attr="disabled">
                     Charge &amp; Issue
                 </button>
@@ -374,7 +376,11 @@
             });
         };
 
-        window.addEventListener('uddds-print', function(event) {
+        window.addEventListener('uddds-confirm-issue', function(event) {
+            confirmUdddsIssue(event.detail.count, () => Livewire.find(event.detail.componentId).call('processSelected'));
+        });
+
+        window.addEventListener('uddds-print' , function(event) {
             window.open(event.detail.url, 'udddsChargeSlips', 'width=900,height=900');
         });
     </script>
