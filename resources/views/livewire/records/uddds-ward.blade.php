@@ -67,7 +67,7 @@
             <p class="mt-2 text-sm">Please wait while the request completes.</p>
             <p class="mt-2 text-sm" wire:loading wire:target="processSelected,readyToBill">Charging and issuing selected items…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="wardcode,selected_date,queue_view,status_filter,showToday">Applying filters and checking stock…</p>
-            <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items">Updating item selection…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items,fallback_sources">Updating item selection…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="view_enctr">Opening patient encounter…</p>
         </div>
     </div>
@@ -233,7 +233,25 @@
                                     value="{{ $item->docointkey }}" @if (! $item->is_actionable) disabled @endif />
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>
-                            <td class="px-3 py-3 text-xs text-slate-600">{{ $item->chrgdesc }}</td>
+                            <td class="px-3 py-3 text-xs text-slate-600">
+                                {{ $item->chrgdesc }}
+                                @if (!empty($item->alternate_funds))
+                                    <label class="block mt-2">
+                                        <span class="block mb-1 font-medium text-slate-700">Use another fund for shortage</span>
+                                        <select class="w-full select select-bordered select-sm" wire:model="fallback_sources.{{ $item->fallback_key }}" wire:loading.attr="disabled">
+                                            <option value="">Current fund only</option>
+                                            @foreach ($item->alternate_funds as $fund)
+                                                <option value="{{ $fund['code'] }}">{{ $fund['name'] }} — {{ $fund['available'] }} available</option>
+                                            @endforeach
+                                        </select>
+                                    </label>
+                                    <p class="mt-1">Uses current stock first, then the selected fund at its price. Applies to selected rows with the same drug and original fund.</p>
+                                @elseif (!empty($item->stock_problem) && empty($item->pcchrgcod))
+                                    <p class="mt-1 text-red-700">No alternate fund has available stock here.</p>
+                                @elseif (!empty($item->stock_problem) && $item->pcchrgcod)
+                                    <p class="mt-1">Existing charge: adjust its fund separately before using alternate stock.</p>
+                                @endif
+                            </td>
                             <td class="px-3 py-3 text-right text-xs tabular-nums text-slate-700">{{ number_format($item->pchrgqty, 0) }}</td>
                             <td class="px-3 py-3 text-xs text-slate-600">{{ $item->frequency ?: '—' }}</td>
                             <td class="px-3 py-3 text-xs tabular-nums text-slate-600 whitespace-nowrap">
@@ -284,7 +302,7 @@
 
             Swal.fire({
                 title: 'Charge and issue ' + itemCount + ' ' + label + '?',
-                text: 'This will post the charge, deduct pharmacy stock, and record the selected ' + label + ' as issued.',
+                text: 'This will charge and issue the selected ' + label + '. Where an alternate fund is chosen, current stock is used first and the remainder is charged at the alternate fund price.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Charge & issue',

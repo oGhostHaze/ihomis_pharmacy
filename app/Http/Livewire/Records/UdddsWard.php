@@ -22,6 +22,7 @@ class UdddsWard extends Component
     public $status_filter = 'all';
     public $lastBatchPrintUrl;
     public $processingProblem;
+    public $fallback_sources = [];
 
     public function mount()
     {
@@ -36,29 +37,29 @@ class UdddsWard extends Component
 
     public function updatingStatusFilter()
     {
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
     }
 
     public function render()
@@ -154,7 +155,7 @@ class UdddsWard extends Component
             'user_id' => session('user_id'),
             'consumption_id' => session('active_consumption'),
             'toecode' => 'ADM',
-        ]);
+        ], $this->fallback_sources);
 
         if (!empty($result['pcchrgcods'])) {
             $this->lastBatchPrintUrl = route('dispensing.uddds.chargeslips', ['codes' => implode(',', $result['pcchrgcods'])]);
@@ -167,7 +168,7 @@ class UdddsWard extends Component
             return;
         }
 
-        $this->reset('selected_items', 'processingProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
