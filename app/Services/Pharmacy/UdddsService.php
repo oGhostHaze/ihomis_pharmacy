@@ -466,6 +466,12 @@ class UdddsService
         ", $params);
     }
 
+    public function selectedPatientChargeCodes(array $items, array $encounters, $referenceDate): array
+    {
+        $selected = array_values(array_filter($items, fn ($item) => in_array((string) $item->enccode, $encounters, true)));
+        return $this->reprintChargeCodes($selected, $referenceDate);
+    }
+
     public function reprintChargeCodes(array $items, $referenceDate): array
     {
         $date = Carbon::parse($referenceDate)->toDateString();

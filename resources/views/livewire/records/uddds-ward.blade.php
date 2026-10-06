@@ -138,7 +138,7 @@
             <p class="mt-2 text-sm">Please wait while the request completes.</p>
             <p class="mt-2 text-sm" wire:loading wire:target="processSelected,readyToBill">Charging and issuing selected items…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="wardcode,selected_date,queue_view,status_filter,showToday,prepareCharge,continueCharge">Applying filters and checking stock…</p>
-            <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items,fallback_sources">Updating item selection…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items,fallback_sources,selected_print_patients,togglePrintPatients">Updating item selection…</p>
             <p class="mt-2 text-sm" wire:loading wire:target="view_enctr">Opening patient encounter…</p>
         </div>
     </div>
@@ -229,6 +229,19 @@
     @if ($processingProblem)
         <div class="mt-4 alert alert-error" role="alert">{{ $processingProblem }}</div>
     @endif
+    <div class="flex flex-wrap items-center gap-2 mt-3 mb-3" aria-label="Patient batch printing">
+        <span class="text-sm font-medium">Patient printing: {{ $selectedPrintCount }} selected</span>
+        <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="togglePrintPatients" wire:loading.attr="disabled" @if (!$hasPrintablePatients) disabled @endif>
+            {{ $allPrintPatientsSelected ? 'Clear print selection' : 'Select all patients' }}
+        </button>
+        @if ($selectedPrintUrl)
+            <a href="{{ $selectedPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline uddds-outline">Print selected patients</a>
+        @else
+            <button type="button" class="btn btn-sm btn-outline uddds-outline" disabled>Print selected patients</button>
+        @endif
+        <span class="text-xs text-slate-600">Only patients with existing slips in the displayed filters can be selected.</span>
+    </div>
+
     @if ($lastBatchPrintUrl)
         <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <span>Slips from the last processing attempt:</span>
@@ -254,6 +267,12 @@
         <section class="mt-4 overflow-hidden border border-base-300 bg-base-100" wire:key="uddds-{{ md5($patient['enccode']) }}">
             <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 uddds-patient-header">
                 <div>
+                    <label class="flex items-center gap-2 mb-1 text-xs font-medium text-slate-700">
+                        <input type="checkbox" wire:model="selected_print_patients" value="{{ $patient['enccode'] }}"
+                            class="h-4 w-4 accent-emerald-700" aria-label="Select {{ $patient['name'] }} for printing"
+                            @if (!$patient['reprint_url']) disabled @endif wire:loading.attr="disabled">
+                        Select patient for printing
+                    </label>
                     <button type="button" class="font-semibold text-left uddds-link" wire:click="view_enctr('{{ $patient['enccode'] }}')">
                         {{ $patient['name'] }}
                     </button>

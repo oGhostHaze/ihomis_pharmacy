@@ -17,6 +17,7 @@ class UdddsWard extends Component
     public $selected_date;
     public $wards = [];
     public $selected_items = [];
+    public $selected_print_patients = [];
     public $queueLoaded = false;
     public $queue_view = 'active';
     public $status_filter = 'all';
@@ -93,29 +94,29 @@ class UdddsWard extends Component
 
     public function updatingStatusFilter()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
     }
 
     public function render()
@@ -125,6 +126,8 @@ class UdddsWard extends Component
             $items = app(UdddsService::class)->annotatePendingStock($items, session('pharm_location_id'));
         }
         $patients = $this->groupPatients($items);
+        $printablePatients = array_values(array_map(fn ($patient) => (string) $patient['enccode'], array_filter($patients, fn ($patient) => !empty($patient['reprint_url']))));
+        $selectedPrintCodes = app(UdddsService::class)->selectedPatientChargeCodes($items, $this->selected_print_patients, $this->selected_date);
         $actionableKeys = collect($items)
             ->filter(fn ($item) => (bool) $item->is_actionable)
             ->pluck('docointkey')
@@ -138,6 +141,10 @@ class UdddsWard extends Component
             'patients' => $patients,
             'fundGroups' => array_filter(app(UdddsService::class)->fundSelectionGroups($items, $this->selected_items), fn ($group) => $group['item']->current_available < $group['qty']),
             'batchReprintUrl' => $this->reprintUrl($items),
+            'hasPrintablePatients' => !empty($printablePatients),
+            'allPrintPatientsSelected' => !empty($printablePatients) && !array_diff($printablePatients, $this->selected_print_patients),
+            'selectedPrintUrl' => $selectedPrintCodes ? route('dispensing.uddds.chargeslips', ['codes' => implode(',', $selectedPrintCodes)]) : null,
+            'selectedPrintCount' => count(array_intersect($printablePatients, $this->selected_print_patients)),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,
             'allSelected' => !empty($actionableKeys) && !array_diff($actionableKeys, $this->selected_items),
@@ -163,6 +170,13 @@ class UdddsWard extends Component
         }
 
         $this->processKeys($keys);
+    }
+
+    public function togglePrintPatients()
+    {
+        $patients = $this->groupPatients($this->filteredItems());
+        $keys = array_values(array_map(fn ($patient) => (string) $patient['enccode'], array_filter($patients, fn ($patient) => !empty($patient['reprint_url']))));
+        $this->selected_print_patients = $keys && !array_diff($keys, $this->selected_print_patients) ? [] : $keys;
     }
 
     public function selectPending()
@@ -225,7 +239,7 @@ class UdddsWard extends Component
             return;
         }
 
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
