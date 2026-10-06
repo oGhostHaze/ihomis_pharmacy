@@ -69,7 +69,6 @@
                     <h2 id="uddds-fund-title" class="text-lg font-semibold">Fund sources for selected items</h2>
                     <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="closeFundModal">Close</button>
                 </div>
-                <p class="mt-2 text-sm">One choice per medicine and original fund, shared across all selected patients. Current stock is used first.</p>
                 @if ($processingProblem)
                     <p class="mt-3 text-sm text-red-700" role="alert">{{ $processingProblem }}</p>
                 @endif
@@ -116,7 +115,6 @@
                                     @if (!empty($usedFunds))
                                         <p class="mt-1 {{ $fundCoverage < $fundNeed ? 'text-red-700' : 'text-slate-700' }}">Combined available: {{ $fundCoverage }} / needed: {{ $fundNeed }}.</p>
                                     @endif
-                                    <p class="mt-1 text-xs">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
 
                             @else
                                 <p class="mt-2 text-sm text-red-700">No alternate fund available, or this item already has a charge that must be adjusted separately.</p>
@@ -198,6 +196,7 @@
             </label>
         </div>
         <div class="uddds-actions">
+            <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="openPrintModal" wire:loading.attr="disabled">Print Patients</button>
             <button type="button" class="btn btn-sm uddds-issue"
                 wire:click="prepareCharge"
                 @if (empty($selected_items)) disabled @endif wire:loading.attr="disabled">
@@ -218,6 +217,13 @@
     @if ($processingProblem)
         <div class="mt-4 alert alert-error" role="alert">{{ $processingProblem }}</div>
     @endif
+    @if ($printModalOpen)
+        <div class="uddds-fund-modal" role="dialog" aria-modal="true" aria-labelledby="uddds-print-title" wire:key="uddds-print-modal">
+            <div class="uddds-fund-panel">
+                <div class="flex items-center justify-between gap-3">
+                    <h2 id="uddds-print-title" class="text-lg font-semibold">Print patients</h2>
+                    <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="closePrintModal">Close</button>
+                </div>
     <div class="flex flex-wrap items-center gap-2 mt-3 mb-3" aria-label="Patient batch printing">
         <label class="text-sm">Patient numbers
             <input type="text" wire:model.defer="print_range" placeholder="4-10 or 4,7,10" class="input input-bordered input-sm" aria-label="Patient numbers for batch printing">
@@ -234,20 +240,30 @@
         @endif
     </div>
 
-    @if ($lastBatchPrintUrl)
-        <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
-            <span>Slips from the last processing attempt:</span>
-            <a href="{{ $lastBatchPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline uddds-outline">Open Last Batch</a>
+
+                @if ($printSelectionProblem)
+                    <p class="mt-2 text-sm text-red-700" role="alert">{{ $printSelectionProblem }}</p>
+                @endif
+                <div class="uddds-fund-list">
+                    @forelse ($patients as $printPatient)
+                        <label class="flex items-center gap-3 py-3 border-b border-slate-200">
+                            <input type="checkbox" wire:model="selected_print_patients" value="{{ $printPatient['enccode'] }}"
+                                class="h-4 w-4 accent-emerald-700" @if (!$printPatient['reprint_url']) disabled @endif wire:loading.attr="disabled">
+                            <span><strong>#{{ $printPatient['number'] }} · {{ $printPatient['name'] }}</strong>
+                                <span class="block text-xs text-slate-600">{{ $printPatient['hpercode'] }} · {{ $printPatient['wardname'] }} {{ $printPatient['rmname'] }}{{ $printPatient['reprint_url'] ? '' : ' · No charge slip' }}</span>
+                            </span>
+                        </label>
+                    @empty
+                        <p class="py-4">No patients found.</p>
+                    @endforelse
+                </div>
+                @if ($lastBatchPrintUrl)
+                    <a href="{{ $lastBatchPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline uddds-outline mt-3">Open Last Batch</a>
+                @endif
+            </div>
         </div>
     @endif
-    @if ($queue_view === 'processed')
-        <p class="mt-4 text-sm text-base-content/70">Includes existing slips even for transferred or discharged patients. Ward reflects the latest assignment on the service date. Paper printing is not tracked; use Reprint to view or print the slips.</p>
-    @endif
 
-    @if ($printSelectionProblem)
-        <p class="mt-2 text-sm text-red-700" role="alert">{{ $printSelectionProblem }}</p>
-    @endif
-    <p class="text-xs text-slate-600">Patient numbers follow the current filtered list. Printed slips retain these numbers; changing filters can change numbering.</p>
     @if (! $udddsReady)
         <div class="mt-4 alert alert-warning">
             <span>{{ $udddsMessage }}</span>
@@ -263,12 +279,6 @@
         <section class="mt-4 overflow-hidden border border-base-300 bg-base-100" wire:key="uddds-{{ md5($patient['enccode']) }}">
             <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 uddds-patient-header">
                 <div>
-                    <label class="flex items-center gap-2 mb-1 text-xs font-medium text-slate-700">
-                        <input type="checkbox" wire:model="selected_print_patients" value="{{ $patient['enccode'] }}"
-                            class="h-4 w-4 accent-emerald-700" aria-label="Select {{ $patient['name'] }} for printing"
-                            @if (!$patient['reprint_url']) disabled @endif wire:loading.attr="disabled">
-                        Select patient for printing
-                    </label>
                     <button type="button" class="font-semibold text-left uddds-link" wire:click="view_enctr('{{ $patient['enccode'] }}')">
                         #{{ $patient['number'] }} · {{ $patient['name'] }}
                     </button>

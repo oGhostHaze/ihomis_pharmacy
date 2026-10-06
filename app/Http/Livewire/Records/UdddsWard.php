@@ -20,6 +20,7 @@ class UdddsWard extends Component
     public $selected_print_patients = [];
     public $print_range = '';
     public $printSelectionProblem;
+    public $printModalOpen = false;
     public $queueLoaded = false;
     public $queue_view = 'active';
     public $status_filter = 'all';
@@ -96,29 +97,29 @@ class UdddsWard extends Component
 
     public function updatingStatusFilter()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
     }
 
     public function render()
@@ -172,6 +173,16 @@ class UdddsWard extends Component
         }
 
         $this->processKeys($keys);
+    }
+
+    public function openPrintModal()
+    {
+        $this->printModalOpen = true;
+    }
+
+    public function closePrintModal()
+    {
+        $this->printModalOpen = false;
     }
 
     public function applyPrintRange()
@@ -262,7 +273,7 @@ class UdddsWard extends Component
             return;
         }
 
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem', 'printModalOpen');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
