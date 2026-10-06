@@ -20,6 +20,7 @@ class UdddsWard extends Component
     public $queueLoaded = false;
     public $queue_view = 'active';
     public $lastBatchPrintUrl;
+    public $processingProblem;
 
     public function mount()
     {
@@ -34,28 +35,31 @@ class UdddsWard extends Component
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items');
+        $this->reset('selected_items', 'processingProblem');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items');
+        $this->reset('selected_items', 'processingProblem');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items');
+        $this->reset('selected_items', 'processingProblem');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items');
+        $this->reset('selected_items', 'processingProblem');
     }
 
     public function render()
     {
         $items = $this->filteredItems();
+        if ($this->queue_view === 'active') {
+            $items = app(UdddsService::class)->annotatePendingStock($items, session('pharm_location_id'));
+        }
         $patients = $this->groupPatients($items);
         $actionableKeys = collect($items)
             ->filter(fn ($item) => (bool) $item->is_actionable)
@@ -113,6 +117,9 @@ class UdddsWard extends Component
             return;
         }
         $udddsService = app(UdddsService::class);
+        $allowed = collect($this->filteredItems())->filter(fn ($item) => (bool) $item->is_actionable)->pluck('docointkey')->all();
+        $keys = array_values(array_intersect(array_unique($keys), $allowed));
+        $this->processingProblem = null;
         $keys = $udddsService->materializeDailyItems($keys, $this->selected_date);
         $result = $udddsService->chargeAndIssue($keys, session('pharm_location_id'), [
             'employeeid' => session('employeeid'),
@@ -127,11 +134,12 @@ class UdddsWard extends Component
         }
 
         if (!$result['ok']) {
+            $this->processingProblem = $result['message'];
             $this->alert('error', $result['message']);
             return;
         }
 
-        $this->reset('selected_items');
+        $this->reset('selected_items', 'processingProblem');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 

@@ -98,6 +98,9 @@
                 :disabled="selected.length === 0" wire:loading.attr="disabled">
                 Charge &amp; Issue Selected
             </button>
+            <button type="button" class="btn btn-sm btn-outline btn-primary"
+                @click="selected = [...actionable]" wire:loading.attr="disabled"
+                @if (!$hasActionableItems) disabled @endif>Select Pending / Unissued</button>
             <button type="button" class="btn btn-sm btn-outline"
                 @click="selected = actionable.length > 0 && actionable.every(key => selected.includes(key)) ? [] : [...actionable]"
                 wire:loading.attr="disabled"
@@ -107,6 +110,12 @@
         </div>
     </div>
 
+    @if ($processingProblem)
+        <div class="mt-4 alert alert-error" role="alert">{{ $processingProblem }}</div>
+    @endif
+    @if ($queue_view === 'active' && $queueLoaded)
+        <p class="mt-3 text-xs text-base-content/70">Stock checks use unexpired stock at this pharmacy, grouped by drug and fund source across the displayed queue. These show current availability; stock is checked again when processing.</p>
+    @endif
     @if ($lastBatchPrintUrl)
         <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <span>Slips from the last processing attempt:</span>
@@ -201,6 +210,9 @@
                                     <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Pending</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">Charged</span>
+                                @endif
+                                @if (!empty($item->pending_reason))
+                                    <div class="mt-1 text-xs {{ $item->stock_problem ? 'text-red-700' : 'text-slate-600' }}">{{ $item->pending_reason }}</div>
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-xs">

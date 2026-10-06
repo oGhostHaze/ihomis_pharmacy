@@ -485,6 +485,47 @@ class UdddsService
         return array_values(array_unique($codes));
     }
 
+    public function annotatePendingStock(array $items, $locationId): array
+    {
+        $groups = [];
+        foreach ($items as $item) {
+            if (empty($item->is_actionable)) continue;
+            $key = $item->dmdcomb . '|' . $item->dmdctr . '|' . $item->orderfrom;
+            if (!isset($groups[$key])) $groups[$key] = ['item' => $item, 'needed' => 0];
+            $groups[$key]['needed'] += (float) $item->pchrgqty;
+        }
+        $available = [];
+        foreach (array_chunk($groups, 100, true) as $chunk) {
+            $stocks = DrugStock::query()->where('loc_code', $locationId)
+                ->where('exp_date', '>', now()->toDateString())->where('stock_bal', '>', 0)
+                ->where(function ($query) use ($chunk) {
+                    foreach ($chunk as $group) {
+                        $item = $group['item'];
+                        $query->orWhere(function ($match) use ($item) {
+                            $match->where('dmdcomb', $item->dmdcomb)->where('dmdctr', $item->dmdctr)->where('chrgcode', $item->orderfrom);
+                        });
+                    }
+                })->selectRaw('dmdcomb, dmdctr, chrgcode, SUM(stock_bal) AS available_qty')
+                ->groupBy('dmdcomb', 'dmdctr', 'chrgcode')->get();
+            foreach ($stocks as $stock) {
+                $available[$stock->dmdcomb . '|' . $stock->dmdctr . '|' . $stock->chrgcode] = (float) $stock->available_qty;
+            }
+        }
+        foreach ($items as $item) {
+            $item->stock_problem = false;
+            $item->pending_reason = null;
+            if (empty($item->is_actionable)) continue;
+            $key = $item->dmdcomb . '|' . $item->dmdctr . '|' . $item->orderfrom;
+            $balance = $available[$key] ?? 0;
+            $needed = $groups[$key]['needed'];
+            $item->stock_problem = $balance < $needed;
+            $item->pending_reason = $item->stock_problem
+                ? 'Stock shortage for this queue: need ' . $needed . ', available ' . $balance . ' (same drug and fund source).'
+                : 'Stock available. Awaiting charge/issue processing.';
+        }
+        return $items;
+    }
+
     public function validateFefoStock(array $items, $locationId)
     {
         $needed = [];
