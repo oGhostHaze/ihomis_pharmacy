@@ -10,6 +10,11 @@
                 $room_name = $slip['room_name'];
             @endphp
             <div class="p-2 uddds-slip">
+                <div class="text-xs/4 font-semibold">
+                    @if ($slip['patient_number']) Patient #{{ $slip['patient_number'] }} · @endif
+                    Slip {{ $slip['batch_index'] }} of {{ $slip['batch_total'] }}
+                    @if ($slip['batch_index'] === $slip['batch_total']) · LAST SLIP @endif
+                </div>
                 <div class="flex flex-col text-xs/4">
                     <h5 class="mb-0 text-2xl text-left"><strong class="uppercase">*{{ $pcchrgcod }}*</strong></h5>
                     <div class="flex flex-col text-center receipt-wrap">

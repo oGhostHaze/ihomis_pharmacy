@@ -12,9 +12,16 @@ use App\Models\Pharmacy\Dispensing\DrugOrder;
 class UdddsChargeSlipBatch extends Component
 {
     public $codes = [];
+    public $patient_numbers = [];
 
     public function mount()
     {
+        $requestedNumbers = explode(',', (string) request('numbers', ''));
+        $requestedCodes = array_map('trim', explode(',', (string) request('codes', '')));
+        foreach ($requestedCodes as $index => $code) {
+            $number = $requestedNumbers[$index] ?? '';
+            if ($code !== '' && ctype_digit($number) && (int) $number > 0) $this->patient_numbers[$code] = (int) $number;
+        }
         $this->codes = array_values(array_unique(array_filter(array_map('trim', explode(',', (string) request('codes', ''))))));
     }
 
@@ -41,6 +48,9 @@ class UdddsChargeSlipBatch extends Component
 
         $slip = [
             'pcchrgcod' => $pcchrgcod,
+            'patient_number' => $this->patient_numbers[$pcchrgcod] ?? null,
+            'batch_index' => array_search($pcchrgcod, $this->codes, true) + 1,
+            'batch_total' => count($this->codes),
             'rxo' => $rxo,
             'rxo_header' => $rxo_header,
             'toecode' => optional($displayEncounter)->toecode ?: optional($rxo_header->enctr)->toecode,

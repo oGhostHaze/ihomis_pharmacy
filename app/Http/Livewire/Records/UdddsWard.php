@@ -18,6 +18,8 @@ class UdddsWard extends Component
     public $wards = [];
     public $selected_items = [];
     public $selected_print_patients = [];
+    public $print_range = '';
+    public $printSelectionProblem;
     public $queueLoaded = false;
     public $queue_view = 'active';
     public $status_filter = 'all';
@@ -94,29 +96,29 @@ class UdddsWard extends Component
 
     public function updatingStatusFilter()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
     }
 
     public function render()
@@ -127,6 +129,7 @@ class UdddsWard extends Component
         }
         $patients = $this->groupPatients($items);
         $printablePatients = array_values(array_map(fn ($patient) => (string) $patient['enccode'], array_filter($patients, fn ($patient) => !empty($patient['reprint_url']))));
+        $patientNumbers = array_column($patients, 'number', 'enccode');
         $selectedPrintCodes = app(UdddsService::class)->selectedPatientChargeCodes($items, $this->selected_print_patients, $this->selected_date);
         $actionableKeys = collect($items)
             ->filter(fn ($item) => (bool) $item->is_actionable)
@@ -140,10 +143,9 @@ class UdddsWard extends Component
             'items' => $items,
             'patients' => $patients,
             'fundGroups' => array_filter(app(UdddsService::class)->fundSelectionGroups($items, $this->selected_items), fn ($group) => $group['item']->current_available < $group['qty']),
-            'batchReprintUrl' => $this->reprintUrl($items),
             'hasPrintablePatients' => !empty($printablePatients),
             'allPrintPatientsSelected' => !empty($printablePatients) && !array_diff($printablePatients, $this->selected_print_patients),
-            'selectedPrintUrl' => $selectedPrintCodes ? route('dispensing.uddds.chargeslips', ['codes' => implode(',', $selectedPrintCodes)]) : null,
+            'selectedPrintUrl' => $this->numberedPrintUrl($selectedPrintCodes, $items, $patientNumbers),
             'selectedPrintCount' => count(array_intersect($printablePatients, $this->selected_print_patients)),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,
@@ -170,6 +172,24 @@ class UdddsWard extends Component
         }
 
         $this->processKeys($keys);
+    }
+
+    public function applyPrintRange()
+    {
+        $this->printSelectionProblem = null;
+        $patients = array_values($this->groupPatients($this->filteredItems()));
+        try {
+            $numbers = \App\Services\Pharmacy\UdddsPrintSelection::parse($this->print_range, count($patients));
+            $encounters = [];
+            foreach ($numbers as $number) {
+                $patient = $patients[$number - 1];
+                if (!$patient['reprint_url']) throw new \InvalidArgumentException('Patient #' . $number . ' has no existing charge slip under these filters.');
+                $encounters[] = (string) $patient['enccode'];
+            }
+            $this->selected_print_patients = $encounters;
+        } catch (\InvalidArgumentException $e) {
+            $this->printSelectionProblem = $e->getMessage();
+        }
     }
 
     public function togglePrintPatients()
@@ -217,7 +237,9 @@ class UdddsWard extends Component
             return;
         }
         $udddsService = app(UdddsService::class);
-        $allowed = collect($this->filteredItems())->filter(fn ($item) => (bool) $item->is_actionable)->pluck('docointkey')->all();
+        $queueItems = $this->filteredItems();
+        $patientNumbersBefore = array_column($this->groupPatients($queueItems), 'number', 'enccode');
+        $allowed = collect($queueItems)->filter(fn ($item) => (bool) $item->is_actionable)->pluck('docointkey')->all();
         $keys = array_values(array_intersect(array_unique($keys), $allowed));
         $this->processingProblem = null;
         $keys = $udddsService->materializeDailyItems($keys, $this->selected_date);
@@ -229,7 +251,8 @@ class UdddsWard extends Component
         ], $this->fallback_sources);
 
         if (!empty($result['pcchrgcods'])) {
-            $this->lastBatchPrintUrl = route('dispensing.uddds.chargeslips', ['codes' => implode(',', $result['pcchrgcods'])]);
+            $printItems = $udddsService->wardItemsForDate($this->wardcode, session('pharm_location_id'), $this->selected_date);
+            $this->lastBatchPrintUrl = $this->numberedPrintUrl($result['pcchrgcods'], $printItems, $patientNumbersBefore);
             $this->dispatchBrowserEvent('uddds-print', ['url' => $this->lastBatchPrintUrl]);
         }
 
@@ -239,7 +262,7 @@ class UdddsWard extends Component
             return;
         }
 
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen', 'selected_print_patients', 'print_range', 'printSelectionProblem');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
@@ -268,12 +291,28 @@ class UdddsWard extends Component
             }
         }
 
+        $number = 0;
         foreach ($patients as &$patient) {
-            $patient['reprint_url'] = $this->reprintUrl($patient['items']);
+            $patient['number'] = ++$number;
+            $patient['reprint_url'] = $this->numberedPrintUrl(app(UdddsService::class)->reprintChargeCodes($patient['items'], $this->selected_date), $patient['items'], [$patient['enccode'] => $number]);
         }
         unset($patient);
 
         return $patients;
+    }
+
+    protected function numberedPrintUrl(array $codes, array $items, array $patientNumbers): ?string
+    {
+        if (!$codes) return null;
+        $numbers = [];
+        foreach ($codes as $code) {
+            $number = 0;
+            foreach ($items as $item) {
+                if ($item->pcchrgcod === $code) { $number = $patientNumbers[$item->enccode] ?? 0; break; }
+            }
+            $numbers[] = $number;
+        }
+        return route('dispensing.uddds.chargeslips', ['codes' => implode(',', $codes), 'numbers' => implode(',', $numbers)]);
     }
 
     protected function reprintUrl(array $items): ?string

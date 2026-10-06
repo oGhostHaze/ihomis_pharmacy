@@ -198,17 +198,6 @@
             </label>
         </div>
         <div class="uddds-actions">
-            @if ($batchReprintUrl)
-                <a href="{{ $batchReprintUrl }}" target="_blank" rel="noopener"
-                    class="btn btn-sm btn-outline uddds-outline"
-                    title="Reprint all existing charge slips for the selected service date and ward">
-                    <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
-                </a>
-            @else
-                <button type="button" class="btn btn-sm btn-outline uddds-outline" disabled>
-                    <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
-                </button>
-            @endif
             <button type="button" class="btn btn-sm uddds-issue"
                 wire:click="prepareCharge"
                 @if (empty($selected_items)) disabled @endif wire:loading.attr="disabled">
@@ -230,6 +219,10 @@
         <div class="mt-4 alert alert-error" role="alert">{{ $processingProblem }}</div>
     @endif
     <div class="flex flex-wrap items-center gap-2 mt-3 mb-3" aria-label="Patient batch printing">
+        <label class="text-sm">Patient numbers
+            <input type="text" wire:model.defer="print_range" placeholder="4-10 or 4,7,10" class="input input-bordered input-sm" aria-label="Patient numbers for batch printing">
+        </label>
+        <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="applyPrintRange" wire:loading.attr="disabled">Select numbers</button>
         <span class="text-sm font-medium">Patient printing: {{ $selectedPrintCount }} selected</span>
         <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="togglePrintPatients" wire:loading.attr="disabled" @if (!$hasPrintablePatients) disabled @endif>
             {{ $allPrintPatientsSelected ? 'Clear print selection' : 'Select all patients' }}
@@ -239,7 +232,6 @@
         @else
             <button type="button" class="btn btn-sm btn-outline uddds-outline" disabled>Print selected patients</button>
         @endif
-        <span class="text-xs text-slate-600">Only patients with existing slips in the displayed filters can be selected.</span>
     </div>
 
     @if ($lastBatchPrintUrl)
@@ -252,6 +244,10 @@
         <p class="mt-4 text-sm text-base-content/70">Includes existing slips even for transferred or discharged patients. Ward reflects the latest assignment on the service date. Paper printing is not tracked; use Reprint to view or print the slips.</p>
     @endif
 
+    @if ($printSelectionProblem)
+        <p class="mt-2 text-sm text-red-700" role="alert">{{ $printSelectionProblem }}</p>
+    @endif
+    <p class="text-xs text-slate-600">Patient numbers follow the current filtered list. Printed slips retain these numbers; changing filters can change numbering.</p>
     @if (! $udddsReady)
         <div class="mt-4 alert alert-warning">
             <span>{{ $udddsMessage }}</span>
@@ -274,7 +270,7 @@
                         Select patient for printing
                     </label>
                     <button type="button" class="font-semibold text-left uddds-link" wire:click="view_enctr('{{ $patient['enccode'] }}')">
-                        {{ $patient['name'] }}
+                        #{{ $patient['number'] }} · {{ $patient['name'] }}
                     </button>
                     <div class="text-xs text-base-content/60">
                         {{ $patient['hpercode'] }} · {{ $patient['wardname'] }} {{ $patient['rmname'] }}
@@ -352,7 +348,7 @@
                             </td>
                             <td class="px-3 py-3 text-xs">
                                 @if ($item->pcchrgcod)
-                                    <a class="uddds-link underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
+                                    <a class="uddds-link underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod, 'numbers' => $patient['number']]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
                                 @else
                                     <span>—</span>
                                 @endif
