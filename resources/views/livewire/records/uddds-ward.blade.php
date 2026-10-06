@@ -53,7 +53,24 @@
             .uddds-queue .uddds-filters { grid-template-columns: 170px 150px 170px 180px; width: auto; }
             .uddds-queue .uddds-actions { margin-left: auto; }
         }
+        .uddds-queue .uddds-loading-modal { position: fixed; inset: 0; z-index: 900; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 23, 42, 0.5); }
+        .uddds-queue .uddds-loading-panel { width: 100%; max-width: 360px; padding: 24px; border-radius: 8px; background: #fff; color: #0f172a; text-align: center; box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2); }
+        .uddds-queue .uddds-loading-spinner { display: inline-block; width: 32px; height: 32px; margin-bottom: 12px; border: 3px solid #cbd5e1; border-top-color: #047857; border-radius: 50%; animation: uddds-loading-spin 0.8s linear infinite; }
+        @keyframes uddds-loading-spin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .uddds-queue .uddds-loading-spinner { animation: none; } }
     </style>
+    <div class="uddds-loading-modal" wire:loading.flex style="display: {{ $queueLoaded ? 'none' : 'flex' }};"
+        role="dialog" aria-modal="true" aria-labelledby="uddds-loading-title" wire:key="uddds-loading-modal">
+        <div class="uddds-loading-panel" role="status" aria-live="polite">
+            <span class="uddds-loading-spinner" aria-hidden="true"></span>
+            <h2 id="uddds-loading-title" class="text-lg font-semibold">{{ $queueLoaded ? 'Updating UDDDS queue' : 'Loading UDDDS queue' }}</h2>
+            <p class="mt-2 text-sm">Please wait while the request completes.</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="processSelected,readyToBill">Charging and issuing selected items…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="wardcode,selected_date,queue_view,status_filter,showToday">Applying filters and checking stock…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="selectPending,toggleSelectAll,selected_items">Updating item selection…</p>
+            <p class="mt-2 text-sm" wire:loading wire:target="view_enctr">Opening patient encounter…</p>
+        </div>
+    </div>
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h1 class="text-xl font-semibold text-base-content">UDDDS ward queue</h1>
@@ -110,9 +127,6 @@
             </label>
         </div>
         <div class="uddds-actions">
-            <span class="mr-1 text-xs text-base-content/60" wire:loading>
-                <i class="las la-spinner la-lg animate-spin"></i> Updating…
-            </span>
             @if ($batchReprintUrl)
                 <a href="{{ $batchReprintUrl }}" target="_blank" rel="noopener"
                     class="btn btn-sm btn-outline uddds-outline"
@@ -192,7 +206,7 @@
                     @endif
                 <button type="button" class="btn btn-xs uddds-issue"
                     onclick="confirmUdddsIssue({{ count($patient['keys']) }}, () => @this.call('readyToBill', '{{ $patient['enccode'] }}'))"
-                    @if (empty($patient['keys'])) disabled @endif>
+                    @if (empty($patient['keys'])) disabled @endif wire:loading.attr="disabled">
                     Charge &amp; Issue
                 </button>
                 </div>
