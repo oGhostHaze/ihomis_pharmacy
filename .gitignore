@@ -22,3 +22,9 @@ Homestead.json
 /.vagrant
 .phpunit.result.cache
 /.codex-remote-attachments
+/public/css
+/public/js
+/public/js
+public/css/app.css
+public/js/app.js
+public/js/turbolinks.js
