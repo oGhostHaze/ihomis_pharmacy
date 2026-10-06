@@ -9,8 +9,9 @@
     .pos-receipt *, .pos-receipt *::before, .pos-receipt *::after {
         box-sizing: border-box;
     }
-    .pos-receipt .whitespace-nowrap {
-        white-space: normal;
+    .pos-receipt .flex > div { min-width: 0; max-width: 100%; }
+    .pos-receipt .whitespace-nowrap, .pos-receipt .receipt-wrap {
+        white-space: normal !important;
         overflow-wrap: anywhere;
     }
     .pos-receipt table {
@@ -20,7 +21,17 @@
         font-size: 10px;
         line-height: 1.3;
     }
-    .pos-receipt th.w-20 { width: 23%; }
+    .pos-receipt th.w-20 { width: auto; }
+    .pos-receipt thead th {
+        white-space: nowrap;
+        overflow-wrap: normal;
+        word-break: normal;
+        font-size: 10px;
+    }
+    .pos-receipt .receipt-numbers td {
+        white-space: nowrap;
+        overflow-wrap: normal;
+    }
     .pos-receipt td, .pos-receipt th {
         padding: 1px 2px;
         overflow-wrap: anywhere;
@@ -49,5 +60,7 @@
             break-inside: auto;
         }
         .pos-receipt tr { break-inside: avoid; }
+        .pos-receipt thead { break-after: avoid; }
+        .pos-receipt h5 { break-after: avoid; }
     }
 </style>

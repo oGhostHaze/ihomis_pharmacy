@@ -1,117 +1,43 @@
 <div class="container max-w-xl mx-auto mt-5 pos-print-page">
     @include('livewire.pharmacy.dispensing.pos-receipt-styles')
-    <div class="flex justify-end mb-3 no-print">
-        <button class="btn btn-sm btn-primary" onclick="printMe()">Print all</button>
-    </div>
-    <div id="print" class="bg-white pos-receipt">
-        @forelse ($slips as $slip)
-            @php
-                $total_issued = 0;
-                $total_amt = 0;
-                $pcchrgcod = $slip['pcchrgcod'];
-                $rxo = $slip['rxo'];
-                $rxo_header = $slip['rxo_header'];
-                $prescription = $slip['prescription'];
-                $toecode = $slip['toecode'];
-                $encounter_suffix = $slip['encounter_suffix'];
-                $wardname = $slip['wardname'];
-                $room_name = $slip['room_name'];
-            @endphp
-            <div class="p-2 uddds-slip">
-                <div class="flex flex-col text-xs/4">
-                    <h5 class="mb-0 text-2xl text-left"><strong class="uppercase">*{{ $pcchrgcod }}*</strong></h5>
-                    <div class="flex flex-col text-center whitespace-nowrap">
-                        <div>MMMHMC-A-PHB-QP-005 Form 1 Rev 0 Charge Slip</div>
-                        <div>MARIANO MARCOS MEM HOSP. MED CTR</div>
-                        <div>CHARGE SLIP / TRANSACTION SLIP</div>
-                        <div class="font-bold">{{ $pcchrgcod }}</div>
-                    </div>
-                    <div class="flex flex-col text-left whitespace-nowrap">
-                        <div>Dep't./Section: <span class="font-semibold">Pharmacy</span></div>
-                        <div>Date/Time: <span
-                                class="font-semibold">{{ date('F j, Y h:i A', strtotime($rxo_header->dodate)) }}</span>
-                        </div>
-                        <div>Patient's Name: <span class="font-semibold">{{ $rxo_header->patient ? $rxo_header->patient->fullname() : '' }}</span></div>
-                        <div>Hosp Number: <span class="font-semibold">{{ $rxo_header->patient ? $rxo_header->patient->hpercode : '' }}</span></div>
-                        <div>Ward:
-                            <span class="font-semibold">{{ $wardname ? $wardname->wardname : '' }}</span>
-                            <span class="font-semibold">{{ $room_name ? $room_name->rmname : '' }}
-                                / {{ $toecode }}{{ $encounter_suffix ? ' / ' . $encounter_suffix : '' }}</span>
-                        </div>
-                        <div>Ordering Physician: <span
-                                class="font-semibold">{{ $rxo_header->prescription_data && $rxo_header->prescription_data->employee ? 'Dr. ' . $rxo_header->prescription_data->employee->fullname() : 'N/A' }}</span>
-                        </div>
-                    </div>
-                </div>
-                <table class="w-full text-xs/4">
-                    <thead class="border border-black">
-                        <tr class="border-b-2 border-b-black">
-                            <th class="text-left">ITEM</th>
-                            <th class="w-20 text-right">QTY</th>
-                            <th class="w-20 text-right">UNIT COST</th>
-                            <th class="w-20 text-right">AMOUNT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($rxo as $item)
-                            @php
-                                $amount = $item->pcchrgamt;
-                                $total_amt += $amount;
-                                $concat = $item->dm ? implode(',', explode('_,', $item->dm->drug_concat)) : '';
-                            @endphp
-                            <tr class="border-t border-black border-x">
-                                <td class="!text-2xs font-semibold text-wrap" colspan="4">{{ $concat }}</td>
-                            </tr>
-                            <tr class="border-b border-black border-x">
-                                <td class="text-right" colspan="2">
-                                    {{ number_format($item->qtyissued ?? $item->pchrgqty, 0) }}</td>
-                                <td class="text-right">{{ number_format($item->pchrgup, 2) }}</td>
-                                <td class="text-right">{{ number_format($amount, 2) }}</td>
-                            </tr>
-                            @php $total_issued++; @endphp
-                        @empty
-                            <tr class="border-b border-black border-x">
-                                <td colspan="4" class="text-center">No issued items found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                    <tfoot>
-                        <tr align="right" class="font-bold border border-t-2 border-black">
-                            <td colspan="2">{{ number_format($total_issued) }} ITEMS</td>
-                            <td colspan="2">TOTAL {{ number_format($total_amt, 2) }}</td>
-                        </tr>
-                    </tfoot>
-                </table>
-                <div class="flex flex-col py-0 my-0 text-left text-xs/4 whitespace-nowrap">
-                    <div>Issued by:
-                        {{ $rxo_header->employee ? $rxo_header->employee->fullname() : ($rxo_header->user ? $rxo_header->user->name : $rxo_header->entry_by) }}
-                    </div>
-                    <div><span>Time: {{ \Carbon\Carbon::create($rxo_header->dodate)->format('h:i A') }}</span></div>
-                    <div><span>Verified by @if (fnmatch('*[ADM]', $toecode))
-                                Nurse/N.A.
-                            @endif: _________________________</span></div>
-                    <div><span>Received by Patient/Watcher: ____________________</span></div>
-                    <div class="mt-10 italic text-right justify-content-end"><span class="border-t border-black">Signature
-                            Over
-                            Printed Name</span></div>
-                    <div class="mt-2 text-right justify-content-end">
-                        <span><input type="checkbox" class="mt-1" disabled> Counseled</span>
-                    </div>
+    <script src="{{ asset('js/uddds-batch-print.js') }}?v=1"></script>
+    <div x-data='udddsBatchLoader($wire, @json($codes))' x-init="$nextTick(() => load())"
+        :class="{ 'batch-incomplete': !ready }" class="batch-incomplete">
+        <style>
+            [x-cloak] { display: none !important; }
+            .batch-loading-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgb(0 0 0 / 50%); }
+            .batch-loading-panel { width: 100%; max-width: 420px; padding: 24px; background: #fff; color: #111; border-radius: 8px; }
+            .batch-print-warning { display: none; }
+            @media print {
+                .batch-incomplete #print { display: none !important; }
+                .batch-incomplete .batch-print-warning { display: block; }
+                .batch-loading-modal { display: none !important; }
+            }
+        </style>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3 no-print">
+            <span role="status" aria-live="polite" x-text="next + ' / ' + codes.length + ' charge slips loaded'"></span>
+            <div class="flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline" x-show="error" x-cloak @click="load()">Retry Loading</button>
+                <button type="button" class="btn btn-sm btn-primary" :disabled="!ready" disabled @click="print()">Print all</button>
+            </div>
+        </div>
+        <div class="batch-loading-modal no-print" x-show="modalOpen" role="dialog" aria-modal="true" aria-labelledby="batch-loading-title">
+            <div class="batch-loading-panel">
+                <h2 id="batch-loading-title" class="text-lg font-semibold" x-text="error ? 'Charge slip could not load' : 'Loading charge slips'"></h2>
+                <p class="mt-2 text-sm" role="status" aria-live="polite" x-text="next + ' of ' + codes.length + ' loaded'"></p>
+                <progress class="progress progress-primary mt-4 w-full" :value="next" :max="codes.length" aria-label="Charge slips loaded"></progress>
+                <p class="mt-2 text-sm" x-show="!error" x-text="'Loading ' + (codes[next] || '')"></p>
+                <p class="mt-2 text-sm text-error" x-show="error" x-text="error" role="alert"></p>
+                <div class="flex gap-2 mt-4" x-show="error" x-cloak>
+                    <button type="button" class="btn btn-sm btn-primary" @click="load()">Retry</button>
+                    <button type="button" class="btn btn-sm btn-outline" @click="modalOpen = false">Close</button>
                 </div>
             </div>
-        @empty
-            <div class="p-8 text-center">No charge slips to print.</div>
-        @endforelse
+        </div>
+        <p class="batch-print-warning">Charge slips are still loading or a slip failed to load. Complete loading before printing.</p>
+        <div id="print" class="bg-white pos-receipt" x-ref="receipts" wire:ignore></div>
+        @if (empty($codes))
+            <p class="p-8 text-center">No charge slips to print.</p>
+        @endif
     </div>
 </div>
-
-@push('scripts')
-    <script>
-        function printMe() {
-            window.print();
-        }
-        window.addEventListener('load', function() {
-            window.print();
-        });
-    </script>
-@endpush
