@@ -26,8 +26,10 @@ class UdddsStockAllocator
         foreach ($items as $item) {
             $qty = $needed[$item->docointkey];
             if ($qty <= 0.000001) continue;
-            $alternate = $fallbacks[self::groupKey($item)] ?? null;
-            if ($alternate && $alternate !== $item->orderfrom) {
+            $alternates = array_values(array_unique(array_filter((array) ($fallbacks[self::groupKey($item)] ?? []))));
+            foreach ($alternates as $alternate) {
+                if ($qty <= 0.000001) break;
+                if ($alternate === $item->orderfrom) continue;
                 if (!empty($item->pcchrgcod)) return ['ok' => false, 'message' => 'An already-charged order needs another fund source. Adjust its existing charge separately before using fallback.', 'plans' => []];
                 $qty = $this->take($item, $alternate, $qty, $stocks, $remaining, $plans[$item->docointkey]);
             }

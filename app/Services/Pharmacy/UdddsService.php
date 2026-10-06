@@ -546,6 +546,8 @@ class UdddsService
             $key = $item->dmdcomb . '|' . $item->dmdctr . '|' . $item->orderfrom;
             $balance = $available[$key] ?? 0;
             $needed = $groups[$key]['needed'];
+            $item->current_available = $balance;
+            $item->queue_needed = $needed;
             $item->stock_problem = $balance < $needed;
             if ($item->stock_problem && empty($item->pcchrgcod)) {
                 foreach ($fundOptions[$item->dmdcomb . '|' . $item->dmdctr] ?? [] as $option) {
@@ -746,9 +748,12 @@ class UdddsService
     private function chargeAndIssueWithFallback(array $keys, $locationId, array $actor, array $fallbacks): array
     {
         $allowedFunds = app('chargetable');
-        foreach ($fallbacks as $fund) {
-            if ($fund && !in_array($fund, $allowedFunds, true)) {
-                return ['ok' => false, 'message' => 'Invalid alternate fund source.', 'pcchrgcods' => []];
+        foreach ($fallbacks as $key => $funds) {
+            $fallbacks[$key] = array_values(array_unique(array_filter((array) $funds)));
+            foreach ($fallbacks[$key] as $fund) {
+                if (!is_string($fund) || !in_array($fund, $allowedFunds, true)) {
+                    return ['ok' => false, 'message' => 'Invalid alternate fund source.', 'pcchrgcods' => []];
+                }
             }
         }
         if (count($keys) > 500) return ['ok' => false, 'message' => 'Process at most 500 items at a time when using alternate funds.', 'pcchrgcods' => []];

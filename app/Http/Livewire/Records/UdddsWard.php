@@ -30,6 +30,16 @@ class UdddsWard extends Component
         $this->wards = Ward::where('wardstat', 'A')->orderBy('wardname')->get();
     }
 
+    public function updatedFallbackSources($value, $name)
+    {
+        $parts = explode('.', $name);
+        if (count($parts) === 2 && ctype_digit($parts[1])) {
+            $key = $parts[0];
+            // A changed earlier choice invalidates the choices that followed it.
+            $this->fallback_sources[$key] = array_slice((array) ($this->fallback_sources[$key] ?? []), 0, (int) $parts[1] + 1);
+        }
+    }
+
     public function loadQueue()
     {
         $this->queueLoaded = true;

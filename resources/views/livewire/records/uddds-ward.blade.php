@@ -236,16 +236,44 @@
                             <td class="px-3 py-3 text-xs text-slate-600">
                                 {{ $item->chrgdesc }}
                                 @if (!empty($item->alternate_funds))
-                                    <label class="block mt-2">
-                                        <span class="block mb-1 font-medium text-slate-700">Use another fund for shortage</span>
-                                        <select class="w-full select select-bordered select-sm" wire:model="fallback_sources.{{ $item->fallback_key }}" wire:loading.attr="disabled">
-                                            <option value="">Current fund only</option>
-                                            @foreach ($item->alternate_funds as $fund)
-                                                <option value="{{ $fund['code'] }}">{{ $fund['name'] }} — {{ $fund['available'] }} available</option>
-                                            @endforeach
-                                        </select>
-                                    </label>
-                                    <p class="mt-1">Uses current stock first, then the selected fund at its price. Applies to selected rows with the same drug and original fund.</p>
+                                    @php
+                                        $fundChoices = array_values((array) ($fallback_sources[$item->fallback_key] ?? []));
+                                        $chosenNeed = collect($items)->filter(fn ($row) => !empty($row->is_actionable)
+                                            && \App\Services\Pharmacy\UdddsStockAllocator::groupKey($row) === $item->fallback_key
+                                            && in_array((string) $row->docointkey, $selected_items, true))->sum('pchrgqty');
+                                        $fundNeed = $chosenNeed > 0 ? $chosenNeed : $item->queue_needed;
+                                        $fundCoverage = $item->current_available;
+                                        $usedFunds = [];
+                                    @endphp
+                                    @for ($fundIndex = 0; $fundIndex < count($item->alternate_funds); $fundIndex++)
+                                        @if ($fundIndex > 0 && ($fundCoverage >= $fundNeed || empty($fundChoices[$fundIndex - 1])))
+                                            @break
+                                        @endif
+                                        <label class="block mt-2">
+                                            <span class="block mb-1 font-medium text-slate-700">{{ $fundIndex === 0 ? 'Alternate fund for shortage' : 'Next fund for remaining shortage' }}</span>
+                                            <select class="w-full select select-bordered select-sm" wire:model="fallback_sources.{{ $item->fallback_key }}.{{ $fundIndex }}" wire:loading.attr="disabled">
+                                                <option value="">Choose one fund source</option>
+                                                @foreach ($item->alternate_funds as $fund)
+                                                    @if (!in_array($fund['code'], $usedFunds, true))
+                                                        <option value="{{ $fund['code'] }}">{{ $fund['name'] }} — {{ $fund['available'] }} available</option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                        @php
+                                            $chosenFund = $fundChoices[$fundIndex] ?? '';
+                                            foreach ($item->alternate_funds as $option) {
+                                                if ($option['code'] === $chosenFund && !in_array($chosenFund, $usedFunds, true)) {
+                                                    $fundCoverage += $option['available'];
+                                                    $usedFunds[] = $chosenFund;
+                                                }
+                                            }
+                                        @endphp
+                                    @endfor
+                                    @if (!empty($usedFunds))
+                                        <p class="mt-1 {{ $fundCoverage < $fundNeed ? 'text-red-700' : 'text-slate-700' }}">Combined available: {{ $fundCoverage }} / needed: {{ $fundNeed }}.</p>
+                                    @endif
+                                    <p class="mt-1">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
                                 @elseif (!empty($item->stock_problem) && empty($item->pcchrgcod))
                                     <p class="mt-1 text-red-700">No alternate fund has available stock here.</p>
                                 @elseif (!empty($item->stock_problem) && $item->pcchrgcod)
