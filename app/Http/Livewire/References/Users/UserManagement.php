@@ -5,6 +5,8 @@ namespace App\Http\Livewire\References\Users;
 use App\Models\Pharmacy\PharmLocation;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -182,6 +184,24 @@ class UserManagement extends Component
 
         $this->show_edit_modal = false;
         $this->alert('success', "Access settings updated for {$user->name}.");
+    }
+
+    public function resetPassword($userId)
+    {
+        $this->authorizeAccess();
+        $user = User::withTrashed()->findOrFail($userId);
+
+        if ($user->hasRole('Super Admin')) {
+            $this->alert('error', 'The Super Admin account is protected.');
+
+            return;
+        }
+
+        $user->password = Hash::make('123456');
+        $user->setRememberToken(Str::random(60));
+        $user->save();
+
+        $this->alert('success', "Password reset for {$user->name}. Ask the user to change their password after signing in.");
     }
 
     public function toggleActive($userId)

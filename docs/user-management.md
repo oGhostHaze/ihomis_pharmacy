@@ -20,6 +20,14 @@ User Management is available from **Settings → Manage Users** to authorized us
 
 Protected Super Admin accounts cannot be changed from this page.
 
+## Reset a password
+
+1. Select **Reset password** beside the account.
+2. Confirm the reset to the default password shown in the confirmation message.
+3. Ask the user to sign in with the default password and change it from their profile.
+
+Only users with `view-settings` permission can reset passwords. Protected Super Admin accounts cannot be reset from this page. Resetting a password does not reactivate an inactive account.
+
 ## Activate or deactivate an account
 
 1. Select **Deactivate** or **Reactivate** beside the account.

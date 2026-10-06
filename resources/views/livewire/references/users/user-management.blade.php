@@ -206,6 +206,15 @@
                                             <i class="las la-user-edit"></i> Edit access
                                         </button>
 
+                                        @if (!$user->hasRole('Super Admin'))
+                                            <button type="button" class="gap-1 btn btn-sm btn-warning btn-outline"
+                                                wire:click="resetPassword({{ $user->id }})"
+                                                wire:loading.attr="disabled"
+                                                onclick="if (!confirm('Reset this user password to 123456? Ask the user to change it after signing in.')) { event.stopImmediatePropagation(); }">
+                                                <i class="las la-key" aria-hidden="true"></i> Reset password
+                                            </button>
+                                        @endif
+
                                         @if (!$isProtected && (int) $user->id !== (int) auth()->id())
                                             <button type="button"
                                                 class="gap-1 btn btn-sm {{ $user->trashed() ? 'btn-success' : 'btn-error' }} btn-outline"
