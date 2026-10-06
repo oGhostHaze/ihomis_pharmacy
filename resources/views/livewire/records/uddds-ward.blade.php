@@ -116,7 +116,7 @@
                                     @if (!empty($usedFunds))
                                         <p class="mt-1 {{ $fundCoverage < $fundNeed ? 'text-red-700' : 'text-slate-700' }}">Combined available: {{ $fundCoverage }} / needed: {{ $fundNeed }}.</p>
                                     @endif
-                                    <p class="mt-1">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
+                                    <p class="mt-1 text-xs">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
 
                             @else
                                 <p class="mt-2 text-sm text-red-700">No alternate fund available, or this item already has a charge that must be adjusted separately.</p>
