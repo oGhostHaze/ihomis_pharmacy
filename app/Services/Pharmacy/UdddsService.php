@@ -504,6 +504,19 @@ class UdddsService
         return array_values(array_filter($items, fn ($item) => $item->queue_status === $status));
     }
 
+    public function fundSelectionGroups(array $items, array $selectedKeys): array
+    {
+        $groups = [];
+        foreach ($items as $item) {
+            if (empty($item->is_actionable) || !in_array((string) $item->docointkey, $selectedKeys, true)) continue;
+            $key = UdddsStockAllocator::groupKey($item);
+            if (!isset($groups[$key])) $groups[$key] = ['item' => $item, 'qty' => 0, 'patients' => []];
+            $groups[$key]['qty'] += (float) $item->pchrgqty;
+            $groups[$key]['patients'][$item->enccode] = true;
+        }
+        return $groups;
+    }
+
     public function annotatePendingStock(array $items, $locationId): array
     {
         $groups = [];

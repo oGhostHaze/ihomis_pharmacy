@@ -58,7 +58,75 @@
         .uddds-queue .uddds-loading-spinner { display: inline-block; width: 32px; height: 32px; margin-bottom: 12px; border: 3px solid #cbd5e1; border-top-color: #047857; border-radius: 50%; animation: uddds-loading-spin 0.8s linear infinite; }
         @keyframes uddds-loading-spin { to { transform: rotate(360deg); } }
         @media (prefers-reduced-motion: reduce) { .uddds-queue .uddds-loading-spinner { animation: none; } }
+        .uddds-queue .uddds-fund-modal { position: fixed; inset: 0; z-index: 850; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,0.5); }
+        .uddds-queue .uddds-fund-panel { width: 100%; max-width: 680px; padding: 24px; background: #fff; color: #0f172a; border-radius: 8px; }
+        .uddds-queue .uddds-fund-list { max-height: 60vh; overflow-y: auto; margin-top: 12px; }
     </style>
+    @if ($fundModalOpen)
+        <div class="uddds-fund-modal" role="dialog" aria-modal="true" aria-labelledby="uddds-fund-title" wire:key="uddds-fund-modal">
+            <div class="uddds-fund-panel">
+                <div class="flex items-center justify-between gap-3">
+                    <h2 id="uddds-fund-title" class="text-lg font-semibold">Fund sources for selected items</h2>
+                    <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="closeFundModal">Close</button>
+                </div>
+                <p class="mt-2 text-sm">One choice per medicine and original fund, shared across all selected patients. Current stock is used first.</p>
+                <div class="uddds-fund-list">
+                    @forelse ($fundGroups as $fundGroup)
+                        @php $item = $fundGroup['item']; @endphp
+                        <section class="py-3 border-b border-slate-200">
+                            <h3 class="font-semibold">{{ str_replace('_', '', $item->drug_concat) }}</h3>
+                            <p class="text-sm">{{ $item->chrgdesc }} · {{ count($fundGroup['patients']) }} patients · {{ $fundGroup['qty'] }} needed · {{ $item->current_available }} available</p>
+                            @if ($item->current_available >= $fundGroup['qty'])
+                                <p class="mt-2 text-sm">Current fund has sufficient stock for this selection.</p>
+                            @elseif (!empty($item->alternate_funds))
+                                    @php
+                                        $fundChoices = array_values((array) ($fallback_sources[$item->fallback_key] ?? []));
+                                        $fundNeed = $fundGroup['qty'];
+                                        $fundCoverage = $item->current_available;
+                                        $usedFunds = [];
+                                    @endphp
+                                    @for ($fundIndex = 0; $fundIndex < count($item->alternate_funds); $fundIndex++)
+                                        @if ($fundIndex > 0 && ($fundCoverage >= $fundNeed || empty($fundChoices[$fundIndex - 1])))
+                                            @break
+                                        @endif
+                                        <label class="block mt-2">
+                                            <span class="block mb-1 font-medium text-slate-700">{{ $fundIndex === 0 ? 'Alternate fund for shortage' : 'Next fund for remaining shortage' }}</span>
+                                            <select class="w-full select select-bordered select-sm" wire:model="fallback_sources.{{ $item->fallback_key }}.{{ $fundIndex }}" wire:loading.attr="disabled">
+                                                <option value="">Choose one fund source</option>
+                                                @foreach ($item->alternate_funds as $fund)
+                                                    @if (!in_array($fund['code'], $usedFunds, true))
+                                                        <option value="{{ $fund['code'] }}">{{ $fund['name'] }} — {{ $fund['available'] }} available</option>
+                                                    @endif
+                                                @endforeach
+                                            </select>
+                                        </label>
+                                        @php
+                                            $chosenFund = $fundChoices[$fundIndex] ?? '';
+                                            foreach ($item->alternate_funds as $option) {
+                                                if ($option['code'] === $chosenFund && !in_array($chosenFund, $usedFunds, true)) {
+                                                    $fundCoverage += $option['available'];
+                                                    $usedFunds[] = $chosenFund;
+                                                }
+                                            }
+                                        @endphp
+                                    @endfor
+                                    @if (!empty($usedFunds))
+                                        <p class="mt-1 {{ $fundCoverage < $fundNeed ? 'text-red-700' : 'text-slate-700' }}">Combined available: {{ $fundCoverage }} / needed: {{ $fundNeed }}.</p>
+                                    @endif
+                                    <p class="mt-1">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
+
+                            @else
+                                <p class="mt-2 text-sm text-red-700">No alternate fund available, or this item already has a charge that must be adjusted separately.</p>
+                            @endif
+                        </section>
+                    @empty
+                        <p class="py-4">Select pending items first.</p>
+                    @endforelse
+                </div>
+                <button type="button" class="btn btn-sm uddds-issue mt-4" wire:click="closeFundModal">Use These Choices</button>
+            </div>
+        </div>
+    @endif
     <div class="uddds-loading-modal" wire:loading.flex style="display: {{ $queueLoaded ? 'none' : 'flex' }};"
         role="dialog" aria-modal="true" aria-labelledby="uddds-loading-title" wire:key="uddds-loading-modal">
         <div class="uddds-loading-panel" role="status" aria-live="polite">
@@ -138,6 +206,7 @@
                     <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
                 </button>
             @endif
+            <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="openFundModal" wire:loading.attr="disabled" @if (empty($selected_items)) disabled @endif>Choose Fund Sources</button>
             <button type="button" class="btn btn-sm uddds-issue"
                 onclick="confirmUdddsIssue({{ count($selected_items) }}, () => @this.call('processSelected'))"
                 @if (empty($selected_items)) disabled @endif wire:loading.attr="disabled">
@@ -235,49 +304,8 @@
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>
                             <td class="px-3 py-3 text-xs text-slate-600">
                                 {{ $item->chrgdesc }}
-                                @if (!empty($item->alternate_funds))
-                                    @php
-                                        $fundChoices = array_values((array) ($fallback_sources[$item->fallback_key] ?? []));
-                                        $chosenNeed = collect($items)->filter(fn ($row) => !empty($row->is_actionable)
-                                            && \App\Services\Pharmacy\UdddsStockAllocator::groupKey($row) === $item->fallback_key
-                                            && in_array((string) $row->docointkey, $selected_items, true))->sum('pchrgqty');
-                                        $fundNeed = $chosenNeed > 0 ? $chosenNeed : $item->queue_needed;
-                                        $fundCoverage = $item->current_available;
-                                        $usedFunds = [];
-                                    @endphp
-                                    @for ($fundIndex = 0; $fundIndex < count($item->alternate_funds); $fundIndex++)
-                                        @if ($fundIndex > 0 && ($fundCoverage >= $fundNeed || empty($fundChoices[$fundIndex - 1])))
-                                            @break
-                                        @endif
-                                        <label class="block mt-2">
-                                            <span class="block mb-1 font-medium text-slate-700">{{ $fundIndex === 0 ? 'Alternate fund for shortage' : 'Next fund for remaining shortage' }}</span>
-                                            <select class="w-full select select-bordered select-sm" wire:model="fallback_sources.{{ $item->fallback_key }}.{{ $fundIndex }}" wire:loading.attr="disabled">
-                                                <option value="">Choose one fund source</option>
-                                                @foreach ($item->alternate_funds as $fund)
-                                                    @if (!in_array($fund['code'], $usedFunds, true))
-                                                        <option value="{{ $fund['code'] }}">{{ $fund['name'] }} — {{ $fund['available'] }} available</option>
-                                                    @endif
-                                                @endforeach
-                                            </select>
-                                        </label>
-                                        @php
-                                            $chosenFund = $fundChoices[$fundIndex] ?? '';
-                                            foreach ($item->alternate_funds as $option) {
-                                                if ($option['code'] === $chosenFund && !in_array($chosenFund, $usedFunds, true)) {
-                                                    $fundCoverage += $option['available'];
-                                                    $usedFunds[] = $chosenFund;
-                                                }
-                                            }
-                                        @endphp
-                                    @endfor
-                                    @if (!empty($usedFunds))
-                                        <p class="mt-1 {{ $fundCoverage < $fundNeed ? 'text-red-700' : 'text-slate-700' }}">Combined available: {{ $fundCoverage }} / needed: {{ $fundNeed }}.</p>
-                                    @endif
-                                    <p class="mt-1">Current fund first, then alternates in order. Another choice appears only if more stock is needed. Applies to selected rows for the same drug and original fund.</p>
-                                @elseif (!empty($item->stock_problem) && empty($item->pcchrgcod))
-                                    <p class="mt-1 text-red-700">No alternate fund has available stock here.</p>
-                                @elseif (!empty($item->stock_problem) && $item->pcchrgcod)
-                                    <p class="mt-1">Existing charge: adjust its fund separately before using alternate stock.</p>
+                                @if (!empty($fallback_sources[\App\Services\Pharmacy\UdddsStockAllocator::groupKey($item)]))
+                                    <p class="mt-1 font-medium">Alternate funds configured for this item.</p>
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-right text-xs tabular-nums text-slate-700">{{ number_format($item->pchrgqty, 0) }}</td>

@@ -23,6 +23,7 @@ class UdddsWard extends Component
     public $lastBatchPrintUrl;
     public $processingProblem;
     public $fallback_sources = [];
+    public $fundModalOpen = false;
 
     public function mount()
     {
@@ -40,6 +41,16 @@ class UdddsWard extends Component
         }
     }
 
+    public function openFundModal()
+    {
+        $this->fundModalOpen = !empty($this->selected_items) && $this->queue_view === 'active';
+    }
+
+    public function closeFundModal()
+    {
+        $this->fundModalOpen = false;
+    }
+
     public function loadQueue()
     {
         $this->queueLoaded = true;
@@ -47,29 +58,29 @@ class UdddsWard extends Component
 
     public function updatingStatusFilter()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
     }
 
     public function updatingWardcode()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
     }
 
     public function updatingSelectedDate()
     {
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
     }
 
     public function showToday()
     {
         $this->selected_date = now('Asia/Manila')->toDateString();
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
     }
 
     public function render()
@@ -90,6 +101,7 @@ class UdddsWard extends Component
         return view('livewire.records.uddds-ward', [
             'items' => $items,
             'patients' => $patients,
+            'fundGroups' => app(UdddsService::class)->fundSelectionGroups($items, $this->selected_items),
             'batchReprintUrl' => $this->reprintUrl($items),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,
@@ -178,7 +190,7 @@ class UdddsWard extends Component
             return;
         }
 
-        $this->reset('selected_items', 'processingProblem', 'fallback_sources');
+        $this->reset('selected_items', 'processingProblem', 'fallback_sources', 'fundModalOpen');
         $this->dispatchBrowserEvent('uddds-selection-cleared');
         $this->alert('success', $result['message']);
 
