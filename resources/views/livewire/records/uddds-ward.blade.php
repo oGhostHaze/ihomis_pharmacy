@@ -43,6 +43,17 @@
         .uddds-queue .btn.uddds-issue:hover:not(:disabled) { background: #065f46; border-color: #065f46; }
         .uddds-queue .btn:disabled { opacity: 0.5; }
         .uddds-queue .uddds-link:focus-visible, .uddds-queue .btn:focus-visible { outline: 2px solid #065f46; outline-offset: 3px; }
+        .uddds-queue .uddds-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; padding-bottom: 12px; }
+        .uddds-queue .uddds-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; width: 100%; }
+        .uddds-queue .uddds-filters > label { min-width: 0; }
+        .uddds-queue .uddds-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        @media (min-width: 640px) {
+            .uddds-queue .uddds-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+            .uddds-queue .uddds-filters { grid-template-columns: 170px 150px 170px 180px; width: auto; }
+            .uddds-queue .uddds-actions { margin-left: auto; }
+        }
     </style>
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -58,8 +69,8 @@
         </div>
     </div>
 
-    <div class="flex flex-col gap-3 pb-5 border-b border-base-300 lg:flex-row lg:items-end lg:justify-between">
-        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="uddds-toolbar border-b border-base-300">
+        <div class="uddds-filters">
             <label class="form-control">
                 <span class="pb-1 text-xs font-medium label-text">View</span>
                 <select wire:model="queue_view" class="w-full select select-bordered select-sm">
@@ -99,7 +110,7 @@
                 </select>
             </label>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="uddds-actions">
             <span class="mr-1 text-xs text-base-content/60" wire:loading>
                 <i class="las la-spinner la-lg animate-spin"></i> Updating…
             </span>
