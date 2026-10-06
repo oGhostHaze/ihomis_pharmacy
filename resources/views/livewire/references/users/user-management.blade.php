@@ -11,7 +11,7 @@
 </x-slot>
 
 <div class="min-h-screen px-4 py-6 bg-base-200 sm:px-6 lg:px-8">
-    <div class="mx-auto space-y-6" style="max-width: 100rem;">
+    <div class="w-full space-y-6">
         <section class="overflow-hidden shadow-lg rounded-xl bg-base-100"
             x-data="{ open: {{ $search || $role_filter || $location_filter || $status_filter ? 'true' : 'false' }} }">
             <button type="button"
@@ -198,7 +198,7 @@
                                     @endif
                                 </td>
                                 <td style="white-space: normal;">
-                                    <div class="flex flex-wrap justify-end gap-2" style="width: 24rem;">
+                                    <div class="flex flex-wrap justify-end gap-2" style="width: 28rem;">
                                         <button type="button" class="gap-1 btn btn-sm btn-info btn-outline"
                                             style="flex-shrink: 0; text-transform: none;"
                                             wire:click="editUser({{ $user->id }})"
