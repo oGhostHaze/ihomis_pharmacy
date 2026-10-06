@@ -28,11 +28,22 @@
     </div>
 </x-slot>
 
-<div class="flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
+<div class="uddds-queue flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
     wire:init="loadQueue"
-    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded . '|' . $queue_view) }}"
-    x-data='{"selected": [], "actionable": @json($actionableKeys)}'
+    wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded . '|' . $queue_view . '|' . $status_filter) }}"
+    x-data="{ selected: [], get actionable() { return Array.from(this.$root.querySelectorAll('[data-uddds-selectable]:not(:disabled)')).map(input => input.value); } }"
     @uddds-selection-cleared.window="selected = []">
+    <style>
+        .uddds-queue .uddds-patient-header { background: #f1f5f9; color: #334155; }
+        .uddds-queue .uddds-link { color: #065f46; }
+        .uddds-queue .uddds-link:hover { color: #064e3b; text-decoration: underline; }
+        .uddds-queue .btn.uddds-outline { color: #065f46; border-color: #047857; background: #fff; }
+        .uddds-queue .btn.uddds-outline:hover:not(:disabled) { color: #fff; background: #065f46; border-color: #065f46; }
+        .uddds-queue .btn.uddds-issue { color: #fff; background: #047857; border-color: #047857; }
+        .uddds-queue .btn.uddds-issue:hover:not(:disabled) { background: #065f46; border-color: #065f46; }
+        .uddds-queue .btn:disabled { opacity: 0.5; }
+        .uddds-queue .uddds-link:focus-visible, .uddds-queue .btn:focus-visible { outline: 2px solid #065f46; outline-offset: 3px; }
+    </style>
     <div class="flex flex-col gap-3 mb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
             <h1 class="text-xl font-semibold text-base-content">UDDDS ward queue</h1>
@@ -48,7 +59,7 @@
     </div>
 
     <div class="flex flex-col gap-3 pb-5 border-b border-base-300 lg:flex-row lg:items-end lg:justify-between">
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label class="form-control">
                 <span class="pb-1 text-xs font-medium label-text">View</span>
                 <select wire:model="queue_view" class="w-full select select-bordered select-sm">
@@ -57,12 +68,22 @@
                 </select>
             </label>
             <label class="form-control">
+                <span class="pb-1 text-xs font-medium label-text">Status</span>
+                <select wire:model="status_filter" class="w-full select select-bordered select-sm">
+                    <option value="all">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="charged">Charged / Unissued</option>
+                    <option value="issued">Issued</option>
+                    <option value="eligible">Eligible</option>
+                </select>
+            </label>
+            <label class="form-control">
                 <span class="pb-1 text-xs font-medium label-text">Service date</span>
                 <div class="flex gap-2">
                     <input type="date" wire:model="selected_date" class="w-full input input-bordered input-sm"
                         aria-label="Service date" />
                     @if (! $isToday)
-                        <button type="button" class="btn btn-sm btn-outline btn-primary" wire:click="showToday">
+                        <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="showToday">
                             Today
                         </button>
                     @endif
@@ -84,21 +105,21 @@
             </span>
             @if ($batchReprintUrl)
                 <a href="{{ $batchReprintUrl }}" target="_blank" rel="noopener"
-                    class="btn btn-sm btn-outline btn-primary"
+                    class="btn btn-sm btn-outline uddds-outline"
                     title="Reprint all existing charge slips for the selected service date and ward">
                     <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
                 </a>
             @else
-                <button type="button" class="btn btn-sm btn-outline btn-primary" disabled>
+                <button type="button" class="btn btn-sm btn-outline uddds-outline" disabled>
                     <i class="las la-print" aria-hidden="true"></i> Batch Reprint Charge Slips
                 </button>
             @endif
-            <button type="button" class="btn btn-sm btn-success"
+            <button type="button" class="btn btn-sm uddds-issue"
                 @click="confirmUdddsIssue(selected.length, () => $wire.processSelected([...selected]))"
                 :disabled="selected.length === 0" wire:loading.attr="disabled">
                 Charge &amp; Issue Selected
             </button>
-            <button type="button" class="btn btn-sm btn-outline btn-primary"
+            <button type="button" class="btn btn-sm btn-outline uddds-outline"
                 @click="selected = [...actionable]" wire:loading.attr="disabled"
                 @if (!$hasActionableItems) disabled @endif>Select Pending / Unissued</button>
             <button type="button" class="btn btn-sm btn-outline"
@@ -119,7 +140,7 @@
     @if ($lastBatchPrintUrl)
         <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <span>Slips from the last processing attempt:</span>
-            <a href="{{ $lastBatchPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline btn-primary">Open Last Batch</a>
+            <a href="{{ $lastBatchPrintUrl }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline uddds-outline">Open Last Batch</a>
         </div>
     @endif
     @if ($queue_view === 'processed')
@@ -139,9 +160,9 @@
     @else
     @forelse ($patients as $patient)
         <section class="mt-4 overflow-hidden border border-base-300 bg-base-100" wire:key="uddds-{{ md5($patient['enccode']) }}">
-            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-base-200">
+            <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 uddds-patient-header">
                 <div>
-                    <button type="button" class="font-semibold text-left text-primary" wire:click="view_enctr('{{ $patient['enccode'] }}')">
+                    <button type="button" class="font-semibold text-left uddds-link" wire:click="view_enctr('{{ $patient['enccode'] }}')">
                         {{ $patient['name'] }}
                     </button>
                     <div class="text-xs text-base-content/60">
@@ -151,15 +172,15 @@
                 <div class="flex flex-wrap items-center gap-2">
                     @if ($patient['reprint_url'])
                         <a href="{{ $patient['reprint_url'] }}" target="_blank" rel="noopener"
-                            class="btn btn-xs btn-outline btn-primary">
+                            class="btn btn-xs btn-outline uddds-outline">
                             <i class="las la-print" aria-hidden="true"></i> Reprint Charge Slips
                         </a>
                     @else
-                        <button type="button" class="btn btn-xs btn-outline btn-primary" disabled>
+                        <button type="button" class="btn btn-xs btn-outline uddds-outline" disabled>
                             <i class="las la-print" aria-hidden="true"></i> Reprint Charge Slips
                         </button>
                     @endif
-                <button type="button" class="btn btn-xs btn-success"
+                <button type="button" class="btn btn-xs uddds-issue"
                     @click="confirmUdddsIssue({{ count($patient['keys']) }}, () => $wire.readyToBill('{{ $patient['enccode'] }}'))"
                     @if (empty($patient['keys'])) disabled @endif>
                     Charge &amp; Issue
@@ -187,7 +208,7 @@
                             <td class="px-3 py-3">
                                 <input type="checkbox"
                                     class="h-4 w-4 cursor-pointer rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                                    aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" x-model="selected"
+                                    data-uddds-selectable aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" x-model="selected"
                                     value="{{ $item->docointkey }}" @if (! $item->is_actionable) disabled @endif />
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>
@@ -200,13 +221,11 @@
                                 {{ $item->uddds_end_date ? date('m/d/Y', strtotime($item->uddds_end_date)) : '' }}
                             </td>
                             <td class="px-3 py-3 text-xs">
-                                @if (!empty($item->is_source_issued_for_date))
+                                @if ($item->queue_status === 'issued')
                                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Issued</span>
-                                @elseif ($queue_view !== 'processed' && empty($item->uddds_source_docointkey))
+                                @elseif ($item->queue_status === 'eligible')
                                     <span class="inline-flex items-center rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800">Eligible</span>
-                                @elseif ($item->estatus === 'S' || (float) $item->qtyissued > 0)
-                                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">Issued</span>
-                                @elseif ($item->estatus == 'U' || !$item->pcchrgcod)
+                                @elseif ($item->queue_status === 'pending')
                                     <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Pending</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-700">Charged</span>
@@ -217,7 +236,7 @@
                             </td>
                             <td class="px-3 py-3 text-xs">
                                 @if ($item->pcchrgcod)
-                                    <a class="text-primary underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
+                                    <a class="uddds-link underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
                                 @else
                                     <span>—</span>
                                 @endif
@@ -230,7 +249,7 @@
         </section>
     @empty
         <div class="p-10 mt-6 text-center border rounded-lg border-base-300 text-base-content/60">
-            <div class="font-medium text-base-content">No UDDDS orders found</div>
+            <div class="font-medium text-base-content">No UDDDS orders match these filters</div>
             <div class="mt-1 text-sm">{{ $queue_view === 'processed' ? 'No existing UDDDS charge slips' : 'No eligible or generated Basic orders' }} for {{ $displayDate }} in this ward.</div>
         </div>
     @endforelse

@@ -485,6 +485,25 @@ class UdddsService
         return array_values(array_unique($codes));
     }
 
+    public function filterWardItemsByStatus(array $items, $status = 'all', $processed = false): array
+    {
+        foreach ($items as $item) {
+            if (!empty($item->is_source_issued_for_date)) {
+                $item->queue_status = 'issued';
+            } elseif (!$processed && empty($item->uddds_source_docointkey)) {
+                $item->queue_status = 'eligible';
+            } elseif ($item->estatus === 'S' || (float) $item->qtyissued > 0) {
+                $item->queue_status = 'issued';
+            } elseif ($item->estatus === 'U' || empty($item->pcchrgcod)) {
+                $item->queue_status = 'pending';
+            } else {
+                $item->queue_status = 'charged';
+            }
+        }
+        if (!in_array($status, ['pending', 'charged', 'issued', 'eligible'], true)) return $items;
+        return array_values(array_filter($items, fn ($item) => $item->queue_status === $status));
+    }
+
     public function annotatePendingStock(array $items, $locationId): array
     {
         $groups = [];

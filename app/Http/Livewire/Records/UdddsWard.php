@@ -19,6 +19,7 @@ class UdddsWard extends Component
     public $selected_items = [];
     public $queueLoaded = false;
     public $queue_view = 'active';
+    public $status_filter = 'all';
     public $lastBatchPrintUrl;
     public $processingProblem;
 
@@ -31,6 +32,12 @@ class UdddsWard extends Component
     public function loadQueue()
     {
         $this->queueLoaded = true;
+    }
+
+    public function updatingStatusFilter()
+    {
+        $this->reset('selected_items', 'processingProblem');
+        $this->dispatchBrowserEvent('uddds-selection-cleared');
     }
 
     public function updatingQueueView()
@@ -77,7 +84,7 @@ class UdddsWard extends Component
             'actionableKeys' => $actionableKeys,
             'displayDate' => Carbon::parse($this->selected_date)->format('F j, Y'),
             'isToday' => $this->selected_date === now('Asia/Manila')->toDateString(),
-            'eligibleCount' => collect($items)->where('is_billable', 0)->count(),
+            'eligibleCount' => collect($items)->where('queue_status', 'eligible')->count(),
             'billableCount' => collect($items)->where('is_billable', 1)->count(),
             'issuedCount' => collect($items)->filter(fn ($item) => !empty($item->is_source_issued_for_date)
                 || ($item->estatus === 'S' && !empty($item->uddds_source_docointkey)))->count(),
@@ -190,14 +197,11 @@ class UdddsWard extends Component
         }
 
         $service = app(UdddsService::class);
-        if ($this->queue_view === 'processed') {
-            return $service->processedWardItemsForDate($this->wardcode, session('pharm_location_id'), $this->selected_date);
-        }
+        $processed = $this->queue_view === 'processed';
+        $items = $processed
+            ? $service->processedWardItemsForDate($this->wardcode, session('pharm_location_id'), $this->selected_date)
+            : $service->wardItemsForDate($this->wardcode, session('pharm_location_id'), $this->selected_date);
 
-        return $service->wardItemsForDate(
-            $this->wardcode,
-            session('pharm_location_id'),
-            $this->selected_date
-        );
+        return $service->filterWardItemsByStatus($items, $this->status_filter, $processed);
     }
 }
