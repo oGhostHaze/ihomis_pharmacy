@@ -158,9 +158,6 @@
     @if ($processingProblem)
         <div class="mt-4 alert alert-error" role="alert">{{ $processingProblem }}</div>
     @endif
-    @if ($queue_view === 'active' && $queueLoaded)
-        <p class="mt-3 text-xs text-base-content/70">Stock checks use unexpired stock at this pharmacy, grouped by drug and fund source across the displayed queue. These show current availability; stock is checked again when processing.</p>
-    @endif
     @if ($lastBatchPrintUrl)
         <div class="mt-4 flex flex-wrap items-center gap-3 text-sm">
             <span>Slips from the last processing attempt:</span>
