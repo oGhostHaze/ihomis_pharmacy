@@ -11,7 +11,7 @@
 </x-slot>
 
 <div class="min-h-screen px-4 py-6 bg-base-200 sm:px-6 lg:px-8">
-    <div class="mx-auto space-y-6 max-w-7xl">
+    <div class="mx-auto space-y-6" style="max-width: 100rem;">
         <section class="overflow-hidden shadow-lg rounded-xl bg-base-100"
             x-data="{ open: {{ $search || $role_filter || $location_filter || $status_filter ? 'true' : 'false' }} }">
             <button type="button"
@@ -110,7 +110,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="table w-full">
+                <table class="table w-full" style="min-width: 72rem;">
                     <thead class="bg-base-200">
                         <tr>
                             <th>
@@ -155,21 +155,21 @@
                             <tr class="{{ $user->trashed() ? 'opacity-60' : '' }}"
                                 wire:key="user-row-{{ $user->id }}">
                                 <td class="font-mono text-xs">#{{ $user->id }}</td>
-                                <td>
+                                <td style="white-space: normal;">
                                     <div class="flex items-center gap-3">
                                         <div class="avatar placeholder">
                                             <div class="w-10 rounded-full bg-primary/10 text-primary">
                                                 <span class="font-bold uppercase">{{ substr(trim($user->name), 0, 1) }}</span>
                                             </div>
                                         </div>
-                                        <div>
+                                        <div style="min-width: 12rem; max-width: 20rem; overflow-wrap: anywhere;">
                                             <div class="font-semibold uppercase">{{ $user->name }}</div>
                                             <div class="text-xs text-base-content/60">{{ $user->email }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>{{ $user->employeeid ?: '—' }}</td>
-                                <td>
+                                <td style="min-width: 10rem;">
                                     @if ($user->location)
                                         <span class="gap-1 badge badge-ghost">
                                             <i class="las la-map-marker-alt"></i>
@@ -179,14 +179,14 @@
                                         <span class="badge badge-warning badge-outline">Unassigned</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td style="min-width: 8rem;">
                                     @if ($role)
                                         <span class="badge badge-info badge-outline">{{ $role->name }}</span>
                                     @else
                                         <span class="badge badge-warning badge-outline">No role</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td style="min-width: 7rem;">
                                     @if ($user->trashed())
                                         <span class="gap-1 badge badge-error badge-outline">
                                             <i class="las la-times-circle"></i> Inactive
@@ -197,9 +197,10 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td>
-                                    <div class="flex justify-end gap-2">
+                                <td style="white-space: normal;">
+                                    <div class="flex flex-wrap justify-end gap-2" style="width: 24rem;">
                                         <button type="button" class="gap-1 btn btn-sm btn-info btn-outline"
+                                            style="flex-shrink: 0; text-transform: none;"
                                             wire:click="editUser({{ $user->id }})"
                                             wire:loading.attr="disabled"
                                             @if ($isProtected) disabled @endif>
@@ -208,6 +209,7 @@
 
                                         @if (!$user->hasRole('Super Admin'))
                                             <button type="button" class="gap-1 btn btn-sm btn-warning btn-outline"
+                                                style="flex-shrink: 0; text-transform: none;"
                                                 wire:click="resetPassword({{ $user->id }})"
                                                 wire:loading.attr="disabled"
                                                 onclick="if (!confirm('Reset this user password to 123456? Ask the user to change it after signing in.')) { event.stopImmediatePropagation(); }">
@@ -217,6 +219,7 @@
 
                                         @if (!$isProtected && (int) $user->id !== (int) auth()->id())
                                             <button type="button"
+                                                style="flex-shrink: 0; text-transform: none;"
                                                 class="gap-1 btn btn-sm {{ $user->trashed() ? 'btn-success' : 'btn-error' }} btn-outline"
                                                 wire:click="toggleActive({{ $user->id }})"
                                                 wire:loading.attr="disabled"
