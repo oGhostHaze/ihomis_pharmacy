@@ -1,5 +1,8 @@
 <style>
     .pos-receipt {
+        --receipt-text-scale: 1;
+        font-size: calc(11px * var(--receipt-text-scale));
+        line-height: 1.35;
         width: 70mm;
         max-width: 100%;
         margin: 0 auto;
@@ -18,15 +21,16 @@
         width: 100%;
         table-layout: fixed;
         border-collapse: collapse;
-        font-size: 10px;
+        font-size: calc(10px * var(--receipt-text-scale));
         line-height: 1.3;
     }
+    .pos-receipt td { font-size: inherit !important; }
     .pos-receipt th.w-20 { width: auto; }
     .pos-receipt thead th {
         white-space: nowrap;
         overflow-wrap: normal;
         word-break: normal;
-        font-size: 10px;
+        font-size: calc(10px * var(--receipt-text-scale));
     }
     .pos-receipt .receipt-numbers td {
         white-space: nowrap;
@@ -36,8 +40,8 @@
         padding: 1px 2px;
         overflow-wrap: anywhere;
     }
-    .pos-receipt .text-xs\/4 { font-size: 11px; line-height: 1.35; }
-    .pos-receipt h5 { font-size: 18px; line-height: 1.3; }
+    .pos-receipt .text-xs\/4 { font-size: calc(11px * var(--receipt-text-scale)) !important; line-height: 1.35; }
+    .pos-receipt h5 { font-size: calc(18px * var(--receipt-text-scale)); line-height: 1.3; }
     .pos-receipt .mt-10 { margin-top: 5mm; }
     .pos-receipt .uddds-slip { padding: 2mm 0; }
     .pos-receipt .uddds-slip + .uddds-slip {

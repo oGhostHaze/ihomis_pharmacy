@@ -1,7 +1,19 @@
 window.udddsBatchLoader = function (wire, codes) {
     return {
         codes: codes, next: 0, loading: false, modalOpen: codes.length > 0,
-        error: '', ready: false,
+        error: '', ready: false, textScale: 1,
+        init() {
+            try {
+                const saved = Number(localStorage.getItem('uddds-receipt-text-scale'));
+                if ([0.65, 0.8, 1].includes(saved)) this.textScale = saved;
+            } catch (_) {}
+        },
+        setTextScale(value) {
+            const scale = Number(value);
+            if (![0.65, 0.8, 1].includes(scale)) return;
+            this.textScale = scale;
+            try { localStorage.setItem('uddds-receipt-text-scale', String(scale)); } catch (_) {}
+        },
         async load() {
             if (this.loading || this.ready || !this.codes.length) return;
             this.loading = true;
@@ -21,7 +33,7 @@ window.udddsBatchLoader = function (wire, codes) {
                 await this.$nextTick();
                 if (document.fonts) await document.fonts.ready;
                 await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                this.print();
+                // Let the operator choose text size before opening the print dialog.
             } catch (error) {
                 this.error = 'Could not load ' + this.codes[this.next] + '. ' +
                     (error instanceof Error && error.message ? error.message : 'Please retry.');
