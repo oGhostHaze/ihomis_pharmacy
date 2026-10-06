@@ -31,8 +31,7 @@
 <div class="uddds-queue flex flex-col px-4 py-6 mx-auto max-w-screen-2xl sm:px-6"
     wire:init="loadQueue"
     wire:key="uddds-queue-{{ md5($selected_date . '|' . $wardcode . '|' . (int) $queueLoaded . '|' . $queue_view . '|' . $status_filter) }}"
-    x-data="{ selected: [], get actionable() { return Array.from(this.$root.querySelectorAll('[data-uddds-selectable]:not(:disabled)')).map(input => input.value); } }"
-    @uddds-selection-cleared.window="selected = []">
+    >
     <style>
         .uddds-queue .uddds-patient-header { background: #f1f5f9; color: #334155; }
         .uddds-queue .uddds-link { color: #065f46; }
@@ -126,18 +125,18 @@
                 </button>
             @endif
             <button type="button" class="btn btn-sm uddds-issue"
-                @click="confirmUdddsIssue(selected.length, () => $wire.processSelected([...selected]))"
-                :disabled="selected.length === 0" wire:loading.attr="disabled">
+                onclick="confirmUdddsIssue({{ count($selected_items) }}, () => @this.call('processSelected'))"
+                @if (empty($selected_items)) disabled @endif wire:loading.attr="disabled">
                 Charge &amp; Issue Selected
             </button>
             <button type="button" class="btn btn-sm btn-outline uddds-outline"
-                @click="selected = [...actionable]" wire:loading.attr="disabled"
+                wire:click="selectPending" wire:loading.attr="disabled"
                 @if (!$hasActionableItems) disabled @endif>Select Pending / Unissued</button>
             <button type="button" class="btn btn-sm btn-outline"
-                @click="selected = actionable.length > 0 && actionable.every(key => selected.includes(key)) ? [] : [...actionable]"
+                wire:click="toggleSelectAll"
                 wire:loading.attr="disabled"
                 @if (! $hasActionableItems) disabled @endif>
-                <span x-text="actionable.length > 0 && actionable.every(key => selected.includes(key)) ? 'Clear selection' : 'Select all'">Select all</span>
+                <span>{{ $allSelected ? 'Clear selection' : 'Select all' }}</span>
             </button>
         </div>
     </div>
@@ -192,7 +191,7 @@
                         </button>
                     @endif
                 <button type="button" class="btn btn-xs uddds-issue"
-                    @click="confirmUdddsIssue({{ count($patient['keys']) }}, () => $wire.readyToBill('{{ $patient['enccode'] }}'))"
+                    onclick="confirmUdddsIssue({{ count($patient['keys']) }}, () => @this.call('readyToBill', '{{ $patient['enccode'] }}'))"
                     @if (empty($patient['keys'])) disabled @endif>
                     Charge &amp; Issue
                 </button>
@@ -219,7 +218,7 @@
                             <td class="px-3 py-3">
                                 <input type="checkbox"
                                     class="h-4 w-4 cursor-pointer rounded border-slate-300 text-emerald-600 accent-emerald-600 focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
-                                    data-uddds-selectable aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" x-model="selected"
+                                    data-uddds-selectable aria-label="Select {{ implode('', explode('_', $item->drug_concat)) }}" wire:model="selected_items"
                                     value="{{ $item->docointkey }}" @if (! $item->is_actionable) disabled @endif />
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>

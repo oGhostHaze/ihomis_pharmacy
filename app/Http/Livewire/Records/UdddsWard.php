@@ -82,6 +82,7 @@ class UdddsWard extends Component
             'batchReprintUrl' => $this->reprintUrl($items),
             'hasActionableItems' => !empty($actionableKeys),
             'actionableKeys' => $actionableKeys,
+            'allSelected' => !empty($actionableKeys) && !array_diff($actionableKeys, $this->selected_items),
             'displayDate' => Carbon::parse($this->selected_date)->format('F j, Y'),
             'isToday' => $this->selected_date === now('Asia/Manila')->toDateString(),
             'eligibleCount' => collect($items)->where('queue_status', 'eligible')->count(),
@@ -106,9 +107,29 @@ class UdddsWard extends Component
         $this->processKeys($keys);
     }
 
+    public function selectPending()
+    {
+        $this->selected_items = $this->selectableKeys();
+    }
+
+    public function toggleSelectAll()
+    {
+        $keys = $this->selectableKeys();
+        $this->selected_items = $keys && !array_diff($keys, $this->selected_items) ? [] : $keys;
+    }
+
+    protected function selectableKeys(): array
+    {
+        $keys = [];
+        foreach ($this->filteredItems() as $item) {
+            if ($item->is_actionable) $keys[] = (string) $item->docointkey;
+        }
+        return array_values(array_unique($keys));
+    }
+
     public function processSelected(array $keys = [])
     {
-        $this->processKeys($keys);
+        $this->processKeys($keys ?: $this->selected_items);
     }
 
     public function view_enctr($enccode)
