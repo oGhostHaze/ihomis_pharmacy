@@ -1,6 +1,6 @@
 <div class="container max-w-xl mx-auto mt-5 pos-print-page">
     @include('livewire.pharmacy.dispensing.pos-receipt-styles')
-    <script src="{{ asset('js/uddds-batch-print.js') }}?v=2"></script>
+    <script src="{{ asset('js/uddds-batch-print.js') }}?v=3"></script>
     <div x-data='udddsBatchLoader($wire, @json($codes))' x-init="$nextTick(() => load())"
         :class="{ 'batch-incomplete': !ready }" class="batch-incomplete">
         <style>
@@ -17,19 +17,10 @@
         <div class="flex flex-wrap items-center justify-between gap-3 mb-3 no-print">
             <span role="status" aria-live="polite" x-text="next + ' / ' + codes.length + ' charge slips loaded'"></span>
             <div class="flex flex-wrap items-center gap-2">
-                <label class="flex items-center gap-2 text-sm">
-                    Text size
-                    <select class="select select-bordered select-sm" :value="textScale" @change="setTextScale($event.target.value)">
-                        <option value="1">Normal (100%)</option>
-                        <option value="0.8">Small (80%)</option>
-                        <option value="0.65">Compact (65%)</option>
-                    </select>
-                </label>
                 <button type="button" class="btn btn-sm btn-outline" x-show="error" x-cloak @click="load()">Retry Loading</button>
                 <button type="button" class="btn btn-sm btn-primary" :disabled="!ready" disabled @click="print()">Print all</button>
             </div>
         </div>
-        <p class="mb-3 text-sm no-print">Keep printer Scale at 100% and Margins at None. Use Text size above to change the font without narrowing the receipt.</p>
         <div class="batch-loading-modal no-print" x-show="modalOpen" role="dialog" aria-modal="true" aria-labelledby="batch-loading-title">
             <div class="batch-loading-panel">
                 <h2 id="batch-loading-title" class="text-lg font-semibold" x-text="error ? 'Charge slip could not load' : 'Loading charge slips'"></h2>
@@ -44,7 +35,7 @@
             </div>
         </div>
         <p class="batch-print-warning">Charge slips are still loading or a slip failed to load. Complete loading before printing.</p>
-        <div id="print" class="bg-white pos-receipt" x-ref="receipts" :style="{ '--receipt-text-scale': textScale }" wire:ignore></div>
+        <div id="print" class="bg-white pos-receipt" x-ref="receipts" wire:ignore></div>
         @if (empty($codes))
             <p class="p-8 text-center">No charge slips to print.</p>
         @endif
