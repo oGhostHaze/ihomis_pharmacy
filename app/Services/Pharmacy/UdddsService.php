@@ -583,7 +583,10 @@ class UdddsService
             $item->current_available = $balance;
             $item->queue_needed = $needed;
             $item->stock_problem = $balance < $needed;
-            if ($item->stock_problem && empty($item->pcchrgcod)) {
+            // A standing enrollment's slip belongs to its original dose. The next
+            // daily order is materialized without a charge before allocation.
+            $hasDailyCharge = !empty($item->uddds_source_docointkey) && !empty($item->pcchrgcod);
+            if ($item->stock_problem && !$hasDailyCharge) {
                 foreach ($fundOptions[$item->dmdcomb . '|' . $item->dmdctr] ?? [] as $option) {
                     if ($option['code'] !== $item->orderfrom) $item->alternate_funds[] = $option;
                 }
