@@ -336,7 +336,8 @@
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-right text-xs tabular-nums text-slate-700">{{ number_format($item->pchrgqty, 0) }}</td>
-                            <td class="px-3 py-3 text-xs text-slate-600">{{ $item->frequency ?: '—' }}</td>
+                            <td class="px-3 py-3 text-xs text-slate-600">{{ $item->frequency ?: '—' }}<span class="block mt-1 text-xs" title="Calendar-day supply schedule">{{ $item->schedule_label ?? 'Daily' }} · Next supply: {{ $item->next_supply_date ?? 'None within window' }}</span>
+                                @if (!empty($item->schedule_error)) <span class="block text-error">{{ $item->schedule_error }}</span> @endif</td>
                             <td class="px-3 py-3 text-xs tabular-nums text-slate-600 whitespace-nowrap">
                                 {{ $item->uddds_start_date ? date('m/d/Y', strtotime($item->uddds_start_date)) : '' }}
                                 –

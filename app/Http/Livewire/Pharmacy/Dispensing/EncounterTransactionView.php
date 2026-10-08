@@ -65,6 +65,7 @@ class EncounterTransactionView extends Component
     public $rx_id, $rx_dmdcomb, $rx_dmdctr, $empid, $mss, $deptcode;
     public $rx_order_type = 'BASIC';
     public $uddds_start_date, $uddds_end_date;
+    public $uddds_interval_days = 1;
     public $uddds_ready = false;
 
     public $stock_changes = false;
@@ -327,6 +328,11 @@ class EncounterTransactionView extends Component
 
     public function charge_items()
     {
+        if ($problem = app(UdddsService::class)->generatedOrderProblem($this->selected_items)) {
+            $this->alert('error', $problem);
+            return;
+        }
+
         $charge_code = OrderChargeCode::create([
             'charge_desc' => 'a',
         ]);
@@ -347,6 +353,11 @@ class EncounterTransactionView extends Component
 
     public function issue_order($bnb = null)
     {
+        if ($problem = app(UdddsService::class)->generatedOrderProblem($this->selected_items)) {
+            $this->alert('error', $problem);
+            return;
+        }
+
         if ($bnb !== null) {
             $this->bnb = filter_var($bnb, FILTER_VALIDATE_BOOLEAN);
         }
@@ -497,7 +508,11 @@ class EncounterTransactionView extends Component
                 $keys = array_map(function ($item) {
                     return trim($item, "'");
                 }, $this->selected_items);
-                $udddsService->activateOnIssued($keys);
+                $activation = $udddsService->activateOnIssued($keys);
+                if (!$activation['ok']) {
+                    $this->alert('warning', 'Order issued; UDDDS was not activated: ' . $activation['message']);
+                    return;
+                }
             }
             $this->alert('success', 'Order issued successfully.');
         } else {
@@ -656,10 +671,10 @@ class EncounterTransactionView extends Component
         return;
     }
 
-    public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date, $orderType = null, $udddsStart = null, $udddsEnd = null, $qty = null, $price = null, $remarks = null)
+    public function add_item($dmdcomb, $dmdctr, $chrgcode, $loc_code, $dmdprdte, $id, $available, $exp_date, $orderType = null, $udddsStart = null, $udddsEnd = null, $qty = null, $price = null, $remarks = null, $intervalDays = 1)
     {
         if ($this->isInpatientUdddsEncounter()) {
-            $this->applyIncomingUdddsFields($orderType, $udddsStart, $udddsEnd);
+            $this->applyIncomingUdddsFields($orderType, $udddsStart, $udddsEnd, $intervalDays);
         } else {
             $this->clearUdddsFields();
         }
@@ -826,37 +841,35 @@ class EncounterTransactionView extends Component
 
         //RECORD RETURN ITEM TO hrxoreturn table
         if (!$isReturned) {
-            DB::insert("INSERT INTO hospital.dbo.hrxoreturn(
-                    docointkey, enccode, hpercode, dmdcomb, returndate, returntime, qty, returnby,
-                    status, rxolock, updsw, confdl, entryby, locacode, dmdctr, dmdprdte, remarks,
-                    returnfrom, chrgcode, pcchrgcod, rcode, unitprice, pchrgup, loc_code)
-                VALUES(
-                '" . $item->docointkey . "',
-                '" . $item->enccode . "',
-                '" . $item->hpercode . "',
-                '" . $item->dmdcomb . "',
-                '" . now() . "',
-                '" . now() . "',
-                '" . $this->return_qty . "',
-                '" . session('employeeid') . "',
-                'A',
-                'N',
-                'N',
-                'N',
-                '" . session('employeeid') . "',
-                '" . $item->locacode . "',
-                '" . $item->dmdctr . "',
-                '" . $item->dmdprdte . "',
-                '" . $item->remarks . "',
-                '" . $item->orderfrom . "',
-                '" . $item->orderfrom . "',
-                '" . $item->pcchrgcod . "',
-                '',
-                '" . $item->pchrgup . "',
-                '" . $item->pchrgup . "',
-                '" . $this->location_id . "'
-                )
-            ");
+            $returnFields = array_merge([
+                'docointkey' => $item->docointkey,
+                'enccode' => $item->enccode,
+                'hpercode' => $item->hpercode,
+                'dmdcomb' => $item->dmdcomb,
+                'returndate' => now(),
+                'returntime' => now(),
+                'qty' => $this->return_qty,
+                'returnby' => session('employeeid'),
+                'status' => 'A',
+                'rxolock' => 'N',
+                'updsw' => 'N',
+                'confdl' => 'N',
+                'entryby' => session('employeeid'),
+                'locacode' => $item->locacode,
+                'dmdctr' => $item->dmdctr,
+                'dmdprdte' => $item->dmdprdte,
+                'remarks' => $item->remarks,
+                'returnfrom' => $item->orderfrom,
+                'chrgcode' => $item->orderfrom,
+                'pcchrgcod' => $item->pcchrgcod,
+                'rcode' => '',
+                'unitprice' => $item->pchrgup,
+                'pchrgup' => $item->pchrgup,
+                'loc_code' => $this->location_id,
+            ], \App\Services\Pharmacy\UdddsTransactionMetadata::forReturn($item));
+            $returnColumns = implode(', ', array_keys($returnFields));
+            $returnPlaceholders = implode(', ', array_fill(0, count($returnFields), '?'));
+            DB::insert("INSERT INTO hospital.dbo.hrxoreturn ({$returnColumns}) VALUES ({$returnPlaceholders})", array_values($returnFields));
 
             //DEDUCT QTYISSUED FROM hrxo and DrugStockIssue table
             $item->pcchrgamt = $item->pchrgup * ($item->qtyissued - $this->return_qty);
@@ -1030,6 +1043,7 @@ class EncounterTransactionView extends Component
                 $order['uddds_start_date'] = $this->uddds_start_date ?: null;
                 $order['uddds_end_date'] = $this->uddds_end_date ?: null;
                 $order['is_uddds'] = false;
+                if (UdddsService::hasIntervalColumn()) $order['uddds_interval_days'] = $this->uddds_interval_days;
             }
             DrugOrder::create($order);
             DB::connection('webapp')->table('webapp.dbo.prescription_data')
@@ -1105,14 +1119,14 @@ class EncounterTransactionView extends Component
         $this->alert($result['ok'] ? 'success' : 'error', $result['message']);
     }
 
-    public function enroll_in_uddds($docointkey, $orderType = 'BASIC', $startDate = null, $endDate = null)
+    public function enroll_in_uddds($docointkey, $orderType = 'BASIC', $startDate = null, $endDate = null, $intervalDays = 1)
     {
         if (!$this->isInpatientUdddsEncounter()) {
             $this->alert('error', 'UDDDS is only available for inpatient (ADM) encounters.');
             return;
         }
 
-        $result = app(UdddsService::class)->enrollSingleOrder($docointkey, $orderType, $startDate, $endDate);
+        $result = app(UdddsService::class)->enrollSingleOrder($docointkey, $orderType, $startDate, $endDate, $intervalDays);
         if ($result['ok']) {
             $order = DrugOrder::find($docointkey);
             if ($order && $order->prescription_data_id) {
@@ -1182,24 +1196,38 @@ class EncounterTransactionView extends Component
         return strtoupper(trim((string) $this->toecode)) === 'ADM';
     }
 
-    protected function applyIncomingUdddsFields($orderType = null, $udddsStart = null, $udddsEnd = null)
+    protected function applyIncomingUdddsFields($orderType = null, $udddsStart = null, $udddsEnd = null, $intervalDays = 1)
     {
-        if ($orderType !== null && $orderType !== '') {
-            $this->rx_order_type = $orderType;
+        try {
+            $this->uddds_interval_days = \App\Services\Pharmacy\UdddsSchedule::interval($intervalDays);
+            if ($this->uddds_interval_days !== 1 && !UdddsService::hasIntervalColumn()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['uddds_interval_days' => 'Interval enrollment requires the UDDDS interval database update.']);
+            }
+            if ($udddsStart && $udddsEnd) {
+                \App\Services\Pharmacy\UdddsSchedule::due($udddsStart, $udddsEnd, $this->uddds_interval_days, $udddsStart);
+            }
+
+            if ($orderType !== null && $orderType !== '') {
+                $this->rx_order_type = $orderType;
+            }
+
+            if ($udddsStart !== null) {
+                $this->uddds_start_date = $udddsStart !== '' ? $udddsStart : null;
+            }
+
+            if ($udddsEnd !== null) {
+                $this->uddds_end_date = $udddsEnd !== '' ? $udddsEnd : null;
+            }
+        } catch (\InvalidArgumentException $e) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['uddds_interval_days' => $e->getMessage()]);
         }
 
-        if ($udddsStart !== null) {
-            $this->uddds_start_date = $udddsStart !== '' ? $udddsStart : null;
-        }
-
-        if ($udddsEnd !== null) {
-            $this->uddds_end_date = $udddsEnd !== '' ? $udddsEnd : null;
-        }
     }
 
     protected function clearUdddsFields()
     {
         $this->rx_order_type = 'BASIC';
+        $this->uddds_interval_days = 1;
         $this->uddds_start_date = null;
         $this->uddds_end_date = null;
     }
@@ -1218,8 +1246,8 @@ class EncounterTransactionView extends Component
         $end = $this->uddds_end_date ? "'" . $esc($this->uddds_end_date) . "'" : 'NULL';
 
         return [
-            'columns' => ', order_type, uddds_start_date, uddds_end_date, is_uddds',
-            'values' => ", '" . $esc($orderType) . "', {$start}, {$end}, 0",
+            'columns' => ', order_type, uddds_start_date, uddds_end_date, is_uddds' . (UdddsService::hasIntervalColumn() ? ', uddds_interval_days' : ''),
+            'values' => ", '" . $esc($orderType) . "', {$start}, {$end}, 0" . (UdddsService::hasIntervalColumn() ? ", " . \App\Services\Pharmacy\UdddsSchedule::interval($this->uddds_interval_days) : ''),
         ];
     }
 }

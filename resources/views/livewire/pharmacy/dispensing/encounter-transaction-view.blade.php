@@ -220,6 +220,7 @@
                                                         @if ($rxo->is_uddds) checked @endif
                                                         onchange="toggle_uddds(this, {{ json_encode($rxo->docointkey) }}, {{ json_encode($udddsStartVal) }}, {{ json_encode($udddsEndVal) }}, {{ json_encode($udddsTypeVal) }}, {{ json_encode($rxDrugVal) }}, {{ json_encode((string) $rxQtyVal) }}, {{ json_encode((string) $rxFreqVal) }}, {{ json_encode((string) $rxDaysVal) }})" />
                                                     @if ($rxo->is_uddds && $rxo->uddds_start_date)
+                                                        @include('livewire.pharmacy.dispensing.uddds-schedule-summary')
                                                         <span class="text-[10px] whitespace-nowrap">{{ date('m/d', strtotime($rxo->uddds_start_date)) }}-{{ date('m/d', strtotime($rxo->uddds_end_date)) }}</span>
                                                     @endif
                                                 </label>
@@ -1223,6 +1224,7 @@
                                 <label class="label py-1"><span class="label-text">UDDDS end</span></label>
                                 <input type="date" id="item_uddds_end" class="w-full input input-bordered input-sm" />
                             </div>
+                            ${udddsRecurrenceFields('item_uddds')}
                         </div>
                     </div>
                 ` : '';
@@ -1257,6 +1259,32 @@
                 `;
                                 }
 
+                                function udddsRecurrenceFields(prefix) {
+                                    const ready = @json(\App\Services\Pharmacy\UdddsService::hasIntervalColumn());
+                                    return `<div class="col-span-2 text-left">
+                                        <label class="label py-1" for="${prefix}_interval"><span class="label-text">Supply recurrence</span></label>
+                                        <select id="${prefix}_interval" class="select select-bordered select-sm w-full" onchange="document.getElementById('${prefix}_custom').hidden = this.value !== 'custom'">
+                                            <option value="1">Daily</option>
+                                            <option value="2" ${ready ? '' : 'disabled'}>Every 2 days (48h)</option>
+                                            <option value="3" ${ready ? '' : 'disabled'}>Every 3 days (72h)</option>
+                                            <option value="custom" ${ready ? '' : 'disabled'}>Custom: every N days</option>
+                                        </select>
+                                        <label id="${prefix}_custom" hidden class="block mt-2 text-sm">Every N days<input id="${prefix}_days" type="number" min="1" max="2147483647" step="1" value="1" class="input input-bordered input-sm w-full"></label>
+                                        <p class="mt-1 text-xs">Calendar-day supply intervals anchored to the start date. Quantity is for one supply occurrence.</p>
+                                        ${ready ? '' : '<p class="text-xs text-warning">Interval enrollment requires the UDDDS interval database update. Daily remains available.</p>'}
+                                    </div>`;
+                                }
+
+                                function udddsInterval(box, prefix) {
+                                    const choice = box.querySelector('#' + prefix + '_interval');
+                                    const value = !choice ? '1' : choice.value === 'custom' ? box.querySelector('#' + prefix + '_days').value : choice.value;
+                                    if (!/^[1-9][0-9]*$/.test(value) || Number(value) > 2147483647) {
+                                        Swal.showValidationMessage('Supply interval must be a positive whole number of days.');
+                                        return false;
+                                    }
+                                    return Number(value);
+                                }
+
                                 function captureSelectItemForm() {
                                     const box = Swal.getHtmlContainer();
                                     if (!box) {
@@ -1268,7 +1296,10 @@
                                     const itemType = box.querySelector('input[name="item_order_type"]:checked');
                                     const startEl = box.querySelector('#item_uddds_start');
                                     const endEl = box.querySelector('#item_uddds_end');
+                                    const intervalDays = udddsInterval(box, 'item_uddds');
+                                    if (intervalDays === false) return false;
                                     const form = {
+                                        intervalDays,
                                         qty: qty ? qty.value : '',
                                         price: price ? price.value : '',
                                         remarks: rem ? rem.value : '',
@@ -1351,7 +1382,7 @@
                                     @this.set('order_qty', form.qty)
                                     @this.set('remarks', form.remarks || '');
                                     Livewire.emit('add_item', dmdcomb, dmdctr, chrgcode, loc_code, dmdprdte, id, available, exp_date,
-                                        form.orderType || 'BASIC', form.start || '', form.end || '', form.qty || '', form.price || '', form.remarks || '')
+                                        form.orderType || 'BASIC', form.start || '', form.end || '', form.qty || '', form.price || '', form.remarks || '', form.intervalDays || 1)
                                 }
 
                                 function toggle_uddds(el, docointkey, start, end, orderType, drug, qty, freq, days) {
@@ -1383,7 +1414,7 @@
                                             title: 'Enable UDDDS',
                                             html: `
                         <div class="px-2 mt-2 text-left">
-                                            <p class="mb-2 text-sm text-slate-500">Optional for inpatient (ADM) standing orders. Set the unit-dose window to start daily generation.</p>
+                                            <p class="mb-2 text-sm text-slate-500">Optional for inpatient (ADM) standing orders. Set the unit-dose window and calendar-day supply recurrence.</p>
                             ${rxBlock}
                             <div class="mb-1 text-xs font-semibold">Order type</div>
                             <div class="flex flex-wrap gap-3">
@@ -1400,6 +1431,7 @@
                                     <label class="label py-1"><span class="label-text">UDDDS end</span></label>
                                     <input type="date" id="row_uddds_end" class="w-full input input-bordered input-sm" value="${typeVal === 'BASIC' ? endVal : ''}" />
                                 </div>
+                            ${udddsRecurrenceFields('row_uddds')}
                             </div>
                         </div>
                     `,
@@ -1428,11 +1460,13 @@
                                                     Swal.showValidationMessage('End date must be on or after the start date.');
                                                     return false;
                                                 }
-                                                return { type, startDate, endDate };
+                                                const intervalDays = udddsInterval(box, 'row_uddds');
+                                                if (intervalDays === false) return false;
+                                                return { type, startDate, endDate, intervalDays };
                                             }
                                         }).then((result) => {
                                             if (result.isConfirmed && result.value) {
-                                                Livewire.emit('enroll_in_uddds', docointkey, result.value.type, result.value.startDate, result.value.endDate);
+                                                Livewire.emit('enroll_in_uddds', docointkey, result.value.type, result.value.startDate, result.value.endDate, result.value.intervalDays);
                                             } else {
                                                 el.checked = false;
                                             }
