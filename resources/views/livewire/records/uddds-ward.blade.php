@@ -310,6 +310,7 @@
                     <tr class="border-b border-slate-200">
                         <th scope="col" class="w-12 px-3 py-3"><span class="sr-only">Select</span></th>
                         <th scope="col" class="px-3 py-3">Item</th>
+                        <th scope="col" class="px-3 py-3">Order type</th>
                         <th scope="col" class="px-3 py-3">Fund source</th>
                         <th scope="col" class="px-3 py-3 text-right">Qty</th>
                         <th scope="col" class="px-3 py-3">Frequency</th>
@@ -329,6 +330,9 @@
                                     value="{{ $item->docointkey }}" @if (! $item->is_actionable) disabled @endif />
                             </td>
                             <td class="px-3 py-3 text-xs font-medium text-slate-800">{{ implode('', explode('_', $item->drug_concat)) }}</td>
+                            <td class="px-3 py-3 text-xs">
+                                @include('livewire.pharmacy.dispensing.uddds-order-type', ['orderType' => $item->order_type ?? 'BASIC'])
+                            </td>
                             <td class="px-3 py-3 text-xs text-slate-600">
                                 {{ $item->chrgdesc }}
                                 @if (!empty($fallback_sources[\App\Services\Pharmacy\UdddsStockAllocator::groupKey($item)]))
@@ -358,8 +362,8 @@
                                 @endif
                             </td>
                             <td class="px-3 py-3 text-xs">
-                                @if ($item->pcchrgcod)
-                                    <a class="uddds-link underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->pcchrgcod, 'numbers' => $patient['number']]) }}" target="_blank" rel="noopener">{{ $item->pcchrgcod }}</a>
+                                @if ($item->selected_date_charge_code)
+                                    <a class="uddds-link underline" href="{{ route('dispensing.uddds.chargeslips', ['codes' => $item->selected_date_charge_code, 'numbers' => $patient['number']]) }}" target="_blank" rel="noopener">{{ $item->selected_date_charge_code }}</a>
                                 @else
                                     <span>—</span>
                                 @endif

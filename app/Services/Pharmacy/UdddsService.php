@@ -98,6 +98,8 @@ class UdddsService
 
     private function decorateSchedule($item, $date): void
     {
+        // An eligible standing order can still carry an earlier day's charge slip.
+        $item->selected_date_charge_code = $this->reprintChargeCodes([$item], $date)[0] ?? null;
         try {
             $item->schedule_label = UdddsSchedule::label($item->uddds_interval_days ?? null);
             $item->next_supply_date = UdddsSchedule::next($item->uddds_start_date, $item->uddds_end_date, $item->uddds_interval_days ?? null, $date);
@@ -143,6 +145,32 @@ class UdddsService
             }
         }
         return null;
+    }
+
+    public function newOrderUdddsFields($orderType, $startDate = null, $endDate = null, $intervalDays = 1): array
+    {
+        $type = strtoupper(trim((string) $orderType));
+        if (!in_array($type, ['BASIC', 'G24', 'OR'], true)) {
+            return ['ok' => false, 'field' => 'rx_order_type', 'message' => 'Choose Basic (standing), G24 or OR Use.'];
+        }
+        $hasDates = !empty($startDate) || !empty($endDate);
+        if ($type !== 'BASIC' && $hasDates) {
+            return ['ok' => false, 'field' => 'rx_order_type', 'message' => 'UDDDS recurrence applies to Basic (standing) orders only.'];
+        }
+        if (!self::hasHrxoColumns()) {
+            return $hasDates ? ['ok' => false, 'message' => $this->schemaMissingMessage()] : ['ok' => true, 'fields' => []];
+        }
+        $fields = ['order_type' => $type, 'is_uddds' => false, 'uddds_start_date' => null, 'uddds_end_date' => null];
+        if ($hasDates) {
+            $schedule = $this->enrollmentSchedule($startDate, $endDate, $intervalDays);
+            if (!$schedule['ok']) return $schedule;
+            $fields['uddds_start_date'] = UdddsSchedule::date($startDate)->format('Y-m-d');
+            $fields['uddds_end_date'] = UdddsSchedule::date($endDate)->format('Y-m-d');
+            if (self::hasIntervalColumn()) $fields['uddds_interval_days'] = $schedule['days'];
+        } elseif (self::hasIntervalColumn()) {
+            $fields['uddds_interval_days'] = null;
+        }
+        return ['ok' => true, 'fields' => $fields];
     }
 
     public function normalizeOrderType($type)

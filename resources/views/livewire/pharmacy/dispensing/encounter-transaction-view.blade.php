@@ -257,6 +257,9 @@
                                         <span class="hidden">{{ $concat[0] }}</span>
                                         <div class="flex flex-col">
                                             <div class="text-xs text-slate-600">{{ $rxo->chrgdesc ?? '' }}</div>
+                                        @if ($toecode === 'ADM')
+                                            @include('livewire.pharmacy.dispensing.uddds-order-type', ['orderType' => $rxo->order_type ?? 'BASIC'])
+                                        @endif
                                             <div class="text-xs font-bold">{{ $concat[0] }}</div>
                                             <div class="ml-10 text-xs text-slate-800">
                                                 {{ $concat[1] }}</div>

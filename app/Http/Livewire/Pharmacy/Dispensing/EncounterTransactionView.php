@@ -1198,30 +1198,17 @@ class EncounterTransactionView extends Component
 
     protected function applyIncomingUdddsFields($orderType = null, $udddsStart = null, $udddsEnd = null, $intervalDays = 1)
     {
-        try {
-            $this->uddds_interval_days = \App\Services\Pharmacy\UdddsSchedule::interval($intervalDays);
-            if ($this->uddds_interval_days !== 1 && !UdddsService::hasIntervalColumn()) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['uddds_interval_days' => 'Interval enrollment requires the UDDDS interval database update.']);
-            }
-            if ($udddsStart && $udddsEnd) {
-                \App\Services\Pharmacy\UdddsSchedule::due($udddsStart, $udddsEnd, $this->uddds_interval_days, $udddsStart);
-            }
-
-            if ($orderType !== null && $orderType !== '') {
-                $this->rx_order_type = $orderType;
-            }
-
-            if ($udddsStart !== null) {
-                $this->uddds_start_date = $udddsStart !== '' ? $udddsStart : null;
-            }
-
-            if ($udddsEnd !== null) {
-                $this->uddds_end_date = $udddsEnd !== '' ? $udddsEnd : null;
-            }
-        } catch (\InvalidArgumentException $e) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['uddds_interval_days' => $e->getMessage()]);
+        $type = $orderType ?: $this->rx_order_type;
+        $start = $udddsStart ?? $this->uddds_start_date;
+        $end = $udddsEnd ?? $this->uddds_end_date;
+        $result = app(UdddsService::class)->newOrderUdddsFields($type, $start, $end, $intervalDays);
+        if (!$result['ok']) {
+            throw \Illuminate\Validation\ValidationException::withMessages([$result['field'] ?? 'uddds_interval_days' => $result['message']]);
         }
-
+        $this->rx_order_type = strtoupper(trim((string) $type));
+        $this->uddds_start_date = $result['fields']['uddds_start_date'] ?? null;
+        $this->uddds_end_date = $result['fields']['uddds_end_date'] ?? null;
+        $this->uddds_interval_days = $result['fields']['uddds_interval_days'] ?? 1;
     }
 
     protected function clearUdddsFields()
