@@ -23,6 +23,68 @@
 @endphp
 
 <div class="flex flex-col p-5 mx-auto mt-5 max-w-screen-2xl">
+
+    <div class="flex justify-end mb-4">
+    @if ($details && $details->status === 'locked')
+        @can('view-deliveries')
+            @if ((string) auth()->user()->pharm_location_id === (string) $details->pharm_location_id)
+                <button type="button" class="btn btn-sm btn-error" wire:click="openRevertModal" wire:loading.attr="disabled">Revert Delivery</button>
+            @endif
+        @endcan
+    @endif
+    </div>
+    <x-jet-dialog-modal wire:model="revertModal" maxWidth="xl" focusable>
+        <x-slot name="title">Revert Locked Delivery</x-slot>
+        <x-slot name="content">
+        <form id="revert-delivery-form" wire:submit.prevent="revert_lock" class="space-y-4">
+            <p class="text-sm">Sales Invoice: <strong>{{ $details->si_no ?? $delivery_id }}</strong></p>
+            <div role="alert" id="revert-delivery-warning" class="p-4 border border-yellow-300 rounded bg-yellow-50 text-yellow-900">
+                <p class="font-semibold">Warning: this will remove all delivered quantities from inventory.</p>
+                <p class="mt-2 text-sm">Every original batch must have enough available balance. If any item cannot be reversed, the entire delivery stays locked and no quantities are removed.</p>
+                <p class="mt-2 text-sm">The delivery will return to Pending. Purchase receipts will be corrected without recording consumption. Your reason, user account and stock balances will be retained in the audit trail.</p>
+            </div>
+            <div>
+                <label for="revert_reason" class="block mb-1 text-sm font-semibold">Reason for reversal</label>
+                <textarea id="revert_reason" wire:model.defer="revert_reason" class="textarea textarea-bordered w-full" rows="3" required minlength="5" maxlength="1000" aria-describedby="revert-reason-help revert-reason-error"></textarea>
+                <p id="revert-reason-help" class="mt-1 text-xs text-gray-500">Enter 5–1000 characters explaining why this receipt should be reversed.</p>
+                @error('revert_reason') <p id="revert-reason-error" class="text-sm text-error" role="alert">{{ $message }}</p> @enderror
+            </div>
+            <label class="flex items-start gap-3 text-sm">
+                <input type="checkbox" wire:model="revert_confirmed" required class="checkbox checkbox-sm mt-1" aria-describedby="revert-confirm-error">
+                <span>I understand this removes all delivered quantities from inventory, and I confirm this reversal.</span>
+            </label>
+            @error('revert_confirmed') <p id="revert-confirm-error" class="text-sm text-error" role="alert">{{ $message }}</p> @enderror
+            @error('delivery') <p class="text-sm text-error" role="alert">{{ $message }}</p> @enderror
+        </form>
+        </x-slot>
+        <x-slot name="footer">
+            <div class="flex justify-end gap-2">
+            <button type="button" class="btn btn-sm btn-ghost" wire:click="cancelRevert" wire:loading.attr="disabled" wire:target="revert_lock">Cancel</button>
+            <button type="submit" form="revert-delivery-form" class="btn btn-sm btn-error" @if (!$revert_confirmed) disabled @endif wire:loading.attr="disabled" wire:target="revert_lock">
+                <span wire:loading.remove wire:target="revert_lock">Confirm Reversal</span>
+                <span wire:loading wire:target="revert_lock">Reverting…</span>
+            </button>
+            </div>
+        </x-slot>
+    </x-jet-dialog-modal>
+
+    @if ($deliveryAudits->isNotEmpty())
+        <details class="p-4 mb-4 border rounded bg-white">
+            <summary class="cursor-pointer font-semibold">Delivery audit trail</summary>
+            @foreach ($deliveryAudits as $audit)
+                <div class="py-3 border-b">
+                    <p>{{ $audit->created_at }} — {{ ucfirst($audit->action) }} by {{ $audit->user_name }} (ID {{ $audit->user_id }})</p>
+                    @if ($audit->reason) <p>Reason: {{ $audit->reason }}</p> @endif
+                    <ul class="ml-4 list-disc">
+                        @foreach ($audit->entries as $entry)
+                            <li>{{ $entry['drug'] }} — lot {{ $entry['lot_no'] }}, expiry {{ $entry['expiry_date'] }}, quantity {{ $entry['qty'] }}; balance {{ $entry['balance_before'] }} → {{ $entry['balance_after'] }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endforeach
+        </details>
+    @endif
+
     @if ($details->delivery_type === 'RIS' && $details->po_no)
         <div class="p-4 mb-4 border-l-4 border-blue-500 rounded bg-blue-50">
             <div class="flex">
@@ -378,7 +440,7 @@
                 confirmButtonText: 'Continue',
                 html: `
                         <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
-                        <div class="mt-2 text-slate-500" id="inf">All items in this delivery will be added to your current stocks and no changes can be made after. <br>This process cannot be undone. Continue?</div>
+                        <div class="mt-2 text-slate-500" id="inf">All items will be added to inventory. To correct a locked delivery, revert it with sufficient stock and a reason first. <br>Reversal requires sufficient stock and an audit reason. Continue?</div>
                     `,
             }).then((result) => {
                 /* Read more about isConfirmed, isDenied below */

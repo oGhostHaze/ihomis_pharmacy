@@ -188,7 +188,7 @@
                         <tbody class="bg-white">
                             @forelse ($rxos as $rxo)
                                 @php
-                                    $concat = explode('_,', $rxo->drug_concat);
+                                    $concat = array_pad(explode('_,', (string) $rxo->drug_concat), 2, '');
                                     $drug = implode('', $concat);
                                 @endphp
                                 <tr class="border">
@@ -367,7 +367,7 @@
                     <tbody id="stockTableBody">
                         @foreach ($stocks as $key => $stock)
                             @php
-                                $concat = explode('_,', $stock->drug_concat);
+                                $concat = array_pad(explode('_,', (string) $stock->drug_concat), 2, '');
                                 $drug = implode('', $concat);
                             @endphp
                             <tr class="cursor-pointer hover content {{ $stock->chrgcode }}"

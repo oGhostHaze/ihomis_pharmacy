@@ -2,16 +2,11 @@
 
 namespace App\Http\Livewire\Pharmacy\Deliveries;
 
-use Carbon\Carbon;
 use Livewire\Component;
-use App\Jobs\LogDrugDelivery;
 use App\Models\Pharmacy\Drug;
 use App\Models\Pharmacy\DrugPrice;
 use App\Models\Pharmacy\DeliveryItems;
 use App\Models\Pharmacy\DeliveryDetail;
-use App\Models\Pharmacy\Drugs\DrugStock;
-use App\Models\Pharmacy\Drugs\DrugStockLog;
-use App\Models\Pharmacy\Drugs\DrugStockCard;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 
 class DeliveryView extends Component
@@ -37,6 +32,7 @@ class DeliveryView extends Component
 
         return view('livewire.pharmacy.deliveries.delivery-view', [
             'drugs' => $drugs,
+            'deliveryAudits' => \App\Models\Pharmacy\DeliveryAudit::where('delivery_id', $this->delivery_id)->orderByDesc('id')->get(),
         ]);
     }
 
@@ -50,6 +46,17 @@ class DeliveryView extends Component
 
     public function add_item()
     {
+        return \Illuminate\Support\Facades\DB::connection('hospital')->transaction(function () {
+            return $this->mutate_add_item();
+        });
+    }
+
+    private function mutate_add_item()
+    {
+        $fresh = DeliveryDetail::whereKey($this->delivery_id)->lockForUpdate()->firstOrFail();
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->authorize($fresh);
+        abort_unless($fresh->status === 'pending', 403);
+        $this->details = $fresh;
         $this->validate([
             'dmdcomb' => 'required',
             'unit_price' => ['required', 'numeric', 'min:0'],
@@ -154,6 +161,18 @@ class DeliveryView extends Component
 
     public function edit_item($item_id)
     {
+        return \Illuminate\Support\Facades\DB::connection('hospital')->transaction(function () use ($item_id) {
+            return $this->mutate_edit_item($item_id);
+        });
+    }
+
+    private function mutate_edit_item($item_id)
+    {
+        $fresh = DeliveryDetail::whereKey($this->delivery_id)->lockForUpdate()->firstOrFail();
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->authorize($fresh);
+        abort_unless($fresh->status === 'pending', 403);
+        $this->details = $fresh;
+        abort_unless(DeliveryItems::where('delivery_id', $fresh->id)->whereKey($item_id)->exists(), 403);
         $this->validate([
             'lot_no' => 'required|string',
             'expiry_date' => 'required|date',
@@ -253,6 +272,18 @@ class DeliveryView extends Component
 
     public function delete_item($item_id)
     {
+        return \Illuminate\Support\Facades\DB::connection('hospital')->transaction(function () use ($item_id) {
+            return $this->mutate_delete_item($item_id);
+        });
+    }
+
+    private function mutate_delete_item($item_id)
+    {
+        $fresh = DeliveryDetail::whereKey($this->delivery_id)->lockForUpdate()->firstOrFail();
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->authorize($fresh);
+        abort_unless($fresh->status === 'pending', 403);
+        $this->details = $fresh;
+        abort_unless(DeliveryItems::where('delivery_id', $fresh->id)->whereKey($item_id)->exists(), 403);
         $delete_item = DeliveryItems::find($item_id);
         $delete_item->delete();
 
@@ -261,85 +292,50 @@ class DeliveryView extends Component
         $this->alert('info', 'Item deleted!');
     }
 
+    public $revert_reason = '';
+    public $revertModal = false;
+    public $revert_confirmed = false;
+
+    public function openRevertModal()
+    {
+        $delivery = DeliveryDetail::findOrFail($this->delivery_id);
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->authorize($delivery);
+        abort_unless($delivery->status === 'locked', 403);
+        $this->details = $delivery->load(['items', 'supplier', 'charge']);
+        $this->resetValidation();
+        $this->revert_reason = '';
+        $this->revert_confirmed = false;
+        $this->revertModal = true;
+    }
+
+    public function cancelRevert()
+    {
+        $this->revertModal = false;
+        $this->revert_reason = '';
+        $this->revert_confirmed = false;
+        $this->resetValidation();
+    }
+
+
     public function save_lock()
     {
-        $updated = false;
-
-        foreach ($this->details->items->all() as $item) {
-            $add_to = DrugStock::firstOrCreate([
-                'dmdcomb' => $item->dmdcomb,
-                'dmdctr' => $item->dmdctr,
-                'loc_code' => $item->pharm_location_id,
-                'chrgcode' => $item->charge_code,
-                'exp_date' => $item->expiry_date,
-                'retail_price' => $item->retail_price,
-                'drug_concat' => $item->drug->drug_name(),
-                'dmdnost' => $item->drug->dmdnost,
-                'strecode' => $item->drug->strecode,
-                'formcode' => $item->drug->formcode,
-                'rtecode' => $item->drug->rtecode,
-                'brandname' => $item->drug->brandname,
-                'dmdrem' => $item->drug->dmdrem,
-                'dmdrxot' => $item->drug->dmdrxot,
-                'gencode' => $item->drug->generic->gencode,
-                'lot_no' => $item->lot_no,
-            ]);
-            $add_to->stock_bal = $add_to->stock_bal + $item->qty;
-            $add_to->beg_bal = $add_to->beg_bal + $item->qty;
-
-            $date = Carbon::parse(now())->startOfMonth()->format('Y-m-d');
-
-            $log = DrugStockLog::firstOrNew([
-                'loc_code' => $item->pharm_location_id,
-                'dmdcomb' => $add_to->dmdcomb,
-                'dmdctr' => $add_to->dmdctr,
-                'chrgcode' => $add_to->chrgcode,
-                'unit_cost' => $item->unit_price,
-                'unit_price' => $item->retail_price,
-                'consumption_id' => session('active_consumption'),
-            ]);
-            $log->purchased += $item->qty;
-            $add_to->dmdprdte = $item->dmdprdte;
-
-            $log->save();
-            $add_to->save();
-            $this->handleLog($item->pharm_location_id, $add_to->dmdcomb, $add_to->dmdctr, $add_to->exp_date, $add_to->chrgcode, $item->qty, $item->drug->drug_concat(), now(), $add_to->dmdprdte);
-            $updated = true;
-
-            $item->status = 'delivered';
-            $item->save();
-        }
-        if ($updated) {
-            $this->details->status = 'locked';
-            $this->details->save();
-            $this->emit('refresh');
-            $this->alert('success', 'Successfully updated stocks inventory!');
-        } else {
-            return $this->alert('error', 'Error! There are no drug or medicine that can be added to stock inventory.');
-        }
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->lock($this->delivery_id, session('active_consumption'));
+        $this->mount($this->delivery_id);
+        $this->alert('success', 'Successfully updated stocks inventory!');
     }
 
-    public function handleLog($pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date, $dmdprdte)
+    public function revert_lock()
     {
-        $date = Carbon::parse($date)->format('Y-m-d');
-
-        $card = DrugStockCard::firstOrNew([
-            'io_trans_ref_no' => $this->details->si_no,
-            'chrgcode' => $chrgcode,
-            'loc_code' => $pharm_location_id,
-            'dmdcomb' => $dmdcomb,
-            'dmdctr' => $dmdctr,
-            'exp_date' => $exp_date,
-            'stock_date' => $date,
-            'drug_concat' => $drug_concat,
-            'dmdprdte' => $dmdprdte,
-        ]);
-
-        $card->rec += $qty;
-        $card->bal += $qty;
-
-        $card->save();
-
-        return;
+        $this->validate([
+            'revert_reason' => 'required|string|min:5|max:1000',
+            'revert_confirmed' => 'accepted',
+        ], ['revert_confirmed.accepted' => 'Confirm that all delivered quantities should be removed from inventory.']);
+        app(\App\Services\Pharmacy\DeliveryInventory::class)->revert($this->delivery_id, $this->revert_reason);
+        $this->revert_reason = '';
+        $this->revert_confirmed = false;
+        $this->revertModal = false;
+        $this->mount($this->delivery_id);
+        $this->alert('success', 'Delivery reverted. Inventory receipt removed; audit saved.');
     }
+
 }
