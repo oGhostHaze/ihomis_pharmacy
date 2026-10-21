@@ -228,6 +228,7 @@
             </label>
         </div>
         <div class="uddds-actions">
+            <a href="{{ route('dispensing.uddds.ward-orders', ['date' => $selected_date, 'ward' => $wardcode]) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline">Print issued by ward</a>
             <button type="button" class="btn btn-sm btn-outline uddds-outline" wire:click="openPrintModal" wire:loading.attr="disabled">Print Patients</button>
             <button type="button" class="btn btn-sm uddds-issue"
                 wire:click="prepareCharge"

@@ -143,6 +143,7 @@ Route::middleware([
         Route::get('/encounter/trans/{enccode}', EncounterTransactionView::class)->name('view.enctr');
         Route::get('/encounter/charge/{pcchrgcod}', RxoChargeSlip::class)->name('rxo.chargeslip');
         Route::get('/uddds/charge-slips', UdddsChargeSlipBatch::class)->name('uddds.chargeslips');
+        Route::get('/uddds/ward-orders', \App\Http\Controllers\UdddsWardPrintController::class)->name('uddds.ward-orders');
         Route::get('/encounter/summary/returns/{hpercode}', ReturnSlip::class)->name('rxo.return.sum');
         Route::get('/pending-orders', PendingOrders::class)->name('rxo.pending');
     });

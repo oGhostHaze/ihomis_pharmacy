@@ -12,3 +12,7 @@ After **Continue to Charge & Issue**, changed items open **Confirm item replacem
 The replacement selector and quantity explanation appear only when matching replacement stock is available (or a replacement is already selected). Before searching, they stay hidden. A search of at least two characters with no matching replacement shows **No record found**.
 
 Replacement stock search runs when you leave the search input, rather than on each keystroke. Enter at least two characters, then click outside the input or press Tab to view results.
+
+## Print issued orders by ward
+
+Choose the service date and ward, then select **Print issued by ward**. Leave the ward as **All wards** to print each ward on a separate page. The print preview includes only issued UDDDS orders for that date and pharmacy location, grouped by patient, with medicine names and issued quantities. Patient names appear on the first medicine row. Pending and charged-but-unissued orders are excluded. Use **Print issued UDDDS orders** in the preview to open the browser print dialog. Queue status and item checkbox selections do not limit this report.

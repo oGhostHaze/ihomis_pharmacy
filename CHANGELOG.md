@@ -2,6 +2,10 @@
 
 ## 2026-10-21
 
+### Improvements
+
+- Issued UDDDS orders can now be printed by ward and service date, showing patient names, medicines and issued quantities, with each ward starting on a separate page.
+
 ### Errors and fixes
 
 - Replacement stock search now runs when leaving the search input instead of while typing.
