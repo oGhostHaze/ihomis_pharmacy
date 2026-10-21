@@ -892,7 +892,7 @@ class UdddsService
         return array_values(array_unique($dailyKeys));
     }
 
-    public function chargeAndIssue(array $docointkeys, $locationId, array $actor, array $fallbacks = [])
+    public function chargeAndIssue(array $docointkeys, $locationId, array $actor, array $fallbacks = [], array $replacements = [])
     {
         $docointkeys = array_values(array_filter($docointkeys));
 
@@ -904,8 +904,8 @@ class UdddsService
             return ['ok' => false, 'message' => $problem, 'pcchrgcods' => []];
         }
 
-        if (array_filter($fallbacks)) {
-            return $this->chargeAndIssueWithFallback(array_values(array_unique($docointkeys)), $locationId, $actor, $fallbacks);
+        if (array_filter($fallbacks) || array_filter($replacements)) {
+            return $this->chargeAndIssueWithFallback(array_values(array_unique($docointkeys)), $locationId, $actor, $fallbacks, $replacements);
         }
 
         $placeholders = implode(',', array_fill(0, count($docointkeys), '?'));
@@ -983,7 +983,7 @@ class UdddsService
         ];
     }
 
-    private function chargeAndIssueWithFallback(array $keys, $locationId, array $actor, array $fallbacks): array
+    private function chargeAndIssueWithFallback(array $keys, $locationId, array $actor, array $fallbacks, array $replacements = []): array
     {
         $allowedFunds = app('chargetable');
         foreach ($fallbacks as $key => $funds) {
@@ -997,7 +997,7 @@ class UdddsService
         if (count($keys) > 500) return ['ok' => false, 'message' => 'Process at most 500 items at a time when using alternate funds.', 'pcchrgcods' => []];
 
         try {
-            return DB::connection('hospital')->transaction(function () use ($keys, $locationId, $actor, $fallbacks, $allowedFunds) {
+            return DB::connection('hospital')->transaction(function () use ($keys, $locationId, $actor, $fallbacks, $allowedFunds, $replacements) {
                 $orders = DrugOrder::whereIn('docointkey', $keys)->where('is_uddds', 1)
                     ->whereHas('enctr', function ($query) { $query->where('toecode', 'ADM'); })
                     ->where(function ($query) use ($locationId) { $query->where('loc_code', $locationId)->orWhereNull('loc_code'); })
@@ -1006,6 +1006,25 @@ class UdddsService
                 if ($orders->count() !== count($keys)) return ['ok' => false, 'message' => 'Some selected orders changed or are already issued. Refresh the queue and select again.', 'pcchrgcods' => []];
                 foreach ($orders as $order) {
                     if (empty($order->uddds_source_docointkey)) return ['ok' => false, 'message' => 'Only generated daily UDDDS orders can use alternate funds.', 'pcchrgcods' => []];
+                }
+                $replacedKeys = [];
+                if (array_filter($replacements)) {
+                    $review = array_map(function ($order) {
+                        $item = (object) $order->getAttributes();
+                        $item->is_actionable = true;
+                        return $item;
+                    }, $orders->all());
+                    $review = $this->annotatePendingStock($review, $locationId);
+                    $selector = app(UdddsReplacementSelection::class);
+                    try {
+                        $review = $selector->apply($review, $replacements, $selector->options($locationId, '', $replacements));
+                    } catch (\InvalidArgumentException $e) {
+                        return ['ok' => false, 'message' => $e->getMessage(), 'pcchrgcods' => []];
+                    }
+                    foreach ($orders as $index => $order) {
+                        if ((string) $order->dmdcomb !== (string) $review[$index]->dmdcomb || (string) $order->dmdctr !== (string) $review[$index]->dmdctr) $replacedKeys[(string) $order->docointkey] = true;
+                        foreach (['dmdcomb', 'dmdctr', 'orderfrom', 'pchrgup', 'remarks'] as $field) $order->$field = $review[$index]->$field;
+                    }
                 }
                 $stocks = DB::connection('hospital')->table('hospital.dbo.pharm_drug_stocks as stock')
                     ->join('hospital.dbo.hdmhdrprice as price', 'price.dmdprdte', '=', 'stock.dmdprdte')
@@ -1051,7 +1070,7 @@ class UdddsService
                             $line->fill(array_intersect_key($template, array_flip($line->getFillable())));
                             $line->docointkey = 'UDD' . bin2hex(random_bytes(16));
                         }
-                        $unitPrice = $stock->chrgcode === $template['orderfrom'] ? (float) $template['pchrgup'] : (float) $stock->fund_unit_price;
+                        $unitPrice = empty($replacedKeys[(string) $order->docointkey]) && $stock->chrgcode === $template['orderfrom'] ? (float) $template['pchrgup'] : (float) $stock->fund_unit_price;
                         $line->orderfrom = $stock->chrgcode;
                         $line->pchrgqty = $qty;
                         $line->pchrgup = $unitPrice;
