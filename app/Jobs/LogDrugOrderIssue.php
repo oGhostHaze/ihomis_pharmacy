@@ -21,6 +21,8 @@ class LogDrugOrderIssue implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $submissionKey;
+
     public $docointkey, $enccode, $hpercode, $dmdcomb, $dmdctr, $pchrgqty, $employeeid, $orderfrom, $pcchrgcod, $pchrgup, $ris, $prescription_data_id, $date, $dmdprdte;
 
 
@@ -36,6 +38,8 @@ class LogDrugOrderIssue implements ShouldQueue
      */
     public function __construct($docointkey, $enccode, $hpercode, $dmdcomb, $dmdctr, $pchrgqty, $employeeid, $orderfrom, $pcchrgcod, $pchrgup, $ris, $prescription_data_id, $date, $dmdprdte)
     {
+        $this->submissionKey = bin2hex(random_bytes(16));
+        $this->afterCommit();
         $this->onQueue('rxo_issue_logger');
         $this->docointkey = $docointkey;
         $this->enccode = $enccode;
@@ -60,9 +64,19 @@ class LogDrugOrderIssue implements ShouldQueue
      */
     public function handle()
     {
+        // Queue UUID is stable for retries of jobs dispatched before this deployment.
+        $key = $this->submissionKey ?: ($this->job ? $this->job->uuid() : null);
+        if (!$key) throw new \RuntimeException('Legacy inventory job needs an operation identity before it can be retried safely.');
+        return app(\App\Services\Pharmacy\InventoryJob::class)->run(static::class, $key, function () {
+            $this->performHandle();
+        });
+    }
+
+    private function performHandle()
+    {
 
         if ($this->prescription_data_id) {
-            PrescriptionDataIssued::create([
+            PrescriptionDataIssued::on('hospital')->create([
                 'presc_data_id' => $this->prescription_data_id,
                 'docointkey' => $this->docointkey,
                 'qtyissued' => $this->pchrgqty,
@@ -78,19 +92,19 @@ class LogDrugOrderIssue implements ShouldQueue
                         ->where('dmdctr', $this->dmdctr)
                         ->first();
                     if ($rx_data) {
-                        PrescriptionDataIssued::create([
+                        PrescriptionDataIssued::on('hospital')->create([
                             'presc_data_id' => $rx_data->id,
                             'docointkey' => $this->docointkey,
                             'qtyissued' => $this->pchrgqty,
                         ]);
 
-                        DB::update(
+                        DB::connection('hospital')->update(
                             "UPDATE hospital.dbo.hrxo SET prescription_data_id = ?, prescribed_by = ? WHERE docointkey = ?",
                             [$rx_data->id, $rx_data->entry_by, $this->docointkey]
                         );
 
                         $rx_data->stat = 'I';
-                        $rx_data->save();
+                        $rx_data->setConnection('hospital')->save();
                     }
                 }
             }

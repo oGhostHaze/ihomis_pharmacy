@@ -15,6 +15,8 @@ use Illuminate\Queue\SerializesModels;
 class LogDrugDelivery implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $submissionKey;
     public $pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date;
 
     public function middleware(): array
@@ -28,6 +30,8 @@ class LogDrugDelivery implements ShouldQueue
      */
     public function __construct($pharm_location_id, $dmdcomb, $dmdctr, $exp_date, $chrgcode, $qty, $drug_concat, $date)
     {
+        $this->submissionKey = bin2hex(random_bytes(16));
+        $this->afterCommit();
         $this->onQueue('rx_delivery');
         $this->pharm_location_id = $pharm_location_id;
         $this->dmdcomb = $dmdcomb;
@@ -45,6 +49,16 @@ class LogDrugDelivery implements ShouldQueue
      * @return void
      */
     public function handle()
+    {
+        // Queue UUID is stable for retries of jobs dispatched before this deployment.
+        $key = $this->submissionKey ?: ($this->job ? $this->job->uuid() : null);
+        if (!$key) throw new \RuntimeException('Legacy inventory job needs an operation identity before it can be retried safely.');
+        return app(\App\Services\Pharmacy\InventoryJob::class)->run(static::class, $key, function () {
+            $this->performHandle();
+        });
+    }
+
+    private function performHandle()
     {
         $date = Carbon::parse($this->date)->format('Y-m-d');
 

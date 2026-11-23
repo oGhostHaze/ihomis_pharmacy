@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        \Livewire\LifecycleManager::registerHydrationMiddleware([
+            \App\Support\SubmissionNonce::class => \App\Support\SubmissionNonce::class,
+        ]);
+        \Livewire\LifecycleManager::registerInitialDehydrationMiddleware([
+            \App\Support\SubmissionNonce::class => [\App\Support\SubmissionNonce::class, 'dehydrate'],
+        ]);
     }
 }

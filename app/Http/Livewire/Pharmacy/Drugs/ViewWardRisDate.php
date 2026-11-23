@@ -44,9 +44,17 @@ class ViewWardRisDate extends Component
 
     public function cancel_issue($row_id)
     {
-        $item = WardRisRequest::find($row_id);
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () use ($row_id) {
+            return $this->perform_cancel_issue($row_id);
+        });
+    }
+
+    private function perform_cancel_issue($row_id)
+    {
+        $item = WardRisRequest::whereKey($row_id)->lockForUpdate()->firstOrFail();
+        if ((float) $item->issued_qty <= 0) return;
         $date = Carbon::parse(date('Y-m-d'))->startOfMonth()->format('Y-m-d');
-        $drug = DrugStock::find($item->stock_id);
+        $drug = DrugStock::whereKey($item->stock_id)->lockForUpdate()->firstOrFail();
         if ($drug) {
             $drug->stock_bal += $item->issued_qty;
             $drug->save();

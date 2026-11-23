@@ -46,6 +46,13 @@ class DeliveryView extends Component
 
     public function add_item()
     {
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () {
+            return $this->perform_add_item();
+        });
+    }
+
+    private function perform_add_item()
+    {
         return \Illuminate\Support\Facades\DB::connection('hospital')->transaction(function () {
             return $this->mutate_add_item();
         });
@@ -160,6 +167,13 @@ class DeliveryView extends Component
     }
 
     public function edit_item($item_id)
+    {
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () use ($item_id) {
+            return $this->perform_edit_item($item_id);
+        });
+    }
+
+    private function perform_edit_item($item_id)
     {
         return \Illuminate\Support\Facades\DB::connection('hospital')->transaction(function () use ($item_id) {
             return $this->mutate_edit_item($item_id);
@@ -319,12 +333,26 @@ class DeliveryView extends Component
 
     public function save_lock()
     {
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () {
+            return $this->perform_save_lock();
+        });
+    }
+
+    private function perform_save_lock()
+    {
         app(\App\Services\Pharmacy\DeliveryInventory::class)->lock($this->delivery_id, session('active_consumption'));
         $this->mount($this->delivery_id);
         $this->alert('success', 'Successfully updated stocks inventory!');
     }
 
     public function revert_lock()
+    {
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () {
+            return $this->perform_revert_lock();
+        });
+    }
+
+    private function perform_revert_lock()
     {
         $this->validate([
             'revert_reason' => 'required|string|min:5|max:1000',

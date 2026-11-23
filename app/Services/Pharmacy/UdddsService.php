@@ -894,6 +894,17 @@ class UdddsService
 
     public function chargeAndIssue(array $docointkeys, $locationId, array $actor, array $fallbacks = [], array $replacements = [])
     {
+        if (empty($docointkeys)) return ['ok' => false, 'message' => 'No UDDDS items selected.', 'pcchrgcods' => []];
+        if ($problem = $this->validateProcessingSchedule($docointkeys)) {
+            return ['ok' => false, 'message' => $problem, 'pcchrgcods' => []];
+        }
+        return app(\App\Services\Pharmacy\InventoryMutation::class)->run(function () use ($docointkeys, $locationId, $actor, $fallbacks, $replacements) {
+            return $this->perform_chargeAndIssue($docointkeys, $locationId, $actor, $fallbacks, $replacements);
+        });
+    }
+
+    private function perform_chargeAndIssue(array $docointkeys, $locationId, array $actor, array $fallbacks = [], array $replacements = [])
+    {
         $docointkeys = array_values(array_filter($docointkeys));
 
         if (empty($docointkeys)) {
@@ -909,7 +920,7 @@ class UdddsService
         }
 
         $placeholders = implode(',', array_fill(0, count($docointkeys), '?'));
-        $items = DB::select(
+        $items = DB::connection('hospital')->select(
             "SELECT hrxo.*, hdmhdr.drug_concat
              FROM hospital.dbo.hrxo
              INNER JOIN hospital.dbo.hdmhdr ON hdmhdr.dmdcomb = hrxo.dmdcomb AND hdmhdr.dmdctr = hrxo.dmdctr
@@ -924,6 +935,7 @@ class UdddsService
             return ['ok' => false, 'message' => 'No billable UDDDS items found.', 'pcchrgcods' => []];
         }
 
+        app(\App\Services\Pharmacy\InventoryMutation::class)->reserveStock($items, $locationId);
         $stockCheck = $this->validateFefoStock($items, $locationId);
         if (!$stockCheck['ok']) {
             return array_merge($stockCheck, ['pcchrgcods' => []]);
@@ -947,7 +959,7 @@ class UdddsService
                 $pcchrgcod = 'P' . date('y') . '-' . sprintf('%07d', $chargeCode->id);
 
                 foreach ($pending as $item) {
-                    DB::update(
+                    DB::connection('hospital')->update(
                         "UPDATE hospital.dbo.hrxo
                             SET pcchrgcod = ?, estatus = 'P'
                             WHERE docointkey = ?
@@ -1168,7 +1180,7 @@ class UdddsService
 
     private function issueOne($rxo, $locationId, array $actor)
     {
-        $stocks = DB::select(
+        $stocks = DB::connection('hospital')->select(
             "SELECT pharm_drug_stocks.*, hdmhdrprice.dmduprice
                 FROM hospital.dbo.pharm_drug_stocks
                 JOIN hospital.dbo.hdmhdrprice ON pharm_drug_stocks.dmdprdte = hdmhdrprice.dmdprdte
@@ -1205,7 +1217,7 @@ class UdddsService
                 $totalDeduct = 0;
             }
 
-            DB::update("UPDATE hospital.dbo.pharm_drug_stocks SET stock_bal = ? WHERE id = ?", [$stockBal, $stock->id]);
+            DB::connection('hospital')->update("UPDATE hospital.dbo.pharm_drug_stocks SET stock_bal = ? WHERE id = ?", [$stockBal, $stock->id]);
             $updated = true;
 
             $this->logStockIssue($stock, $rxo, $transQty, $tag, $actor, $locationId);
@@ -1216,7 +1228,7 @@ class UdddsService
         }
 
         if ($updated) {
-            DB::update(
+            DB::connection('hospital')->update(
                 "UPDATE hospital.dbo.hrxo
                     SET estatus = 'S', qtyissued = ?, dodtepost = ?, dotmepost = ?
                     WHERE docointkey = ? AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)",
@@ -1224,7 +1236,7 @@ class UdddsService
             );
 
             if ($rxo->prescription_data_id) {
-                PrescriptionDataIssued::create([
+                PrescriptionDataIssued::on('hospital')->create([
                     'presc_data_id' => $rxo->prescription_data_id,
                     'docointkey' => $rxo->docointkey,
                     'qtyissued' => $rxo->pchrgqty,

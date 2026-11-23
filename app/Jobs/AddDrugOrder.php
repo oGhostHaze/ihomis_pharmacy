@@ -17,6 +17,8 @@ class AddDrugOrder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $submissionKey;
+
     protected $enccode, $hpercode;
     protected $order_qty, $unit_price;
     protected $dm, $sc, $ems, $maip, $wholesale, $pay, $medicare, $service, $caf, $govt, $type, $employeeid;
@@ -34,6 +36,8 @@ class AddDrugOrder implements ShouldQueue
      */
     public function __construct($enccode, $hpercode, $order_qty, $unit_price, DrugStock $dm, $sc, $ems, $maip, $wholesale, $pay, $medicare, $service, $caf, $govt, $type, $employeeid)
     {
+        $this->submissionKey = bin2hex(random_bytes(16));
+        $this->afterCommit();
         $this->onQueue('iotx');
         $this->enccode = $enccode;
         $this->hpercode = $hpercode;
@@ -59,6 +63,16 @@ class AddDrugOrder implements ShouldQueue
      * @return void
      */
     public function handle()
+    {
+        // Queue UUID is stable for retries of jobs dispatched before this deployment.
+        $key = $this->submissionKey ?: ($this->job ? $this->job->uuid() : null);
+        if (!$key) throw new \RuntimeException('Legacy inventory job needs an operation identity before it can be retried safely.');
+        return app(\App\Services\Pharmacy\InventoryJob::class)->run(static::class, $key, function () {
+            $this->performHandle();
+        });
+    }
+
+    private function performHandle()
     {
         $dm = $this->dm;
 

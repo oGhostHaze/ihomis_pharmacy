@@ -17,6 +17,8 @@ class LogIoTransIssue implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $submissionKey;
+
 
     protected $warehouse_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $retail_price, $dmdprdte, $trans_time, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost;
 
@@ -33,6 +35,8 @@ class LogIoTransIssue implements ShouldQueue
      */
     public function __construct($warehouse_id, $dmdcomb, $dmdctr, $chrgcode, $trans_date, $retail_price, $dmdprdte, $trans_time, $qty, $exp_date, $drug_concat, $active_consumption = null, $unit_cost)
     {
+        $this->submissionKey = bin2hex(random_bytes(16));
+        $this->afterCommit();
         $this->onQueue('iotx');
         $this->warehouse_id = $warehouse_id;
         $this->dmdcomb = $dmdcomb;
@@ -55,6 +59,16 @@ class LogIoTransIssue implements ShouldQueue
      * @return void
      */
     public function handle()
+    {
+        // Queue UUID is stable for retries of jobs dispatched before this deployment.
+        $key = $this->submissionKey ?: ($this->job ? $this->job->uuid() : null);
+        if (!$key) throw new \RuntimeException('Legacy inventory job needs an operation identity before it can be retried safely.');
+        return app(\App\Services\Pharmacy\InventoryJob::class)->run(static::class, $key, function () {
+            $this->performHandle();
+        });
+    }
+
+    private function performHandle()
     {
         $date = Carbon::parse($this->trans_date)->startOfMonth()->format('Y-m-d');
         $log = DrugStockLog::firstOrNew([

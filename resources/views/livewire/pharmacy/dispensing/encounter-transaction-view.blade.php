@@ -81,26 +81,26 @@
                                     <p class="text-xs break-words">{{ $diagtext ?? 'N/A' }}</p>
                                 </div>
                             </td>
-                            <td colspan="4" class="text-xs border border-black">Patient Classification:
+                            <td colspan="4" class="text-xs border border-black">MSS Class:
                                 @php
                                     $class = '---';
                                     // if ($mss) {
                                     switch ($mssikey) {
                                         case 'MSSA11111999':
                                         case 'MSSB11111999':
-                                            $class = 'Pay';
+                                            $class = 'Fully Pay';
                                             break;
 
                                         case 'MSSC111111999':
-                                            $class = 'PP1';
+                                            $class = 'Partial Pay';
                                             break;
 
                                         case 'MSSC211111999':
-                                            $class = 'PP2';
+                                            $class = 'Partial Pay';
                                             break;
 
                                         case 'MSSC311111999':
-                                            $class = 'PP3';
+                                            $class = 'Partial Pay';
                                             break;
 
                                         case 'MSSD11111999':
@@ -113,6 +113,10 @@
                                     // }
                                 @endphp
                                 <span class="text-xs uppercase">{{ $class }}</span>
+                                <div>Accommodation: {{ $this->getAccommodationLabel() }}</div>
+                                @error('transaction')
+                                    <div class="text-error" role="alert">{{ $message }}</div>
+                                @enderror
                             </td>
                         </tr>
                         <tr>
@@ -1143,25 +1147,13 @@
                                             html: `
                         <i data-feather="x-circle" class="w-16 h-16 mx-auto mt-3 text-danger"></i>
                         <div class="mt-2 text-slate-500" id="inf">Issue all charged items. Continue?</div>
-                        <div class="grid grid-cols-4 gap-2 px-2 mt-3 gap-y-2">
-                            <div class="col-span-4 font-bold">TAG</div>
-                            <div class="col-span-4 text-center align-middle py-auto">
-                                <label class="cursor-pointer py-auto" for="na">
-                                    <span class="label-text">Basic</span>
-                                </label>
-                                <input class="toggle toggle-success" type="checkbox" id="na" name="radio">
-                                <label class="cursor-pointer py-auto" for="na">
-                                    <span class="label-text">NON-Basic</span>
-                                </label>
-                            </div>
-                        </div>
+                        <div class="mt-3">Accommodation: {{ $this->getAccommodationLabel() }}</div>
                     `,
                                             showCancelButton: true,
                                             confirmButtonText: `Confirm`,
                                             preConfirm: () => {
-                                                const na = Swal.getHtmlContainer().querySelector('#na');
                                                 return {
-                                                    bnb: na ? na.checked : false
+                                                    bnb: false
                                                 };
                                             }
                                         }).then((result) => {

@@ -29,3 +29,11 @@ public/css/app.css
 public/js/app.js
 public/js/turbolinks.js
 /tests
+!/public/js/
+/public/js/*
+!/public/js/submissions.js
+!/tests/
+/tests/*
+!/tests/Standalone/
+/tests/Standalone/*
+!/tests/Standalone/SubmissionProtectionTest.php
