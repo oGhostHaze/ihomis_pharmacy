@@ -81,39 +81,8 @@
                                     <p class="text-xs break-words">{{ $diagtext ?? 'N/A' }}</p>
                                 </div>
                             </td>
-                            <td colspan="4" class="text-xs border border-black">MSS Class:
-                                @php
-                                    $class = '---';
-                                    // if ($mss) {
-                                    switch ($mssikey) {
-                                        case 'MSSA11111999':
-                                        case 'MSSB11111999':
-                                            $class = 'Fully Pay';
-                                            break;
-
-                                        case 'MSSC111111999':
-                                            $class = 'Partial Pay';
-                                            break;
-
-                                        case 'MSSC211111999':
-                                            $class = 'Partial Pay';
-                                            break;
-
-                                        case 'MSSC311111999':
-                                            $class = 'Partial Pay';
-                                            break;
-
-                                        case 'MSSD11111999':
-                                            $class = 'Indigent';
-                                            break;
-
-                                        default:
-                                            $class = '---';
-                                    }
-                                    // }
-                                @endphp
-                                <span class="text-xs uppercase">{{ $class }}</span>
-                                <div>Accommodation: {{ $this->getAccommodationLabel() }}</div>
+                            <td colspan="4" class="text-xs border border-black">Classification:
+                                <span class="text-xs">{{ $this->getAccommodationLabel() }}</span>
                                 @error('transaction')
                                     <div class="text-error" role="alert">{{ $message }}</div>
                                 @enderror
