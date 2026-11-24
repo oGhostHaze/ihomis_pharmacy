@@ -961,13 +961,12 @@ class ShowRis extends Component
     {
         $this->validate();
 
+        $db = DB::connection('hospital');
+        $transactionStarted = false;
         try {
-            DB::beginTransaction();
-
             $transferableItems = $this->getTransferableRisDetails();
 
             if ($transferableItems->isEmpty()) {
-                DB::rollBack();
                 session()->flash('error', 'All RIS items have already been transferred to the delivery system.');
                 return;
             }
@@ -977,7 +976,6 @@ class ShowRis extends Component
             });
 
             if ($invalidExpiryItem) {
-                DB::rollBack();
                 $itemDescription = $invalidExpiryItem->description ?? 'Unknown item';
                 $stockNumber = $invalidExpiryItem->stockno ?? 'N/A';
                 $expiryDate = $invalidExpiryItem->expire_date;
@@ -994,6 +992,9 @@ class ShowRis extends Component
             $itemsByInvoice = $transferableItems->groupBy(function ($detail) {
                 return $detail->invoiceno ?? 'NO_INVOICE';
             });
+
+            $db->beginTransaction();
+            $transactionStarted = true;
 
             $createdDeliveries = [];
             $transferredItemsCount = 0;
@@ -1168,12 +1169,13 @@ class ShowRis extends Component
             }
 
             if (empty($createdDeliveries)) {
-                DB::rollBack();
+                if ($transactionStarted) $db->rollBack();
                 session()->flash('error', 'No untransferred RIS items are ready for delivery transfer.');
                 return;
             }
 
-            DB::commit();
+            $db->commit();
+            $transactionStarted = false;
 
             $this->closeTransferModal();
 
@@ -1194,8 +1196,8 @@ class ShowRis extends Component
                 session()->flash('info', "Multiple deliveries were created. You are viewing the first one.");
                 return redirect()->route('delivery.view', [$createdDeliveries[0]->id]);
             }
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (\Throwable $e) {
+            if ($transactionStarted) $db->rollBack();
             session()->flash('error', 'Error transferring items: ' . $e->getMessage());
             \Log::error('Transfer to delivery error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()

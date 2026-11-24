@@ -541,8 +541,11 @@ class EncounterTransactionView extends Component
                     }
                 }
                 if ($cnt == 1) {
+                    $postedAt = now();
                     $cnt = DB::connection('hospital')->update(
-                        "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = '" . $rxo->pchrgqty . "', tx_type = '" . $this->type . "', dodtepost = '" . now() . "', dotmepost = '" . now() . "', deptcode = '" . $this->deptcode . "' WHERE docointkey = '" . $rxo->docointkey . "' AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)"
+                        "UPDATE hospital.dbo.hrxo SET estatus = 'S', qtyissued = ?, tx_type = ?, dodtepost = ?, dotmepost = ?, deptcode = ?
+                         WHERE docointkey = ? AND (estatus = 'P' OR orderfrom = 'DRUMK' OR pchrgup = 0)",
+                        [$rxo->pchrgqty, $tag, $postedAt, $postedAt, (string) $this->deptcode, $rxo->docointkey]
                     );
                     $this->log_hrxoissue($rxo->docointkey, $rxo->enccode, $rxo->hpercode, $rxo->dmdcomb, $rxo->dmdctr, $rxo->pchrgqty, session('employeeid'), $rxo->orderfrom, $rxo->pcchrgcod, $rxo->pchrgup, $rxo->ris, $rxo->prescription_data_id, now(), $rxo->dmdprdte);
                     $this->fillEmptyRemarksFromPrescription($rxo->docointkey, $rxo->prescription_data_id, $rxo->remarks ?? null);
