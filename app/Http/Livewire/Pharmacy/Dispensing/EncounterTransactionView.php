@@ -582,12 +582,13 @@ class EncounterTransactionView extends Component
                 'qtyissued' => $pchrgqty,
             ]);
         } else {
-            $rx_header = Prescription::where('enccode', $enccode)
-                ->with('data_active')
+            $rx_header = Prescription::on('hospital')->where('enccode', $enccode)
                 ->get();
             if ($rx_header) {
                 foreach ($rx_header as $rxh) {
-                    $rx_data = $rxh->data_active()
+                    $rx_data = \App\Models\Record\Prescriptions\PrescriptionData::on('hospital')
+                        ->where('presc_id', $rxh->id)
+                        ->where('stat', 'A')->whereNull('archive')
                         ->where('dmdcomb', $dmdcomb)
                         ->where('dmdctr', $dmdctr)
                         ->first();
